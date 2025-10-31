@@ -15,7 +15,7 @@ import kotlin.coroutines.suspendCoroutine
 @DoNotStrip
 class NitroCookies : HybridNitroCookiesSpec() {
 
-  /** Convert Cookie struct to Set-Cookie header string T014: toRFC6265String implementation */
+  /** Convert Cookie struct to Set-Cookie header string */
   private fun toRFC6265String(cookie: Cookie): String {
     val parts = mutableListOf<String>()
 
@@ -54,7 +54,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     return parts.joinToString("; ")
   }
 
-  /** Parse a Set-Cookie header string into Cookie struct T013: createCookieData implementation */
+  /** Parse a Set-Cookie header string into Cookie struct */
   private fun createCookieData(setCookieHeader: String, url: URL): Cookie? {
     val parts = setCookieHeader.split(";").map { it.trim() }
     if (parts.isEmpty()) return null
@@ -169,9 +169,9 @@ class NitroCookies : HybridNitroCookiesSpec() {
     return url
   }
 
-  // MARK: - Main Cookie Operations (User Story 1)
+  // MARK: - Main Cookie Operations
 
-  /** Set a single cookie T018: Android set() implementation */
+  /** Set a single cookie */
   override fun set(url: String, cookie: Cookie, useWebKit: Boolean?): Promise<Boolean> {
     return Promise.async {
       val urlObj = validateURL(url)
@@ -191,7 +191,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     }
   }
 
-  /** Get all cookies for a URL T020: Android get() implementation */
+  /** Get all cookies for a URL */
   override fun get(url: String, useWebKit: Boolean?): Promise<Array<Cookie>> {
     return Promise.async {
       val urlObj = validateURL(url)
@@ -228,7 +228,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     }
   }
 
-  /** Clear all cookies T022: Android clearAll() implementation */
+  /** Clear all cookies */
   override fun clearAll(useWebKit: Boolean?): Promise<Boolean> {
     return Promise.async {
       val cookieManager = CookieManager.getInstance()
@@ -325,19 +325,13 @@ class NitroCookies : HybridNitroCookiesSpec() {
   }
 
   companion object {
-    /**
-     * ISO 8601 date formatter for cookie expires (yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ) T015: ISO 8601
-     * date parsing
-     */
+    /** ISO 8601 date formatter for cookie expires (yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ) */
     private val iso8601Formatter =
       SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
       }
 
-    /**
-     * RFC 1123 date formatter for Set-Cookie headers (EEE, dd MMM yyyy HH:mm:ss z) T016: RFC 1123
-     * date formatting
-     */
+    /** RFC 1123 date formatter for Set-Cookie headers (EEE, dd MMM yyyy HH:mm:ss z) */
     private val rfc1123Formatter =
       SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("GMT")

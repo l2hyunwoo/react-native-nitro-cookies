@@ -12,7 +12,7 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
 
     // MARK: - Initialization
 
-    public required init() {
+    public required override init() {
         // Initialize the hybrid object
     }
 
@@ -29,7 +29,6 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
 
     /**
      * Convert Cookie struct to NSHTTPCookie
-     * T006: makeHTTPCookie implementation
      */
     private func makeHTTPCookie(from cookie: Cookie, url: URL) throws -> HTTPCookie {
         let host = url.host ?? ""
@@ -66,7 +65,6 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
 
     /**
      * Convert NSHTTPCookie to Cookie struct
-     * T007: createCookieData implementation
      */
     private func createCookieData(from httpCookie: HTTPCookie) -> Cookie {
         let expiresString = httpCookie.expiresDate.map {
@@ -87,7 +85,6 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
 
     /**
      * Check if cookie domain matches or is subdomain of URL host
-     * T008: isMatchingDomain implementation
      */
     private func isMatchingDomain(cookieDomain: String, urlHost: String) -> Bool {
         // Exact match
@@ -107,7 +104,6 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
 
     /**
      * Validate that cookie domain matches URL host
-     * T009: validateDomain implementation
      */
     private func validateDomain(cookie: Cookie, url: URL) throws {
         guard let host = url.host else {
@@ -138,11 +134,10 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
         return url
     }
 
-    // MARK: - Main Cookie Operations (User Story 1)
+    // MARK: - Main Cookie Operations
 
     /**
      * Set a single cookie
-     * T017: iOS set() implementation
      */
     public func set(url urlString: String, cookie: Cookie, useWebKit: Bool?) throws -> Promise<Bool> {
         return Promise.async {
@@ -185,7 +180,6 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
 
     /**
      * Get all cookies for a URL
-     * T019: iOS get() implementation
      */
     public func get(url urlString: String, useWebKit: Bool?) throws -> Promise<[Cookie]> {
         return Promise.async {
@@ -222,7 +216,6 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
 
     /**
      * Clear all cookies
-     * T021: iOS clearAll() implementation
      */
     public func clearAll(useWebKit: Bool?) throws -> Promise<Bool> {
         return Promise.async {
