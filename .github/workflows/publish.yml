@@ -263,7 +263,7 @@ jobs:
             echo ""
             echo "## Documentation"
             echo ""
-            echo "- [README](https://github.com/l2hyunwoo/react-native-nitro-cookieso#readme)"
+            echo "- [README](https://github.com/l2hyunwoo/react-native-nitro-cookies#readme)"
             echo ""
             if [ -n "$PREVIOUS_TAG" ]; then
               echo "**Full Changelog**: https://github.com/l2hyunwoo/react-native-nitro-cookies/compare/$PREVIOUS_TAG...v$VERSION"
