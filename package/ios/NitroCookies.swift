@@ -8,12 +8,12 @@ import NitroModules
  * Provides high-performance cookie operations using NSHTTPCookieStorage
  * and WKHTTPCookieStore with Nitro Modules JSI architecture.
  */
-class HybridNitroCookies: HybridNitroCookiesSpec {
+public class HybridNitroCookies: HybridNitroCookiesSpec {
 
     // MARK: - Initialization
 
     public required override init() {
-        // Initialize the hybrid object
+        super.init()
     }
 
     // MARK: - Date Formatters
