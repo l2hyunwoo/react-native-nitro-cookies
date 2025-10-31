@@ -76,9 +76,11 @@ jobs:
       - name: Update package.json version
         run: |
           VERSION="${{ github.event.inputs.version }}"
-          echo "Updating package.json to version $VERSION"
+          echo "Updating package/package.json to version $VERSION"
+          cd package
           npm version $VERSION --no-git-tag-version
-          echo "✓ package.json updated to version $VERSION"
+          cd ..
+          echo "✓ package/package.json updated to version $VERSION"
 
       - name: Configure git
         run: |
@@ -89,7 +91,7 @@ jobs:
         id: commit
         run: |
           VERSION="${{ github.event.inputs.version }}"
-          git add package.json
+          git add package/package.json
           git commit -m "chore(release): bump version to $VERSION"
 
           COMMIT_SHA=$(git rev-parse HEAD)
@@ -131,9 +133,11 @@ jobs:
         if: github.event.inputs.dry_run == 'true'
         run: |
           VERSION="${{ github.event.inputs.version }}"
-          echo "Updating package.json to version $VERSION (dry run)"
+          echo "Updating package/package.json to version $VERSION (dry run)"
+          cd package
           npm version $VERSION --no-git-tag-version
-          echo "✓ package.json updated to version $VERSION"
+          cd ..
+          echo "✓ package/package.json updated to version $VERSION"
 
       - name: Create and push tag
         run: |
@@ -176,16 +180,21 @@ jobs:
         if: github.event.inputs.dry_run == 'true'
         run: |
           VERSION="${{ github.event.inputs.version }}"
-          echo "Updating package.json to version $VERSION (dry run)"
+          echo "Updating package/package.json to version $VERSION (dry run)"
+          cd package
           npm version $VERSION --no-git-tag-version
-          echo "✓ package.json updated to version $VERSION"
+          cd ..
+          echo "✓ package/package.json updated to version $VERSION"
 
       - name: Build library
-        run: yarn prepare
+        run: |
+          cd package
+          yarn prepare
 
       - name: Verify build outputs
         run: |
           echo "Verifying build outputs..."
+          cd package
           test -d lib/module || (echo "::error::lib/module directory not found" && exit 1)
           test -d lib/typescript || (echo "::error::lib/typescript directory not found" && exit 1)
           test -d nitrogen/generated || (echo "::error::nitrogen/generated directory not found" && exit 1)
@@ -193,6 +202,7 @@ jobs:
 
       - name: Publish to NPM
         run: |
+          cd package
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "🔍 DRY RUN: Testing NPM publish..."
             npm publish --dry-run --access public

@@ -1,0 +1,91 @@
+# Build outputs
+android/build/
+ios/build/
+*.aar
+*.apk
+
+# Test files
+__tests__/
+__fixtures__/
+__mocks__/
+*.test.ts
+*.test.tsx
+*.test.js
+*.test.jsx
+*.spec.ts
+*.spec.tsx
+*.spec.js
+*.spec.jsx
+
+# Coverage reports
+coverage/
+*.lcov
+.nyc_output
+
+# Development tools
+jest.config.js
+babel.config.js
+tsconfig.json
+tsconfig.build.json
+.eslintrc*
+.prettierrc*
+.editorconfig
+
+# Source maps (optional - remove if you want to include them)
+*.map
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development dependencies
+node_modules/
+
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD files
+.github/
+.travis.yml
+.circleci/
+
+# Documentation (optional - include if you want README in package)
+# README.md
+# CHANGELOG.md
+# LICENSE
+
+# Gradle files (not needed in published package)
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+android/.gradle/
+
+# Xcode files
+ios/*.xcodeproj/
+ios/*.xcworkspace/
+ios/Pods/
+ios/Podfile.lock
+ios/build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
