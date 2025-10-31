@@ -7,6 +7,10 @@
     "example": "yarn workspace react-native-nitro-cookies-example",
     "package": "yarn workspace react-native-nitro-cookies",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
+    "typecheck": "yarn workspace react-native-nitro-cookies typecheck",
+    "test": "yarn workspace react-native-nitro-cookies test",
+    "prepare": "yarn workspace react-native-nitro-cookies prepare",
+    "nitrogen": "yarn workspace react-native-nitro-cookies nitrogen",
     "clean": "del-cli package/android/build example/android/build example/android/app/build example/ios/build package/lib",
     "release": "yarn workspace react-native-nitro-cookies release-it --only-version"
   },
