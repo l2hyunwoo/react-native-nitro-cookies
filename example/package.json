@@ -12,7 +12,10 @@
   "dependencies": {
     "react": "19.1.0",
     "react-native": "0.81.1",
-    "react-native-nitro-modules": "^0.31.4"
+    "react-native-nitro-cookies": "*",
+    "react-native-nitro-modules": "^0.31.4",
+    "react-native-safe-area-context": "^5.6.2",
+    "react-native-webview": "^13.16.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -25,8 +28,7 @@
     "@react-native/metro-config": "0.81.1",
     "@react-native/typescript-config": "0.81.1",
     "@types/react": "^19.1.0",
-    "react-native-builder-bob": "^0.40.14",
-    "react-native-monorepo-config": "^0.1.9"
+    "react-native-builder-bob": "^0.40.14"
   },
   "engines": {
     "node": ">=20"

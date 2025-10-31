@@ -9,7 +9,7 @@
   },
   "autolinking": {
     "NitroCookies": {
-      "swift": "NitroCookies",
+      "swift": "HybridNitroCookies",
       "kotlin": "NitroCookies"
     }
   },
