@@ -3,12 +3,12 @@ import WebKit
 import NitroModules
 
 /**
- * NitroCookies - iOS implementation of cookie management
+ * HybridNitroCookies - iOS implementation of cookie management
  *
  * Provides high-performance cookie operations using NSHTTPCookieStorage
  * and WKHTTPCookieStore with Nitro Modules JSI architecture.
  */
-public class NitroCookies: HybridNitroCookiesSpec {
+public class HybridNitroCookies: HybridNitroCookiesSpec {
 
     // MARK: - Initialization
 
