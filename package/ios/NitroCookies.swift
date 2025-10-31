@@ -159,7 +159,10 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                 // Use WKHTTPCookieStore
                 if #available(iOS 11.0, *) {
                     // Accessing WKWebsiteDataStore.default() inside MainActor.run is necessary for iOS 11-12 compatibility,
-                    // since it is not marked @MainActor in those versions. For iOS 13+, this is redundant but safe.
+                    // since it is not marked @MainActor in those versions.
+                    // For iOS 13+, WKWebsiteDataStore.default() is already @MainActor, so wrapping in MainActor.run is redundant.
+                    // This workaround is safe for iOS 13+ and does not introduce any performance penalty or behavioral change,
+                    // as MainActor.run is a no-op when already on the main actor. This ensures compatibility across all supported iOS versions.
                     let store = await MainActor.run {
                         WKWebsiteDataStore.default().httpCookieStore
                     }
