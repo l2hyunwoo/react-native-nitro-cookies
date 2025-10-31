@@ -1,0 +1,127 @@
+{
+  "name": "react-native-nitro-cookies",
+  "version": "0.1.0",
+  "description": "Fetch, Get Cookies 🍪 at the Speed of Nitro",
+  "main": "./lib/module/index.js",
+  "types": "./lib/typescript/src/index.d.ts",
+  "exports": {
+    ".": {
+      "source": "./src/index.tsx",
+      "types": "./lib/typescript/src/index.d.ts",
+      "default": "./lib/module/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "android",
+    "ios",
+    "cpp",
+    "nitrogen",
+    "nitro.json",
+    "*.podspec",
+    "react-native.config.js",
+    "!ios/build",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradlew",
+    "!android/gradlew.bat",
+    "!android/local.properties",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__",
+    "!**/.*"
+  ],
+  "scripts": {
+    "test": "jest",
+    "typecheck": "tsc",
+    "clean": "del-cli android/build lib",
+    "prepare": "bob build",
+    "nitrogen": "nitrogen"
+  },
+  "keywords": [
+    "react-native",
+    "ios",
+    "android",
+    "cookies",
+    "cookie-management",
+    "http-cookies",
+    "nitro-modules",
+    "jsi",
+    "webview",
+    "cookie-storage",
+    "session-management",
+    "typescript",
+    "high-performance",
+    "wkwebview",
+    "cookiemanager"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/l2hyunwoo/react-native-nitro-cookies.git",
+    "directory": "package"
+  },
+  "author": "HyunWoo Lee <l2hyunwoo@gmail.com> (https://github.com/l2hyunwoo)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/l2hyunwoo/react-native-nitro-cookies/issues"
+  },
+  "homepage": "https://github.com/l2hyunwoo/react-native-nitro-cookies#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@react-native/babel-preset": "0.81.1",
+    "@types/react": "^19.1.0",
+    "del-cli": "^6.0.0",
+    "nitrogen": "^0.31.4",
+    "react": "19.1.0",
+    "react-native": "0.81.1",
+    "react-native-builder-bob": "^0.40.14",
+    "react-native-nitro-modules": "^0.31.4",
+    "typescript": "^5.9.2"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-nitro-modules": "^0.31.4"
+  },
+  "prettier": {
+    "quoteProps": "consistent",
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "useTabs": false
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      [
+        "custom",
+        {
+          "script": "nitrogen",
+          "clean": "nitrogen/"
+        }
+      ],
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  },
+  "create-react-native-library": {
+    "languages": "kotlin-swift",
+    "type": "nitro-module",
+    "version": "0.54.8"
+  }
+}

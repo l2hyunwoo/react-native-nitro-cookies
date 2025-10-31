@@ -40,6 +40,10 @@ project.xcworkspace
 .settings
 local.properties
 android.iml
+android/build/
+**/android/build/
+*.apk
+*.aab
 
 # Cocoapods
 #
@@ -84,3 +88,25 @@ android/generated
 
 # React Native Nitro Modules
 nitrogen/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+logs/
+
+# Claude
+CLAUDE.md
+.claude/
+.specify/
+specs/

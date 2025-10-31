@@ -1,29 +1,79 @@
-import { fixupConfigRules } from '@eslint/compat';
-import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
 import prettier from 'eslint-plugin-prettier';
-import { defineConfig } from 'eslint/config';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
-
-export default defineConfig([
+export default [
+  js.configs.recommended,
   {
-    extends: fixupConfigRules(compat.extends('@react-native', 'prettier')),
-    plugins: { prettier },
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: tsparser,
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      globals: {
+        __DEV__: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        process: 'readonly',
+        global: 'readonly',
+        Promise: 'readonly',
+        URL: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      prettier,
+    },
     rules: {
-      'react/react-in-jsx-scope': 'off',
       'prettier/prettier': 'error',
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      'no-console': 'off',
     },
   },
   {
-    ignores: ['node_modules/', 'lib/'],
+    files: ['**/*.{js,jsx}'],
+    plugins: {
+      prettier,
+    },
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    rules: {
+      'prettier/prettier': 'error',
+      'no-unused-vars': 'warn',
+      'no-console': 'off',
+    },
   },
-]);
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/lib/**',
+      '**/build/**',
+      '**/dist/**',
+      'example/',
+      'package/nitrogen/generated/**',
+      '**/babel.config.js',
+      '**/metro.config.js',
+      '**/.eslintrc.js',
+    ],
+  },
+];
