@@ -6163,7 +6163,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:2.2.4, invariant@npm:^2.2.4":
+"invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -8464,7 +8464,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-monorepo-config@npm:^0.1.8":
+"react-native-monorepo-config@npm:^0.1.8, react-native-monorepo-config@npm:^0.1.9":
   version: 0.1.10
   resolution: "react-native-monorepo-config@npm:0.1.10"
   dependencies:
@@ -8491,10 +8491,8 @@ __metadata:
     react: 19.1.0
     react-native: 0.81.1
     react-native-builder-bob: ^0.40.14
-    react-native-nitro-cookies: "*"
+    react-native-monorepo-config: ^0.1.9
     react-native-nitro-modules: ^0.31.4
-    react-native-safe-area-context: ^5.6.2
-    react-native-webview: ^13.16.0
   languageName: unknown
   linkType: soft
 
@@ -8522,7 +8520,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"react-native-nitro-cookies@*, react-native-nitro-cookies@workspace:package":
+"react-native-nitro-cookies@workspace:package":
   version: 0.0.0-use.local
   resolution: "react-native-nitro-cookies@workspace:package"
   dependencies:
@@ -8549,29 +8547,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 9d251ec788eafb5c66033a1f376e2a8f9dfc8962a22e8511f6451bc50bf324549fd4e5113ee5bed59a993c0afc3288e8722d854239a33c00faae26848a211fde
-  languageName: node
-  linkType: hard
-
-"react-native-safe-area-context@npm:^5.6.2":
-  version: 5.6.2
-  resolution: "react-native-safe-area-context@npm:5.6.2"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 7b15cdd07df4f3650cf443fb322ee2d51b3ab45c652789cbea4cb48a8e6fd2b66e2be01e9f63e614ceaf28d9d228af681ca8857b2ed8dabe48f23964076d40c3
-  languageName: node
-  linkType: hard
-
-"react-native-webview@npm:^13.16.0":
-  version: 13.16.0
-  resolution: "react-native-webview@npm:13.16.0"
-  dependencies:
-    escape-string-regexp: ^4.0.0
-    invariant: 2.2.4
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: a6fefc1bc977c1d121057c91696edb08ca170421a6d6ad5a9bcda279a20eca84aaaf553eca3a8e51b621e22fd473afa8bc994888807fb7db154eb9d7acb87928
   languageName: node
   linkType: hard
 
