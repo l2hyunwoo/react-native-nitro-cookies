@@ -158,14 +158,17 @@ public class NitroCookies: HybridNitroCookiesSpec {
             if useWebKit == true {
                 // Use WKHTTPCookieStore
                 if #available(iOS 11.0, *) {
-                    return await MainActor.run {
-                        let store = WKWebsiteDataStore.default().httpCookieStore
-                        return await withCheckedContinuation { continuation in
+                    let store = await MainActor.run {
+                        WKWebsiteDataStore.default().httpCookieStore
+                    }
+                    await withCheckedContinuation { continuation in
+                        Task { @MainActor in
                             store.setCookie(httpCookie) {
-                                continuation.resume(returning: true)
+                                continuation.resume(returning: ())
                             }
                         }
                     }
+                    return true
                 } else {
                     throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
                                  userInfo: [NSLocalizedDescriptionKey:
@@ -188,18 +191,21 @@ public class NitroCookies: HybridNitroCookiesSpec {
 
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    return await MainActor.run {
-                        let store = WKWebsiteDataStore.default().httpCookieStore
-                        return await withCheckedContinuation { continuation in
+                    let store = await MainActor.run {
+                        WKWebsiteDataStore.default().httpCookieStore
+                    }
+                    let httpCookies = await withCheckedContinuation { continuation in
+                        Task { @MainActor in
                             store.getAllCookies { cookies in
-                                let filteredCookies = cookies.filter { cookie in
-                                    self.isMatchingDomain(cookieDomain: cookie.domain,
-                                                         urlHost: url.host ?? "")
-                                }
-                                continuation.resume(returning: filteredCookies.map { self.createCookieData(from: $0) })
+                                continuation.resume(returning: cookies)
                             }
                         }
                     }
+                    let filteredCookies = httpCookies.filter { cookie in
+                        self.isMatchingDomain(cookieDomain: cookie.domain,
+                                             urlHost: url.host ?? "")
+                    }
+                    return filteredCookies.map { self.createCookieData(from: $0) }
                 } else {
                     throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
                                  userInfo: [NSLocalizedDescriptionKey:
@@ -223,23 +229,26 @@ public class NitroCookies: HybridNitroCookiesSpec {
         return Promise.async {
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    return await MainActor.run {
-                        let store = WKWebsiteDataStore.default().httpCookieStore
-                        return await withCheckedContinuation { continuation in
+                    let store = await MainActor.run {
+                        WKWebsiteDataStore.default().httpCookieStore
+                    }
+                    let cookies = await withCheckedContinuation { continuation in
+                        Task { @MainActor in
                             store.getAllCookies { cookies in
-                                Task {
-                                    for cookie in cookies {
-                                        await withCheckedContinuation { (innerContinuation: CheckedContinuation<Void, Never>) in
-                                            store.delete(cookie) {
-                                                innerContinuation.resume(returning: ())
-                                            }
-                                        }
-                                    }
-                                    continuation.resume(returning: true)
+                                continuation.resume(returning: cookies)
+                            }
+                        }
+                    }
+                    for cookie in cookies {
+                        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                            Task { @MainActor in
+                                store.delete(cookie) {
+                                    continuation.resume(returning: ())
                                 }
                             }
                         }
                     }
+                    return true
                 } else {
                     throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
                                   userInfo: [NSLocalizedDescriptionKey:
@@ -303,14 +312,17 @@ public class NitroCookies: HybridNitroCookiesSpec {
         return Promise.async {
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    return await MainActor.run {
-                        let store = WKWebsiteDataStore.default().httpCookieStore
-                        return await withCheckedContinuation { continuation in
+                    let store = await MainActor.run {
+                        WKWebsiteDataStore.default().httpCookieStore
+                    }
+                    let cookies = await withCheckedContinuation { continuation in
+                        Task { @MainActor in
                             store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies.map { self.createCookieData(from: $0) })
+                                continuation.resume(returning: cookies)
                             }
                         }
                     }
+                    return cookies.map { self.createCookieData(from: $0) }
                 } else {
                     throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
                                   userInfo: [NSLocalizedDescriptionKey:
@@ -332,25 +344,33 @@ public class NitroCookies: HybridNitroCookiesSpec {
 
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    return await MainActor.run {
-                        let store = WKWebsiteDataStore.default().httpCookieStore
-                        return await withCheckedContinuation { continuation in
+                    let store = await MainActor.run {
+                        WKWebsiteDataStore.default().httpCookieStore
+                    }
+                    let cookies = await withCheckedContinuation { continuation in
+                        Task { @MainActor in
                             store.getAllCookies { cookies in
-                                let matchingCookie = cookies.first { cookie in
-                                    cookie.name == name &&
-                                    self.isMatchingDomain(cookieDomain: cookie.domain,
-                                                         urlHost: url.host ?? "")
-                                }
+                                continuation.resume(returning: cookies)
+                            }
+                        }
+                    }
+                    let matchingCookie = cookies.first { cookie in
+                        cookie.name == name &&
+                        self.isMatchingDomain(cookieDomain: cookie.domain,
+                                             urlHost: url.host ?? "")
+                    }
 
-                                if let cookie = matchingCookie {
-                                    store.delete(cookie) {
-                                        continuation.resume(returning: true)
-                                    }
-                                } else {
-                                    continuation.resume(returning: false)
+                    if let cookie = matchingCookie {
+                        await withCheckedContinuation { continuation in
+                            Task { @MainActor in
+                                store.delete(cookie) {
+                                    continuation.resume(returning: ())
                                 }
                             }
                         }
+                        return true
+                    } else {
+                        return false
                     }
                 } else {
                     throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
