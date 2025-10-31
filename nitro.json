@@ -1,0 +1,17 @@
+{
+  "cxxNamespace": ["nitrocookies"],
+  "ios": {
+    "iosModuleName": "NitroCookies"
+  },
+  "android": {
+    "androidNamespace": ["nitrocookies"],
+    "androidCxxLibName": "nitrocookies"
+  },
+  "autolinking": {
+    "NitroCookies": {
+      "swift": "NitroCookies",
+      "kotlin": "NitroCookies"
+    }
+  },
+  "ignorePaths": ["node_modules"]
+}
