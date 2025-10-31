@@ -13,5 +13,5 @@
       "kotlin": "NitroCookies"
     }
   },
-  "ignorePaths": ["node_modules"]
+  "ignorePaths": ["node_modules", "specs"]
 }
