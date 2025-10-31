@@ -10,6 +10,12 @@ import NitroModules
  */
 class HybridNitroCookies: HybridNitroCookiesSpec {
 
+    // MARK: - Initialization
+
+    public required init() {
+        // Initialize the hybrid object
+    }
+
     // MARK: - Date Formatters
 
     /// ISO 8601 date formatter for cookie expires (yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ)
@@ -72,7 +78,7 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
             value: httpCookie.value,
             path: httpCookie.path,
             domain: httpCookie.domain,
-            version: httpCookie.version.map { String($0) },
+            version: String(httpCookie.version),
             expires: expiresString,
             secure: httpCookie.isSecure,
             httpOnly: httpCookie.isHTTPOnly
@@ -139,41 +145,40 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * T017: iOS set() implementation
      */
     public func set(url urlString: String, cookie: Cookie, useWebKit: Bool?) throws -> Promise<Bool> {
-        return Promise.async { resolve, reject in
-            do {
-                let url = try self.validateURL(urlString)
-                try self.validateDomain(cookie: cookie, url: url)
+        return Promise.async {
+            let url = try self.validateURL(urlString)
+            try self.validateDomain(cookie: cookie, url: url)
 
-                // Apply defaults
-                var cookieWithDefaults = cookie
-                if cookieWithDefaults.path == nil {
-                    cookieWithDefaults.path = "/"
-                }
-                if cookieWithDefaults.domain == nil {
-                    cookieWithDefaults.domain = url.host
-                }
+            // Apply defaults
+            var cookieWithDefaults = cookie
+            if cookieWithDefaults.path == nil {
+                cookieWithDefaults.path = "/"
+            }
+            if cookieWithDefaults.domain == nil {
+                cookieWithDefaults.domain = url.host
+            }
 
-                let httpCookie = try self.makeHTTPCookie(from: cookieWithDefaults, url: url)
+            let httpCookie = try self.makeHTTPCookie(from: cookieWithDefaults, url: url)
 
-                if useWebKit == true {
-                    // Use WKHTTPCookieStore
-                    if #available(iOS 11.0, *) {
-                        let store = WKWebsiteDataStore.default().httpCookieStore
+            if useWebKit == true {
+                // Use WKHTTPCookieStore
+                if #available(iOS 11.0, *) {
+                    let store = WKWebsiteDataStore.default().httpCookieStore
+                    await withCheckedContinuation { continuation in
                         store.setCookie(httpCookie) {
-                            resolve(true)
+                            continuation.resume(returning: ())
                         }
-                    } else {
-                        throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
-                                     userInfo: [NSLocalizedDescriptionKey:
-                                        "WebKit requires iOS 11 or higher"])
                     }
+                    return true
                 } else {
-                    // Use NSHTTPCookieStorage
-                    HTTPCookieStorage.shared.setCookie(httpCookie)
-                    resolve(true)
+                    throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
+                                 userInfo: [NSLocalizedDescriptionKey:
+                                    "WebKit requires iOS 11 or higher"])
                 }
-            } catch {
-                reject(error)
+            } else {
+                // Use NSHTTPCookieStorage
+                HTTPCookieStorage.shared.setCookie(httpCookie)
+                return true
             }
         }
     }
@@ -183,37 +188,34 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * T019: iOS get() implementation
      */
     public func get(url urlString: String, useWebKit: Bool?) throws -> Promise<[Cookie]> {
-        return Promise.async { resolve, reject in
-            do {
-                let url = try self.validateURL(urlString)
+        return Promise.async {
+            let url = try self.validateURL(urlString)
 
-                if useWebKit == true {
-                    if #available(iOS 11.0, *) {
-                        let store = WKWebsiteDataStore.default().httpCookieStore
-                        store.getAllCookies { httpCookies in
-                            let filteredCookies = httpCookies.filter { cookie in
-                                self.isMatchingDomain(cookieDomain: cookie.domain,
-                                                     urlHost: url.host ?? "")
-                            }
-                            let result = filteredCookies.map { self.createCookieData(from: $0) }
-                            resolve(result)
+            if useWebKit == true {
+                if #available(iOS 11.0, *) {
+                    let store = WKWebsiteDataStore.default().httpCookieStore
+                    let httpCookies = await withCheckedContinuation { continuation in
+                        store.getAllCookies { cookies in
+                            continuation.resume(returning: cookies)
                         }
-                    } else {
-                        throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
-                                     userInfo: [NSLocalizedDescriptionKey:
-                                        "WebKit requires iOS 11 or higher"])
                     }
-                } else {
-                    let allCookies = HTTPCookieStorage.shared.cookies ?? []
-                    let filteredCookies = allCookies.filter { cookie in
+                    let filteredCookies = httpCookies.filter { cookie in
                         self.isMatchingDomain(cookieDomain: cookie.domain,
                                              urlHost: url.host ?? "")
                     }
-                    let result = filteredCookies.map { self.createCookieData(from: $0) }
-                    resolve(result)
+                    return filteredCookies.map { self.createCookieData(from: $0) }
+                } else {
+                    throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
+                                 userInfo: [NSLocalizedDescriptionKey:
+                                    "WebKit requires iOS 11 or higher"])
                 }
-            } catch {
-                reject(error)
+            } else {
+                let allCookies = HTTPCookieStorage.shared.cookies ?? []
+                let filteredCookies = allCookies.filter { cookie in
+                    self.isMatchingDomain(cookieDomain: cookie.domain,
+                                         urlHost: url.host ?? "")
+                }
+                return filteredCookies.map { self.createCookieData(from: $0) }
             }
         }
     }
@@ -223,26 +225,27 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * T021: iOS clearAll() implementation
      */
     public func clearAll(useWebKit: Bool?) throws -> Promise<Bool> {
-        return Promise.async { resolve, reject in
+        return Promise.async {
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
                     let store = WKWebsiteDataStore.default().httpCookieStore
-                    store.getAllCookies { cookies in
-                        let group = DispatchGroup()
-                        for cookie in cookies {
-                            group.enter()
-                            store.delete(cookie) {
-                                group.leave()
-                            }
-                        }
-                        group.notify(queue: .main) {
-                            resolve(true)
+                    let cookies = await withCheckedContinuation { continuation in
+                        store.getAllCookies { cookies in
+                            continuation.resume(returning: cookies)
                         }
                     }
+                    for cookie in cookies {
+                        await withCheckedContinuation { continuation in
+                            store.delete(cookie) {
+                                continuation.resume(returning: ())
+                            }
+                        }
+                    }
+                    return true
                 } else {
-                    reject(NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
+                    throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
                                   userInfo: [NSLocalizedDescriptionKey:
-                                    "WebKit requires iOS 11 or higher"]))
+                                    "WebKit requires iOS 11 or higher"])
                 }
             } else {
                 let storage = HTTPCookieStorage.shared
@@ -250,7 +253,7 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
                 for cookie in cookies {
                     storage.deleteCookie(cookie)
                 }
-                resolve(true)
+                return true
             }
         }
     }
@@ -259,20 +262,16 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * Parse and set cookies from Set-Cookie header
      */
     public func setFromResponse(url urlString: String, value: String) throws -> Promise<Bool> {
-        return Promise.async { resolve, reject in
-            do {
-                let url = try self.validateURL(urlString)
-                let headerFields = ["Set-Cookie": value]
-                let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: url)
+        return Promise.async {
+            let url = try self.validateURL(urlString)
+            let headerFields = ["Set-Cookie": value]
+            let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: url)
 
-                let storage = HTTPCookieStorage.shared
-                for cookie in cookies {
-                    storage.setCookie(cookie)
-                }
-                resolve(true)
-            } catch {
-                reject(error)
+            let storage = HTTPCookieStorage.shared
+            for cookie in cookies {
+                storage.setCookie(cookie)
             }
+            return true
         }
     }
 
@@ -280,35 +279,22 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * Make HTTP request and get cookies from response
      */
     public func getFromResponse(url urlString: String) throws -> Promise<[Cookie]> {
-        return Promise.async { resolve, reject in
-            do {
-                let url = try self.validateURL(urlString)
+        return Promise.async {
+            let url = try self.validateURL(urlString)
 
-                let task = URLSession.shared.dataTask(with: url) { data, response, error in
-                    if let error = error {
-                        reject(NSError(domain: "NETWORK_ERROR", code: 4,
-                                      userInfo: [NSLocalizedDescriptionKey: error.localizedDescription]))
-                        return
-                    }
+            let (_, response) = try await URLSession.shared.data(from: url)
 
-                    guard let httpResponse = response as? HTTPURLResponse else {
-                        reject(NSError(domain: "NETWORK_ERROR", code: 4,
-                                      userInfo: [NSLocalizedDescriptionKey: "Not HTTP response"]))
-                        return
-                    }
-
-                    let cookies = HTTPCookie.cookies(
-                        withResponseHeaderFields: httpResponse.allHeaderFields as! [String: String],
-                        for: url
-                    )
-
-                    let result = cookies.map { self.createCookieData(from: $0) }
-                    resolve(result)
-                }
-                task.resume()
-            } catch {
-                reject(error)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NSError(domain: "NETWORK_ERROR", code: 4,
+                              userInfo: [NSLocalizedDescriptionKey: "Not HTTP response"])
             }
+
+            let cookies = HTTPCookie.cookies(
+                withResponseHeaderFields: httpResponse.allHeaderFields as! [String: String],
+                for: url
+            )
+
+            return cookies.map { self.createCookieData(from: $0) }
         }
     }
 
@@ -316,23 +302,24 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * Get all cookies regardless of domain (iOS only)
      */
     public func getAll(useWebKit: Bool?) throws -> Promise<[Cookie]> {
-        return Promise.async { resolve, reject in
+        return Promise.async {
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
                     let store = WKWebsiteDataStore.default().httpCookieStore
-                    store.getAllCookies { cookies in
-                        let result = cookies.map { self.createCookieData(from: $0) }
-                        resolve(result)
+                    let cookies = await withCheckedContinuation { continuation in
+                        store.getAllCookies { cookies in
+                            continuation.resume(returning: cookies)
+                        }
                     }
+                    return cookies.map { self.createCookieData(from: $0) }
                 } else {
-                    reject(NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
+                    throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
                                   userInfo: [NSLocalizedDescriptionKey:
-                                    "WebKit requires iOS 11 or higher"]))
+                                    "WebKit requires iOS 11 or higher"])
                 }
             } else {
                 let cookies = HTTPCookieStorage.shared.cookies ?? []
-                let result = cookies.map { self.createCookieData(from: $0) }
-                resolve(result)
+                return cookies.map { self.createCookieData(from: $0) }
             }
         }
     }
@@ -341,36 +328,17 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * Clear specific cookie by name (iOS only)
      */
     public func clearByName(url urlString: String, name: String, useWebKit: Bool?) throws -> Promise<Bool> {
-        return Promise.async { resolve, reject in
-            do {
-                let url = try self.validateURL(urlString)
+        return Promise.async {
+            let url = try self.validateURL(urlString)
 
-                if useWebKit == true {
-                    if #available(iOS 11.0, *) {
-                        let store = WKWebsiteDataStore.default().httpCookieStore
+            if useWebKit == true {
+                if #available(iOS 11.0, *) {
+                    let store = WKWebsiteDataStore.default().httpCookieStore
+                    let cookies = await withCheckedContinuation { continuation in
                         store.getAllCookies { cookies in
-                            let matchingCookie = cookies.first { cookie in
-                                cookie.name == name &&
-                                self.isMatchingDomain(cookieDomain: cookie.domain,
-                                                     urlHost: url.host ?? "")
-                            }
-
-                            if let cookie = matchingCookie {
-                                store.delete(cookie) {
-                                    resolve(true)
-                                }
-                            } else {
-                                resolve(false)
-                            }
+                            continuation.resume(returning: cookies)
                         }
-                    } else {
-                        throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
-                                     userInfo: [NSLocalizedDescriptionKey:
-                                        "WebKit requires iOS 11 or higher"])
                     }
-                } else {
-                    let storage = HTTPCookieStorage.shared
-                    let cookies = storage.cookies ?? []
                     let matchingCookie = cookies.first { cookie in
                         cookie.name == name &&
                         self.isMatchingDomain(cookieDomain: cookie.domain,
@@ -378,14 +346,35 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
                     }
 
                     if let cookie = matchingCookie {
-                        storage.deleteCookie(cookie)
-                        resolve(true)
+                        await withCheckedContinuation { continuation in
+                            store.delete(cookie) {
+                                continuation.resume(returning: ())
+                            }
+                        }
+                        return true
                     } else {
-                        resolve(false)
+                        return false
                     }
+                } else {
+                    throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
+                                 userInfo: [NSLocalizedDescriptionKey:
+                                    "WebKit requires iOS 11 or higher"])
                 }
-            } catch {
-                reject(error)
+            } else {
+                let storage = HTTPCookieStorage.shared
+                let cookies = storage.cookies ?? []
+                let matchingCookie = cookies.first { cookie in
+                    cookie.name == name &&
+                    self.isMatchingDomain(cookieDomain: cookie.domain,
+                                         urlHost: url.host ?? "")
+                }
+
+                if let cookie = matchingCookie {
+                    storage.deleteCookie(cookie)
+                    return true
+                } else {
+                    return false
+                }
             }
         }
     }
@@ -394,10 +383,10 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * Flush cookies (Android only - no-op on iOS)
      */
     public func flush() throws -> Promise<Void> {
-        return Promise.async { resolve, reject in
-            reject(NSError(domain: "PLATFORM_UNSUPPORTED", code: 5,
+        return Promise.async {
+            throw NSError(domain: "PLATFORM_UNSUPPORTED", code: 5,
                           userInfo: [NSLocalizedDescriptionKey:
-                            "flush() is only available on Android"]))
+                            "flush() is only available on Android"])
         }
     }
 
@@ -405,10 +394,10 @@ class HybridNitroCookies: HybridNitroCookiesSpec {
      * Remove session cookies (Android only - no-op on iOS)
      */
     public func removeSessionCookies() throws -> Promise<Bool> {
-        return Promise.async { resolve, reject in
-            reject(NSError(domain: "PLATFORM_UNSUPPORTED", code: 5,
+        return Promise.async {
+            throw NSError(domain: "PLATFORM_UNSUPPORTED", code: 5,
                           userInfo: [NSLocalizedDescriptionKey:
-                            "removeSessionCookies() is only available on Android"]))
+                            "removeSessionCookies() is only available on Android"])
         }
     }
 }
