@@ -158,14 +158,14 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             if useWebKit == true {
                 // Use WKHTTPCookieStore
                 if #available(iOS 11.0, *) {
+                    // Accessing WKWebsiteDataStore.default() inside MainActor.run is necessary for iOS 11-12 compatibility,
+                    // since it is not marked @MainActor in those versions. For iOS 13+, this is redundant but safe.
                     let store = await MainActor.run {
                         WKWebsiteDataStore.default().httpCookieStore
                     }
                     await withCheckedContinuation { continuation in
-                        Task { @MainActor in
-                            store.setCookie(httpCookie) {
-                                continuation.resume(returning: ())
-                            }
+                        store.setCookie(httpCookie) {
+                            continuation.resume(returning: ())
                         }
                     }
                     return true
@@ -195,10 +195,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                         WKWebsiteDataStore.default().httpCookieStore
                     }
                     let httpCookies = await withCheckedContinuation { continuation in
-                        Task { @MainActor in
-                            store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies)
-                            }
+                        store.getAllCookies { cookies in
+                            continuation.resume(returning: cookies)
                         }
                     }
                     let filteredCookies = httpCookies.filter { cookie in
@@ -233,18 +231,14 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                         WKWebsiteDataStore.default().httpCookieStore
                     }
                     let cookies = await withCheckedContinuation { continuation in
-                        Task { @MainActor in
-                            store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies)
-                            }
+                        store.getAllCookies { cookies in
+                            continuation.resume(returning: cookies)
                         }
                     }
                     for cookie in cookies {
-                        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                            Task { @MainActor in
-                                store.delete(cookie) {
-                                    continuation.resume(returning: ())
-                                }
+                        await withCheckedContinuation { continuation in
+                            store.delete(cookie) {
+                                continuation.resume(returning: ())
                             }
                         }
                     }
@@ -316,10 +310,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                         WKWebsiteDataStore.default().httpCookieStore
                     }
                     let cookies = await withCheckedContinuation { continuation in
-                        Task { @MainActor in
-                            store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies)
-                            }
+                        store.getAllCookies { cookies in
+                            continuation.resume(returning: cookies)
                         }
                     }
                     return cookies.map { self.createCookieData(from: $0) }
@@ -348,10 +340,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                         WKWebsiteDataStore.default().httpCookieStore
                     }
                     let cookies = await withCheckedContinuation { continuation in
-                        Task { @MainActor in
-                            store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies)
-                            }
+                        store.getAllCookies { cookies in
+                            continuation.resume(returning: cookies)
                         }
                     }
                     let matchingCookie = cookies.first { cookie in
@@ -362,10 +352,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
 
                     if let cookie = matchingCookie {
                         await withCheckedContinuation { continuation in
-                            Task { @MainActor in
-                                store.delete(cookie) {
-                                    continuation.resume(returning: ())
-                                }
+                            store.delete(cookie) {
+                                continuation.resume(returning: ())
                             }
                         }
                         return true

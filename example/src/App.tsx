@@ -109,13 +109,10 @@ function AppContent() {
   const loadCookies = useCallback(async () => {
     setLoading(true);
     try {
-      // Try to get all cookies (iOS only)
       if (Platform.OS === 'ios') {
-        const allCookiesDict = await NitroCookies.getAll();
-        console.log('iOS All cookies dict:', JSON.stringify(allCookiesDict, null, 2));
-
-        // Convert dictionary to array
-        const allCookies = Object.values(allCookiesDict) as Cookie[];
+        // iOS: get all cookies (returns array directly)
+        const allCookies = await NitroCookies.getAll();
+        console.log('iOS All cookies array:', JSON.stringify(allCookies, null, 2));
 
         // Filter cookies for current domain
         const domain = new URL(currentUrl).hostname;
@@ -126,22 +123,16 @@ function AppContent() {
         console.log('iOS Filtered cookies:', JSON.stringify(filtered, null, 2));
         setCookies(filtered);
       } else {
-        // Android: get cookies for specific URL
-        const cookiesDict = await NitroCookies.get(currentUrl);
-        console.log('Android Cookies dict type:', typeof cookiesDict);
-        console.log('Android Cookies dict:', JSON.stringify(cookiesDict, null, 2));
+        // Android: get cookies for specific URL (returns array directly)
+        const cookieArray = await NitroCookies.get(currentUrl);
+        console.log('Android Cookies array:', JSON.stringify(cookieArray, null, 2));
 
-        // Handle different response formats
-        if (!cookiesDict || typeof cookiesDict !== 'object') {
+        // Handle empty response
+        if (!cookieArray || !Array.isArray(cookieArray)) {
           setCookies([]);
           return;
         }
 
-        // cookiesDict is { [name: string]: Cookie }
-        // So value is already a Cookie object
-        const cookieArray = Object.values(cookiesDict) as Cookie[];
-
-        console.log('Android Cookie array:', JSON.stringify(cookieArray, null, 2));
         setCookies(cookieArray);
       }
     } catch (error) {
