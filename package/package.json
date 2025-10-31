@@ -73,8 +73,10 @@
   },
   "devDependencies": {
     "@react-native/babel-preset": "0.81.1",
+    "@types/jest": "^30.0.0",
     "@types/react": "^19.1.0",
     "del-cli": "^6.0.0",
+    "jest": "^30.2.0",
     "nitrogen": "^0.31.4",
     "react": "19.1.0",
     "react-native": "0.81.1",

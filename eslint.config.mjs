@@ -56,11 +56,36 @@ export default [
           jsx: true,
         },
       },
+      globals: {
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        console: 'readonly',
+      },
     },
     rules: {
       'prettier/prettier': 'error',
       'no-unused-vars': 'warn',
       'no-console': 'off',
+    },
+  },
+  {
+    files: ['**/__tests__/**/*.{ts,tsx,js,jsx}', '**/*.test.{ts,tsx,js,jsx}'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        jest: 'readonly',
+      },
     },
   },
   {
