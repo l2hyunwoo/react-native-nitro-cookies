@@ -16,22 +16,116 @@ function cookiesToDictionary(cookies: Cookie[]): Cookies {
 /**
  * Main NitroCookies export object with all cookie management methods.
  *
+ * Supports both synchronous and asynchronous APIs:
+ * - Synchronous methods (getSync, setSync, etc.): Direct return values, no Promise overhead
+ * - Asynchronous methods (get, set, etc.): Return Promises for WebKit and network operations
+ *
  * @example
  * ```typescript
  * import NitroCookies from 'react-native-nitro-cookies';
  *
- * // Set a cookie
- * await NitroCookies.set('https://example.com', {
- *   name: 'session',
- *   value: 'abc123',
- *   secure: true,
- * });
+ * // Synchronous API (no await needed!)
+ * const cookies = NitroCookies.getSync('https://example.com');
+ * NitroCookies.setSync('https://example.com', { name: 'session', value: 'abc123' });
  *
- * // Get cookies
- * const cookies = await NitroCookies.get('https://example.com');
+ * // Asynchronous API (for WebKit/network operations)
+ * const cookies = await NitroCookies.get('https://example.com', true); // useWebKit
  * ```
  */
 export const NitroCookies = {
+  // ========================================
+  // SYNCHRONOUS METHODS
+  // ========================================
+
+  /**
+   * Get cookies synchronously for a URL.
+   *
+   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Does NOT support WebKit cookie store (use async `get` with `useWebKit: true`).
+   *
+   * @param url - The URL to match cookies against (must include protocol)
+   * @returns Array of cookies matching the URL domain
+   * @throws {Error} INVALID_URL - URL is malformed or missing protocol
+   *
+   * @example
+   * ```typescript
+   * // No await needed!
+   * const cookies = NitroCookies.getSync('https://example.com');
+   * console.log(cookies); // [{ name: 'session', value: 'abc123', ... }]
+   * ```
+   */
+  getSync(url: string): Cookie[] {
+    return NitroCookiesHybridObject.getSync(url);
+  },
+
+  /**
+   * Set a cookie synchronously.
+   *
+   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Does NOT support WebKit cookie store (use async `set` with `useWebKit: true`).
+   *
+   * @param url - The URL for which to set the cookie (must include protocol)
+   * @param cookie - The cookie object to store
+   * @returns true on success
+   * @throws {Error} INVALID_URL - URL is malformed or missing protocol
+   * @throws {Error} DOMAIN_MISMATCH - Cookie domain doesn't match URL host
+   *
+   * @example
+   * ```typescript
+   * // No await needed!
+   * NitroCookies.setSync('https://example.com', {
+   *   name: 'session',
+   *   value: 'abc123',
+   *   path: '/',
+   *   secure: true,
+   * });
+   * ```
+   */
+  setSync(url: string, cookie: Cookie): boolean {
+    return NitroCookiesHybridObject.setSync(url, cookie);
+  },
+
+  /**
+   * Parse and set cookies from Set-Cookie header synchronously.
+   *
+   * @param url - The URL associated with the Set-Cookie header
+   * @param value - The raw Set-Cookie header value
+   * @returns true on success
+   * @throws {Error} INVALID_URL - URL is malformed
+   *
+   * @example
+   * ```typescript
+   * NitroCookies.setFromResponseSync(
+   *   'https://example.com',
+   *   'session=abc123; path=/; secure; HttpOnly'
+   * );
+   * ```
+   */
+  setFromResponseSync(url: string, value: string): boolean {
+    return NitroCookiesHybridObject.setFromResponseSync(url, value);
+  },
+
+  /**
+   * Clear a specific cookie by name synchronously.
+   *
+   * @param url - The URL to match the cookie domain
+   * @param name - The name of the cookie to remove
+   * @returns true if cookie was found and removed, false if not found
+   * @throws {Error} INVALID_URL - URL is malformed
+   *
+   * @example
+   * ```typescript
+   * const removed = NitroCookies.clearByNameSync('https://example.com', 'session');
+   * console.log(removed ? 'Cookie removed' : 'Cookie not found');
+   * ```
+   */
+  clearByNameSync(url: string, name: string): boolean {
+    return NitroCookiesHybridObject.clearByNameSync(url, name);
+  },
+
+  // ========================================
+  // ASYNCHRONOUS METHODS
+  // ========================================
   /**
    * Set a single cookie for a specific URL.
    *
