@@ -2,8 +2,10 @@
 
 High-performance HTTP cookie management for React Native using Nitro Modules JSI architecture.
 
-[![npm version](https://badge.fury.io/js/react-native-nitro-cookies.svg)](https://badge.fury.io/js/react-native-nitro-cookies)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<a href="https://www.npmjs.com/package/react-native-nitro-cookies"><img src="https://img.shields.io/npm/v/react-native-nitro-cookies.svg?style=flat-square" alt="npm version"></a>
+<a href="https://www.npmjs.com/package/react-native-nitro-cookies"><img src="https://img.shields.io/npm/dm/react-native-nitro-cookies.svg?style=flat-square" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/react-native-nitro-cookies"><img src="https://img.shields.io/npm/dt/react-native-nitro-cookies.svg?style=flat-square" alt="npm total downloads"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License: MIT"></a>
 
 ## Features
 
