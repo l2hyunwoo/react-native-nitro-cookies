@@ -246,13 +246,21 @@ class NitroCookies : HybridNitroCookiesSpec() {
     val urlObj = validateURL(url)
     val cookieManager = CookieManager.getInstance()
 
-    // Android CookieManager doesn't support removing specific cookies by name
-    // We can only expire them by setting a past expiration date
-    val expiredCookie =
-      "$name=; Path=/; Domain=${urlObj.host}; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
-    cookieManager.setCookie(url, expiredCookie)
+    // Check if the cookie exists for the given URL
+    val cookieString = cookieManager.getCookie(url)
+    val cookies = cookieString?.split(";")?.map { it.trim() } ?: emptyList()
+    val found = cookies.any { it.startsWith("$name=") }
 
-    return true
+    if (found) {
+      // Android CookieManager doesn't support removing specific cookies by name
+      // We can only expire them by setting a past expiration date
+      val expiredCookie =
+        "$name=; Path=/; Domain=${urlObj.host}; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+      cookieManager.setCookie(url, expiredCookie)
+      return true
+    }
+
+    return false
   }
 
   // MARK: - Asynchronous Cookie Operations
@@ -375,19 +383,27 @@ class NitroCookies : HybridNitroCookiesSpec() {
     }
   }
 
-  /** Clear specific cookie by name (iOS only - not fully supported on Android) */
+  /** Clear specific cookie by name */
   override fun clearByName(url: String, name: String, useWebKit: Boolean?): Promise<Boolean> {
     return Promise.async {
       val urlObj = validateURL(url)
       val cookieManager = CookieManager.getInstance()
 
-      // Android CookieManager doesn't support removing specific cookies by name
-      // We can only expire them by setting a past expiration date
-      val expiredCookie =
-        "$name=; Path=/; Domain=${urlObj.host}; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
-      cookieManager.setCookie(url, expiredCookie)
+      // Check if the cookie exists for the given URL
+      val cookieString = cookieManager.getCookie(url)
+      val cookies = cookieString?.split(";")?.map { it.trim() } ?: emptyList()
+      val found = cookies.any { it.startsWith("$name=") }
 
-      true
+      if (found) {
+        // Android CookieManager doesn't support removing specific cookies by name
+        // We can only expire them by setting a past expiration date
+        val expiredCookie =
+          "$name=; Path=/; Domain=${urlObj.host}; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        cookieManager.setCookie(url, expiredCookie)
+        true
+      } else {
+        false
+      }
     }
   }
 
