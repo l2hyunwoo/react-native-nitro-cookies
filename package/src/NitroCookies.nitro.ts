@@ -18,9 +18,65 @@ import type { Cookie } from './types';
  * Uses Nitro Modules JSI architecture to achieve 5x+ faster operations compared
  * to traditional React Native bridge-based implementations.
  *
+ * API Design:
+ * - Synchronous methods (xxxSync): Direct return values, no Promise wrapping
+ * - Asynchronous methods: Return Promise for operations requiring callbacks/network
  */
 export interface NitroCookies
   extends HybridObject<{ ios: 'swift'; android: 'kotlin' }> {
+  // ========================================
+  // SYNCHRONOUS METHODS
+  // ========================================
+
+  /**
+   * Get cookies synchronously for a URL
+   *
+   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Does NOT support WebKit cookie store (use async `get` with `useWebKit: true`).
+   *
+   * @param url - The URL to match cookies against (must include protocol)
+   * @returns Array of cookies matching the URL domain
+   * @throws Error if URL is invalid
+   */
+  getSync(url: string): Cookie[];
+
+  /**
+   * Set a cookie synchronously
+   *
+   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Does NOT support WebKit cookie store (use async `set` with `useWebKit: true`).
+   *
+   * @param url - The URL for which to set the cookie (must include protocol)
+   * @param cookie - The cookie object to store
+   * @returns true on success
+   * @throws Error if URL is invalid or domain mismatch
+   */
+  setSync(url: string, cookie: Cookie): boolean;
+
+  /**
+   * Parse and set cookies from Set-Cookie header synchronously
+   *
+   * @param url - The URL associated with the Set-Cookie header
+   * @param value - The raw Set-Cookie header value
+   * @returns true on success
+   * @throws Error if URL is invalid
+   */
+  setFromResponseSync(url: string, value: string): boolean;
+
+  /**
+   * Clear a specific cookie by name synchronously
+   *
+   * @param url - The URL to match the cookie domain
+   * @param name - The name of the cookie to remove
+   * @returns true if cookie was found and removed, false if not found
+   * @throws Error if URL is invalid
+   */
+  clearByNameSync(url: string, name: string): boolean;
+
+  // ========================================
+  // ASYNCHRONOUS METHODS
+  // ========================================
+
   /**
    * Set a single cookie for a specific URL
    *
