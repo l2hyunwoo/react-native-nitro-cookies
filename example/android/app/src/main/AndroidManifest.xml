@@ -10,6 +10,12 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       android:supportsRtl="true"
+      <!--
+        SECURITY WARNING:
+        android:usesCleartextTraffic="true" allows unencrypted HTTP traffic, which exposes cookies and sensitive data to man-in-the-middle attacks.
+        This setting is for development/testing purposes only (e.g., testing with https://naver.com).
+        DO NOT use this configuration in production apps.
+      -->
       android:usesCleartextTraffic="true">
       <activity
         android:name=".MainActivity"
