@@ -8,6 +8,7 @@ High-performance HTTP cookie management for React Native using Nitro Modules JSI
 ## Features
 
 - **5x+ Faster** than bridge-based cookie libraries thanks to JSI (JavaScript Interface)
+- **Synchronous API** for performance-critical code paths (no async/await needed!)
 - **Cross-platform** support for iOS (11+) and Android (API 21+)
 - **WebView synchronization** with iOS WKWebView cookie storage
 - **Automatic HTTP header parsing** from Set-Cookie headers
@@ -59,6 +60,47 @@ console.log(cookies); // { session_token: { name: 'session_token', value: 'abc12
 // Clear all cookies
 await NitroCookies.clearAll();
 ```
+
+## Synchronous API
+
+For performance-critical code paths, use synchronous methods to avoid async/await overhead:
+
+```typescript
+import NitroCookies from "react-native-nitro-cookies";
+
+// Synchronous get - no await needed!
+const cookies = NitroCookies.getSync("https://example.com");
+console.log(cookies); // [{ name: 'session_token', value: 'abc123', ... }]
+
+// Synchronous set - immediate write
+NitroCookies.setSync("https://example.com", {
+  name: "session_token",
+  value: "abc123",
+  path: "/",
+});
+
+// Synchronous clear by name
+const removed = NitroCookies.clearByNameSync("https://example.com", "session_token");
+```
+
+### Sync vs Async: When to Use
+
+| Use Case | Recommended API |
+|----------|-----------------|
+| Quick cookie read during render | `getSync()` |
+| Setting cookie before navigation | `setSync()` |
+| Need WebKit cookie store (iOS) | `get()` / `set()` with `useWebKit: true` |
+| Clearing all cookies (Android) | `clearAll()` (async required) |
+| Network-based cookie fetch | `getFromResponse()` (async required) |
+
+### Available Synchronous Methods
+
+| Method | Description |
+|--------|-------------|
+| `getSync(url)` | Get cookies for URL synchronously |
+| `setSync(url, cookie)` | Set cookie synchronously |
+| `setFromResponseSync(url, value)` | Parse Set-Cookie header synchronously |
+| `clearByNameSync(url, name)` | Remove specific cookie synchronously |
 
 ## API Reference
 
