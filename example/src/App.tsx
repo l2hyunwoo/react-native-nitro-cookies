@@ -110,8 +110,9 @@ function AppContent() {
   const loadCookiesSync = useCallback(() => {
     setLoading(true);
     try {
-      // Use synchronous getSync() - no await needed! Returns Cookie[] directly
-      const cookieArray = NitroCookies.getSync(currentUrl);
+      // Use synchronous getSync() - no await needed! Returns Cookies dictionary
+      const cookiesDict = NitroCookies.getSync(currentUrl);
+      const cookieArray = Object.values(cookiesDict) as Cookie[];
       console.log('[SYNC] Cookies:', JSON.stringify(cookieArray, null, 2));
 
       if (Platform.OS === 'ios') {
@@ -133,15 +134,15 @@ function AppContent() {
     }
   }, [currentUrl]);
 
-  // Asynchronous API (original) - uses get() with Promise
+  // Asynchronous API - uses get() with Promise, supports WebKit on iOS
   const loadCookies = useCallback(async () => {
     setLoading(true);
     try {
       if (Platform.OS === 'ios') {
-        // iOS: get all cookies (returns dictionary, convert to array)
+        // iOS: get all cookies from all domains, convert dictionary to array for display
         const allCookiesDict = await NitroCookies.getAll();
-        const allCookies = Object.values(allCookiesDict);
-        console.log('[ASYNC] iOS All cookies array:', JSON.stringify(allCookies, null, 2));
+        const allCookies = Object.values(allCookiesDict) as Cookie[];
+        console.log('[ASYNC] iOS All cookies:', JSON.stringify(allCookies, null, 2));
 
         // Filter cookies for current domain
         const domain = new URL(currentUrl).hostname;
@@ -152,10 +153,10 @@ function AppContent() {
         console.log('[ASYNC] iOS Filtered cookies:', JSON.stringify(filtered, null, 2));
         setCookies(filtered);
       } else {
-        // Android: get cookies for specific URL (returns dictionary, convert to array)
+        // Android: get cookies for specific URL, convert dictionary to array for display
         const cookiesDict = await NitroCookies.get(currentUrl);
-        const cookieArray = Object.values(cookiesDict);
-        console.log('[ASYNC] Android Cookies array:', JSON.stringify(cookieArray, null, 2));
+        const cookieArray = Object.values(cookiesDict) as Cookie[];
+        console.log('[ASYNC] Android Cookies:', JSON.stringify(cookieArray, null, 2));
 
         setCookies(cookieArray);
       }

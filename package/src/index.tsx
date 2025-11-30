@@ -44,18 +44,18 @@ export const NitroCookies = {
    * Does NOT support WebKit cookie store (use async `get` with `useWebKit: true`).
    *
    * @param url - The URL to match cookies against (must include protocol)
-   * @returns Array of cookies matching the URL domain
+   * @returns Dictionary of cookies keyed by name
    * @throws {Error} INVALID_URL - URL is malformed or missing protocol
    *
    * @example
    * ```typescript
    * // No await needed!
    * const cookies = NitroCookies.getSync('https://example.com');
-   * console.log(cookies); // [{ name: 'session', value: 'abc123', ... }]
+   * console.log(cookies); // { session: { name: 'session', value: 'abc123', ... } }
    * ```
    */
-  getSync(url: string): Cookie[] {
-    return NitroCookiesHybridObject.getSync(url);
+  getSync(url: string): Cookies {
+    return cookiesToDictionary(NitroCookiesHybridObject.getSync(url));
   },
 
   /**
