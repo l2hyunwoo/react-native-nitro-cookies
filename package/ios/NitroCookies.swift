@@ -134,7 +134,81 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return url
     }
 
-    // MARK: - Main Cookie Operations
+    // MARK: - Synchronous Cookie Operations
+
+    /**
+     * Get cookies synchronously for a URL
+     * Uses NSHTTPCookieStorage only (WebKit not supported for sync operations)
+     */
+    public func getSync(url urlString: String) throws -> [Cookie] {
+        let url = try validateURL(urlString)
+        let allCookies = HTTPCookieStorage.shared.cookies ?? []
+        let filteredCookies = allCookies.filter { cookie in
+            self.isMatchingDomain(cookieDomain: cookie.domain,
+                                 urlHost: url.host ?? "")
+        }
+        return filteredCookies.map { self.createCookieData(from: $0) }
+    }
+
+    /**
+     * Set a cookie synchronously
+     * Uses NSHTTPCookieStorage only (WebKit not supported for sync operations)
+     */
+    public func setSync(url urlString: String, cookie: Cookie) throws -> Bool {
+        let url = try validateURL(urlString)
+        try validateDomain(cookie: cookie, url: url)
+
+        // Apply defaults
+        var cookieWithDefaults = cookie
+        if cookieWithDefaults.path == nil {
+            cookieWithDefaults.path = "/"
+        }
+        if cookieWithDefaults.domain == nil {
+            cookieWithDefaults.domain = url.host
+        }
+
+        let httpCookie = try makeHTTPCookie(from: cookieWithDefaults, url: url)
+        HTTPCookieStorage.shared.setCookie(httpCookie)
+        return true
+    }
+
+    /**
+     * Parse and set cookies from Set-Cookie header synchronously
+     */
+    public func setFromResponseSync(url urlString: String, value: String) throws -> Bool {
+        let url = try validateURL(urlString)
+        let headerFields = ["Set-Cookie": value]
+        let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: url)
+
+        let storage = HTTPCookieStorage.shared
+        for cookie in cookies {
+            storage.setCookie(cookie)
+        }
+        return true
+    }
+
+    /**
+     * Clear a specific cookie by name synchronously
+     */
+    public func clearByNameSync(url urlString: String, name: String) throws -> Bool {
+        let url = try validateURL(urlString)
+        let storage = HTTPCookieStorage.shared
+        let cookies = storage.cookies ?? []
+        let matchingCookie = cookies.first { cookie in
+            cookie.name == name &&
+            self.isMatchingDomain(cookieDomain: cookie.domain,
+                                 urlHost: url.host ?? "")
+        }
+
+        if let cookie = matchingCookie {
+            storage.deleteCookie(cookie)
+            return true
+        } else {
+            return false
+        }
+    }
+
+    // MARK: - Asynchronous Cookie Operations
 
     /**
      * Set a single cookie

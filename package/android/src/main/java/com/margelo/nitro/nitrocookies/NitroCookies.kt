@@ -169,7 +169,93 @@ class NitroCookies : HybridNitroCookiesSpec() {
     return url
   }
 
-  // MARK: - Main Cookie Operations
+  // MARK: - Synchronous Cookie Operations
+
+  /** Get cookies synchronously for a URL */
+  override fun getSync(url: String): Array<Cookie> {
+    val urlObj = validateURL(url)
+    val cookieManager = CookieManager.getInstance()
+    val cookieString = cookieManager.getCookie(url)
+
+    if (cookieString.isNullOrEmpty()) {
+      return emptyArray()
+    }
+
+    // Parse cookie string (format: "name1=value1; name2=value2")
+    val cookies = mutableListOf<Cookie>()
+    val cookiePairs = cookieString.split(";").map { it.trim() }
+
+    for (pair in cookiePairs) {
+      val nameValue = pair.split("=", limit = 2)
+      if (nameValue.size == 2) {
+        cookies.add(
+          Cookie(
+            name = nameValue[0].trim(),
+            value = nameValue[1].trim(),
+            path = "/",
+            domain = urlObj.host,
+            version = null,
+            expires = null,
+            secure = null,
+            httpOnly = null
+          )
+        )
+      }
+    }
+
+    return cookies.toTypedArray()
+  }
+
+  /** Set a cookie synchronously */
+  override fun setSync(url: String, cookie: Cookie): Boolean {
+    val urlObj = validateURL(url)
+    validateDomain(cookie, urlObj)
+
+    // Apply defaults
+    val cookieWithDefaults =
+      cookie.copy(path = cookie.path ?: "/", domain = cookie.domain ?: urlObj.host)
+
+    val cookieManager = CookieManager.getInstance()
+    cookieManager.setAcceptCookie(true)
+
+    val setCookieString = toRFC6265String(cookieWithDefaults)
+    cookieManager.setCookie(url, setCookieString)
+
+    return true
+  }
+
+  /** Parse and set cookies from Set-Cookie header synchronously */
+  override fun setFromResponseSync(url: String, value: String): Boolean {
+    val urlObj = validateURL(url)
+    val cookieManager = CookieManager.getInstance()
+    cookieManager.setAcceptCookie(true)
+
+    // Set-Cookie header can contain multiple cookies
+    val setCookieHeaders = value.split("\n").map { it.trim() }
+    for (header in setCookieHeaders) {
+      if (header.isNotEmpty()) {
+        cookieManager.setCookie(url, header)
+      }
+    }
+
+    return true
+  }
+
+  /** Clear a specific cookie by name synchronously */
+  override fun clearByNameSync(url: String, name: String): Boolean {
+    val urlObj = validateURL(url)
+    val cookieManager = CookieManager.getInstance()
+
+    // Android CookieManager doesn't support removing specific cookies by name
+    // We can only expire them by setting a past expiration date
+    val expiredCookie =
+      "$name=; Path=/; Domain=${urlObj.host}; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    cookieManager.setCookie(url, expiredCookie)
+
+    return true
+  }
+
+  // MARK: - Asynchronous Cookie Operations
 
   /** Set a single cookie */
   override fun set(url: String, cookie: Cookie, useWebKit: Boolean?): Promise<Boolean> {
