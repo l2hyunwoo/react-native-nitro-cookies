@@ -28,8 +28,8 @@ const BOTTOM_SHEET_MAX_HEIGHT = SCREEN_HEIGHT * 0.6;
 
 function AppContent() {
   const insets = useSafeAreaInsets();
-  const [url, setUrl] = useState('https://example.com');
-  const [currentUrl, setCurrentUrl] = useState('https://example.com');
+  const [url, setUrl] = useState('https://naver.com');
+  const [currentUrl, setCurrentUrl] = useState('https://naver.com');
   const [cookies, setCookies] = useState<Cookie[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -106,42 +106,93 @@ function AppContent() {
     })
   ).current;
 
-  const loadCookies = useCallback(async () => {
+  // Synchronous API demo - uses getSync() for immediate cookie access
+  const loadCookiesSync = useCallback(() => {
     setLoading(true);
     try {
-      if (Platform.OS === 'ios') {
-        // iOS: get all cookies (returns array directly)
-        const allCookies = await NitroCookies.getAll();
-        console.log('iOS All cookies array:', JSON.stringify(allCookies, null, 2));
+      // Use synchronous getSync() - no await needed! Returns Cookies dictionary
+      const cookiesDict = NitroCookies.getSync(currentUrl);
+      const cookieArray = Object.values(cookiesDict) as Cookie[];
+      console.log('[SYNC] Cookies:', JSON.stringify(cookieArray, null, 2));
 
-        // Filter cookies for current domain
+      if (Platform.OS === 'ios') {
+        // On iOS, filter by domain
         const domain = new URL(currentUrl).hostname;
-        const filtered = allCookies.filter(
-          (cookie) =>
+        const filtered = cookieArray.filter(
+          (cookie: Cookie) =>
             cookie.domain === domain || cookie.domain === `.${domain}`
         );
-        console.log('iOS Filtered cookies:', JSON.stringify(filtered, null, 2));
         setCookies(filtered);
       } else {
-        // Android: get cookies for specific URL (returns array directly)
-        const cookieArray = await NitroCookies.get(currentUrl);
-        console.log('Android Cookies array:', JSON.stringify(cookieArray, null, 2));
-
-        // Handle empty response
-        if (!cookieArray || !Array.isArray(cookieArray)) {
-          setCookies([]);
-          return;
-        }
-
-        setCookies(cookieArray);
+        setCookies(cookieArray || []);
       }
     } catch (error) {
-      console.error('Failed to load cookies:', error);
+      console.error('[SYNC] Failed to load cookies:', error);
       setCookies([]);
     } finally {
       setLoading(false);
     }
   }, [currentUrl]);
+
+  // Asynchronous API - uses get() with Promise, supports WebKit on iOS
+  const loadCookies = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (Platform.OS === 'ios') {
+        // iOS: get all cookies from all domains, convert dictionary to array for display
+        const allCookiesDict = await NitroCookies.getAll();
+        const allCookies = Object.values(allCookiesDict) as Cookie[];
+        console.log('[ASYNC] iOS All cookies:', JSON.stringify(allCookies, null, 2));
+
+        // Filter cookies for current domain
+        const domain = new URL(currentUrl).hostname;
+        const filtered = allCookies.filter(
+          (cookie: Cookie) =>
+            cookie.domain === domain || cookie.domain === `.${domain}`
+        );
+        console.log('[ASYNC] iOS Filtered cookies:', JSON.stringify(filtered, null, 2));
+        setCookies(filtered);
+      } else {
+        // Android: get cookies for specific URL, convert dictionary to array for display
+        const cookiesDict = await NitroCookies.get(currentUrl);
+        const cookieArray = Object.values(cookiesDict) as Cookie[];
+        console.log('[ASYNC] Android Cookies:', JSON.stringify(cookieArray, null, 2));
+
+        setCookies(cookieArray);
+      }
+    } catch (error) {
+      console.error('[ASYNC] Failed to load cookies:', error);
+      setCookies([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUrl]);
+
+  // Demo: Test synchronous write operations
+  const testSyncWrite = useCallback(() => {
+    try {
+      const testCookie = {
+        name: 'nitro_sync_test',
+        value: `sync_${Date.now()}`,
+        path: '/',
+        secure: false,
+        httpOnly: false,
+      };
+
+      // Synchronous set - no await needed!
+      const success = NitroCookies.setSync(currentUrl, testCookie);
+      console.log('[SYNC] setSync result:', success);
+
+      // Immediately read back with synchronous get
+      const cookies = NitroCookies.getSync(currentUrl);
+      console.log('[SYNC] getSync after setSync:', JSON.stringify(cookies, null, 2));
+
+      // Update UI
+      loadCookiesSync();
+    } catch (error) {
+      console.error('[SYNC] Write test failed:', error);
+    }
+  }, [currentUrl, loadCookiesSync]);
 
   const handleLoadEnd = useCallback(() => {
     loadCookies();
@@ -223,14 +274,31 @@ function AppContent() {
           </TouchableOpacity>
         </View>
 
+        {/* Sync API Demo Buttons */}
+        <View style={styles.syncApiBar}>
+          <TouchableOpacity style={styles.syncButton} onPress={loadCookiesSync}>
+            <Text style={styles.syncButtonText}>getSync()</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.syncButton} onPress={testSyncWrite}>
+            <Text style={styles.syncButtonText}>setSync() Test</Text>
+          </TouchableOpacity>
+          <Text style={styles.syncApiLabel}>Sync API Demo</Text>
+        </View>
+
         {/* WebView */}
         <View style={styles.webViewContainer}>
           <WebView
             ref={webViewRef}
+            style={styles.webView}
             source={{ uri: currentUrl }}
             onLoadEnd={handleLoadEnd}
+            onError={(syntheticEvent) => {
+              console.error('[WebView] Error:', syntheticEvent.nativeEvent);
+            }}
             sharedCookiesEnabled={true}
             thirdPartyCookiesEnabled={true}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
           />
         </View>
 
@@ -397,7 +465,38 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
+  syncApiBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: '#FFF3E0',
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFE0B2',
+    gap: 8,
+  },
+  syncButton: {
+    backgroundColor: '#FF9800',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  syncButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  syncApiLabel: {
+    marginLeft: 'auto',
+    fontSize: 12,
+    color: '#E65100',
+    fontWeight: '500',
+  },
   webViewContainer: {
+    flex: 1,
+    marginBottom: BOTTOM_SHEET_MIN_HEIGHT,
+  },
+  webView: {
     flex: 1,
   },
   bottomSheet: {
