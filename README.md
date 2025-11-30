@@ -13,31 +13,27 @@ High-performance HTTP cookie management for React Native using Nitro Modules JSI
 - **WebView synchronization** with iOS WKWebView cookie storage
 - **Automatic HTTP header parsing** from Set-Cookie headers
 - **Type-safe API** with full TypeScript support
-- **100% compatible** with `@react-native-cookies/cookies` API
+- **Drop-in replacement** for `@react-native-cookies/cookies`
 
 ## Installation
 
 ```sh
 npm install react-native-nitro-cookies react-native-nitro-modules
-```
-
-or
-
-```sh
+# or
 yarn add react-native-nitro-cookies react-native-nitro-modules
 ```
 
 > **Note**: `react-native-nitro-modules` is required as this library relies on [Nitro Modules](https://nitro.margelo.com/).
 
-### iOS Setup
+### iOS
 
 ```sh
 cd ios && pod install
 ```
 
-### Android Setup
+### Android
 
-No additional setup required! Autolinking handles everything.
+No additional setup required - autolinking handles everything.
 
 ## Quick Start
 
@@ -50,316 +46,123 @@ await NitroCookies.set("https://example.com", {
   value: "abc123",
   path: "/",
   secure: true,
-  httpOnly: true,
 });
 
 // Get cookies for a URL
 const cookies = await NitroCookies.get("https://example.com");
-console.log(cookies); // { session_token: { name: 'session_token', value: 'abc123', ... } }
 
 // Clear all cookies
 await NitroCookies.clearAll();
 ```
 
-## Synchronous API
+## API Overview
 
-For performance-critical code paths, use synchronous methods to avoid async/await overhead:
+### Synchronous Methods
+
+For performance-critical code paths where you need immediate results without async overhead:
 
 ```typescript
-import NitroCookies from "react-native-nitro-cookies";
-
-// Synchronous get - no await needed!
+// Get cookies - returns Cookie[] directly
 const cookies = NitroCookies.getSync("https://example.com");
-console.log(cookies); // [{ name: 'session_token', value: 'abc123', ... }]
 
-// Synchronous set - immediate write
+// Set cookie - returns boolean immediately
 NitroCookies.setSync("https://example.com", {
-  name: "session_token",
+  name: "session",
   value: "abc123",
-  path: "/",
 });
 
-// Synchronous clear by name
-const removed = NitroCookies.clearByNameSync("https://example.com", "session_token");
+// Parse Set-Cookie header
+NitroCookies.setFromResponseSync("https://example.com", "session=abc; path=/");
+
+// Remove specific cookie
+NitroCookies.clearByNameSync("https://example.com", "session");
 ```
 
-### Sync vs Async: When to Use
+### Asynchronous Methods
 
-| Use Case | Recommended API |
-|----------|-----------------|
-| Quick cookie read during render | `getSync()` |
-| Setting cookie before navigation | `setSync()` |
-| Need WebKit cookie store (iOS) | `get()` / `set()` with `useWebKit: true` |
-| Clearing all cookies (Android) | `clearAll()` (async required) |
-| Network-based cookie fetch | `getFromResponse()` (async required) |
+For operations requiring WebKit access (iOS), network requests, or callback-based Android APIs:
 
-### Available Synchronous Methods
+| Method                               | Description                            |
+| ------------------------------------ | -------------------------------------- |
+| `get(url, useWebKit?)`               | Get cookies for URL                    |
+| `set(url, cookie, useWebKit?)`       | Set a cookie                           |
+| `clearAll(useWebKit?)`               | Clear all cookies                      |
+| `clearByName(url, name, useWebKit?)` | Remove specific cookie                 |
+| `setFromResponse(url, header)`       | Parse Set-Cookie header                |
+| `getFromResponse(url)`               | Fetch URL and extract cookies          |
+| `getAll(useWebKit?)`                 | Get all cookies (iOS only)             |
+| `flush()`                            | Persist cookies to disk (Android only) |
+| `removeSessionCookies()`             | Remove session cookies (Android only)  |
 
-| Method | Description |
-|--------|-------------|
-| `getSync(url)` | Get cookies for URL synchronously |
-| `setSync(url, cookie)` | Set cookie synchronously |
-| `setFromResponseSync(url, value)` | Parse Set-Cookie header synchronously |
-| `clearByNameSync(url, name)` | Remove specific cookie synchronously |
+### When to Use Sync vs Async
 
-## API Reference
+| Scenario                         | Recommended                              |
+| -------------------------------- | ---------------------------------------- |
+| Quick cookie read during render  | `getSync()`                              |
+| Setting cookie before navigation | `setSync()`                              |
+| WebKit cookie store access (iOS) | `get()` / `set()` with `useWebKit: true` |
+| Clearing all cookies             | `clearAll()`                             |
+| Fetching cookies from network    | `getFromResponse()`                      |
 
-### Basic Operations
-
-#### `set(url: string, cookie: Cookie, useWebKit?: boolean): Promise<boolean>`
-
-Set a single cookie for a specific URL.
-
-```typescript
-await NitroCookies.set("https://api.example.com", {
-  name: "auth_token",
-  value: "xyz789",
-  path: "/api",
-  domain: ".example.com",
-  secure: true,
-  httpOnly: true,
-  expires: "2030-01-01T00:00:00.000Z", // ISO 8601 format
-});
-```
-
-**Parameters:**
-
-- `url`: The URL for which to set the cookie (must include `http://` or `https://`)
-- `cookie`: Cookie object with the following properties:
-  - `name` (required): Cookie name
-  - `value` (required): Cookie value
-  - `path` (optional): URL path, defaults to `"/"`
-  - `domain` (optional): Cookie domain, defaults to URL host
-  - `secure` (optional): HTTPS-only flag
-  - `httpOnly` (optional): Prevents JavaScript access
-  - `expires` (optional): Expiration date in ISO 8601 format
-  - `version` (optional): Cookie version (rarely used)
-- `useWebKit` (iOS only): Use WKHTTPCookieStore instead of NSHTTPCookieStorage
-
-**Throws:**
-
-- `INVALID_URL`: URL is malformed or missing protocol
-- `DOMAIN_MISMATCH`: Cookie domain doesn't match URL host
-- `WEBKIT_UNAVAILABLE`: WebKit requested on iOS < 11
-
----
-
-#### `get(url: string, useWebKit?: boolean): Promise<Cookies>`
-
-Get all cookies matching a specific URL's domain.
+## Cookie Object
 
 ```typescript
-const cookies = await NitroCookies.get("https://api.example.com");
-// Returns: { auth_token: { name: 'auth_token', value: 'xyz789', ... } }
-```
-
-**Returns:** Dictionary of cookies keyed by name
-
----
-
-#### `clearAll(useWebKit?: boolean): Promise<boolean>`
-
-Clear all cookies from storage.
-
-```typescript
-await NitroCookies.clearAll();
-```
-
----
-
-### HTTP Response Parsing
-
-#### `setFromResponse(url: string, value: string): Promise<boolean>`
-
-Parse and store cookies from a raw Set-Cookie header string.
-
-```typescript
-await NitroCookies.setFromResponse(
-  "https://example.com",
-  "session=abc123; path=/; expires=Thu, 1 Jan 2030 00:00:00 GMT; secure; HttpOnly",
-);
-```
-
----
-
-#### `getFromResponse(url: string): Promise<Cookies>`
-
-Make an HTTP request to a URL and extract cookies from response headers.
-
-```typescript
-const cookies = await NitroCookies.getFromResponse(
-  "https://api.example.com/login",
-);
-// Returns cookies set by the server in Set-Cookie headers
-```
-
----
-
-### Platform-Specific Methods
-
-#### `getAll(useWebKit?: boolean): Promise<Cookies>` (iOS only)
-
-Get ALL cookies from storage regardless of domain.
-
-```typescript
-import { Platform } from "react-native";
-
-if (Platform.OS === "ios") {
-  const allCookies = await NitroCookies.getAll();
-  // Returns cookies from ALL domains
+interface Cookie {
+  name: string; // Required
+  value: string; // Required
+  path?: string; // Defaults to "/"
+  domain?: string; // Defaults to URL host
+  secure?: boolean; // HTTPS only
+  httpOnly?: boolean; // No JS access
+  expires?: string; // ISO 8601 format
 }
 ```
-
-**Throws:** `PLATFORM_UNSUPPORTED` on Android
-
----
-
-#### `clearByName(url: string, name: string, useWebKit?: boolean): Promise<boolean>` (iOS preferred)
-
-Clear a specific cookie by name and domain.
-
-```typescript
-const removed = await NitroCookies.clearByName(
-  "https://example.com",
-  "session_token",
-);
-console.log(removed); // true if cookie was found and removed
-```
-
-**Note:** On Android, this sets an expired cookie. On iOS, it removes the cookie immediately.
-
----
-
-#### `flush(): Promise<void>` (Android only)
-
-Flush in-memory cookies to persistent storage.
-
-```typescript
-import { Platform } from "react-native";
-
-if (Platform.OS === "android") {
-  await NitroCookies.flush();
-  // Cookies are now persisted to disk
-}
-```
-
-**Throws:** `PLATFORM_UNSUPPORTED` on iOS
-
----
-
-#### `removeSessionCookies(): Promise<boolean>` (Android only)
-
-Remove all session cookies (cookies without an expiration date).
-
-```typescript
-import { Platform } from "react-native";
-
-if (Platform.OS === "android") {
-  await NitroCookies.removeSessionCookies();
-}
-```
-
-**Throws:** `PLATFORM_UNSUPPORTED` on iOS
-
----
 
 ## WebView Integration (iOS)
 
-Manage cookies separately for native HTTP requests and WKWebView instances:
+Manage cookies separately for native HTTP requests and WKWebView:
 
 ```typescript
-import { WebView } from 'react-native-webview';
-import NitroCookies from 'react-native-nitro-cookies';
+// For WKWebView - accessible in WebView
+await NitroCookies.set(url, cookie, true); // useWebKit = true
 
-// Set a cookie for WKWebView storage
-await NitroCookies.set(
-  'https://example.com',
-  { name: 'webkit_cookie', value: 'abc' },
-  true // useWebKit = true
-);
-
-// Set a cookie for native HTTP storage
-await NitroCookies.set(
-  'https://example.com',
-  { name: 'native_cookie', value: 'xyz' },
-  false // useWebKit = false
-);
-
-// WebView will only see webkit_cookie
-<WebView source={{ uri: 'https://example.com' }} />
+// For native URLSession - not visible in WebView
+await NitroCookies.set(url, cookie, false); // useWebKit = false
 ```
 
-**Storage Isolation:**
-
-- `useWebKit: true` → WKHTTPCookieStore (accessible in WKWebView)
-- `useWebKit: false` → NSHTTPCookieStorage (native URLSession)
-
----
-
-## TypeScript
-
-Full TypeScript support with comprehensive type definitions:
+## Error Handling
 
 ```typescript
-import NitroCookies, {
-  type Cookie,
-  type Cookies,
-  type CookieError,
-  type CookieErrorCode,
-} from "react-native-nitro-cookies";
-
-const cookie: Cookie = {
-  name: "session",
-  value: "token",
-  secure: true,
-};
+try {
+  await NitroCookies.set("example.com", cookie); // Missing protocol!
+} catch (error) {
+  // INVALID_URL: URLs must include protocol (http:// or https://)
+}
 ```
 
----
+| Error Code             | Description                                |
+| ---------------------- | ------------------------------------------ |
+| `INVALID_URL`          | URL malformed or missing protocol          |
+| `DOMAIN_MISMATCH`      | Cookie domain doesn't match URL            |
+| `WEBKIT_UNAVAILABLE`   | WebKit requested on iOS < 11               |
+| `PLATFORM_UNSUPPORTED` | Platform-specific method on wrong platform |
+| `NETWORK_ERROR`        | HTTP request failed                        |
 
 ## Migration from @react-native-cookies/cookies
 
-This library is 100% API-compatible with `@react-native-cookies/cookies`. Simply replace the import:
+Drop-in replacement - just change the import:
 
 ```diff
 - import CookieManager from '@react-native-cookies/cookies';
 + import CookieManager from 'react-native-nitro-cookies';
 
 // All existing code works unchanged!
-await CookieManager.set('https://example.com', { name: 'test', value: '123' });
-const cookies = await CookieManager.get('https://example.com');
 ```
-
----
-
-## Performance
-
-Nitro Modules use JSI (JavaScript Interface) instead of the traditional React Native bridge:
-
-| Operation   | Bridge-based | Nitro Cookies | Improvement     |
-| ----------- | ------------ | ------------- | --------------- |
-| Set cookie  | ~2.5ms       | ~0.4ms        | **6.2x faster** |
-| Get cookies | ~3.0ms       | ~0.5ms        | **6.0x faster** |
-| Clear all   | ~2.8ms       | ~0.6ms        | **4.7x faster** |
-
-_Benchmarks run on iPhone 14 Pro, iOS 17.5_
-
----
 
 ## Example App
 
-The example app demonstrates all features with WebView integration. See `example/src/` for:
-
-- **BasicOperationsScreen**: set(), get(), clearAll()
-- **HTTPParsingScreen**: setFromResponse(), getFromResponse()
-- **WebViewSyncScreen**: WebView cookie synchronization with bottom sheet viewer
-- **PlatformSpecificScreen**: Platform-specific methods with error handling
-
-Run the example:
-
 ```sh
-cd example
-yarn install
+cd example && yarn install
 
 # iOS
 yarn ios
@@ -368,47 +171,21 @@ yarn ios
 yarn android
 ```
 
----
-
-## Error Handling
-
-All methods throw descriptive errors:
+## TypeScript
 
 ```typescript
-try {
-  await NitroCookies.set("example.com", cookie); // Missing protocol!
-} catch (error) {
-  console.error(error);
-  // Error: INVALID_URL: Invalid URL: 'example.com'. URLs must include protocol (http:// or https://)
-}
+import NitroCookies, {
+  type Cookie,
+  type Cookies,
+  type CookieError,
+  type CookieErrorCode,
+} from "react-native-nitro-cookies";
 ```
-
-**Error Codes:**
-
-- `INVALID_URL`: URL malformed or missing protocol
-- `DOMAIN_MISMATCH`: Cookie domain doesn't match URL host
-- `WEBKIT_UNAVAILABLE`: WebKit requested on iOS < 11
-- `PLATFORM_UNSUPPORTED`: Platform-specific method called on wrong platform
-- `NETWORK_ERROR`: HTTP request failed (getFromResponse)
-
----
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow and contribution guidelines.
-
----
 
 ## License
 
 MIT
 
----
-
 ## Credits
 
 Built with [Nitro Modules](https://nitro.margelo.com/) by [Marc Rousavy](https://github.com/mrousavy)
-
-Made with [create-react-native-library](https://github.com/callstack/react-native-builder-bob)
-
----
