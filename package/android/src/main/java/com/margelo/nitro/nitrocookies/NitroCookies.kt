@@ -226,7 +226,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
 
   /** Parse and set cookies from Set-Cookie header synchronously */
   override fun setFromResponseSync(url: String, value: String): Boolean {
-    val urlObj = validateURL(url)
+    validateURL(url) // Validate URL format
     val cookieManager = CookieManager.getInstance()
     cookieManager.setAcceptCookie(true)
 

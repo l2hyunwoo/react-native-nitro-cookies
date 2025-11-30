@@ -64,7 +64,7 @@ await NitroCookies.clearAll();
 For performance-critical code paths where you need immediate results without async overhead:
 
 ```typescript
-// Get cookies - returns Cookie[] directly
+// Get cookies - returns Cookies dictionary (keyed by cookie name)
 const cookies = NitroCookies.getSync("https://example.com");
 
 // Set cookie - returns boolean immediately
