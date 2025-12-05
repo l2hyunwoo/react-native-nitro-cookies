@@ -161,6 +161,13 @@ Drop-in replacement - just change the import:
 // All existing code works unchanged!
 ```
 
+## Acknowledgement
+
+- [This Week In React](https://thisweekinreact.com/)
+  - [#261](https://thisweekinreact.com/newsletter/261#react-native)
+- [NativeWeekly by beehiiv](https://nativeweekly.beehiiv.com/)
+  - [Dec 5 2025: Issue 8](https://nativeweekly.beehiiv.com/p/dec-5-2025-issue-8)
+
 ## Example App
 
 ```sh
