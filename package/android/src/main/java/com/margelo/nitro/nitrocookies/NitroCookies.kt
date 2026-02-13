@@ -36,9 +36,9 @@ class NitroCookies : HybridNitroCookiesSpec() {
         } else {
           expiresISO
         }
-        val date = iso8601Formatter.parse(normalizedISO)
+        val date = iso8601Formatter.get()!!.parse(normalizedISO)
         date?.let {
-          val expiresRFC = rfc1123Formatter.format(it)
+          val expiresRFC = rfc1123Formatter.get()!!.format(it)
           parts.add("Expires=$expiresRFC")
         }
       } catch (e: Exception) {
@@ -92,8 +92,8 @@ class NitroCookies : HybridNitroCookiesSpec() {
         part.startsWith("Expires=", ignoreCase = true) -> {
           val expiresRFC = part.substring(8).trim()
           try {
-            val date = rfc1123Formatter.parse(expiresRFC)
-            date?.let { expires = iso8601Formatter.format(it) }
+            val date = rfc1123Formatter.get()!!.parse(expiresRFC)
+            date?.let { expires = iso8601Formatter.get()!!.format(it) }
           } catch (e: Exception) {
             // Invalid date, skip
           }
@@ -135,7 +135,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     // Wildcard match (.example.com matches api.example.com)
     if (cookieDomain.startsWith(".")) {
       val domain = cookieDomain.substring(1)
-      return urlHost.endsWith(domain) || urlHost == domain
+      return urlHost.endsWith(".$domain") || urlHost == domain
     }
 
     // Subdomain match (example.com matches api.example.com)
@@ -331,8 +331,12 @@ class NitroCookies : HybridNitroCookiesSpec() {
   override fun clearAll(useWebKit: Boolean?): Promise<Boolean> {
     val promise = Promise<Boolean>()
     Handler(Looper.getMainLooper()).post {
-      val cookieManager = CookieManager.getInstance()
-      cookieManager.removeAllCookies { _ -> promise.resolve(true) }
+      try {
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.removeAllCookies { removed -> promise.resolve(removed) }
+      } catch (e: Exception) {
+        promise.reject(e)
+      }
     }
     return promise
   }
@@ -359,9 +363,9 @@ class NitroCookies : HybridNitroCookiesSpec() {
   /** Make HTTP request and get cookies from response */
   override fun getFromResponse(url: String): Promise<Array<Cookie>> {
     return Promise.async {
+      val urlObj = validateURL(url)
+      val connection = urlObj.openConnection() as HttpURLConnection
       try {
-        val urlObj = validateURL(url)
-        val connection = urlObj.openConnection() as HttpURLConnection
         connection.requestMethod = "GET"
         connection.connect()
 
@@ -373,10 +377,11 @@ class NitroCookies : HybridNitroCookiesSpec() {
           cookie?.let { cookies.add(it) }
         }
 
-        connection.disconnect()
         cookies.toTypedArray()
       } catch (e: Exception) {
-        throw Exception("NETWORK_ERROR: ${e.message}")
+        throw Exception("NETWORK_ERROR: ${e.message}", e)
+      } finally {
+        connection.disconnect()
       }
     }
   }
@@ -425,23 +430,29 @@ class NitroCookies : HybridNitroCookiesSpec() {
   override fun removeSessionCookies(): Promise<Boolean> {
     val promise = Promise<Boolean>()
     Handler(Looper.getMainLooper()).post {
-      val cookieManager = CookieManager.getInstance()
-      cookieManager.removeSessionCookies { _ -> promise.resolve(true) }
+      try {
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.removeSessionCookies { removed -> promise.resolve(removed) }
+      } catch (e: Exception) {
+        promise.reject(e)
+      }
     }
     return promise
   }
 
   companion object {
     /** ISO 8601 date formatter for cookie expires (yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ) */
-    private val iso8601Formatter =
+    private val iso8601Formatter = ThreadLocal.withInitial {
       SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
       }
+    }
 
     /** RFC 1123 date formatter for Set-Cookie headers (EEE, dd MMM yyyy HH:mm:ss z) */
-    private val rfc1123Formatter =
+    private val rfc1123Formatter = ThreadLocal.withInitial {
       SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("GMT")
       }
+    }
   }
 }
