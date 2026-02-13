@@ -8,7 +8,8 @@
     "start": "react-native start",
     "build:android": "react-native build-android --extra-params \"--no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a\"",
     "build:ios": "react-native build-ios --mode Debug",
-    "test:harness": "react-native-harness"
+    "harness:android": "react-native-harness --harnessRunner android",
+    "harness:ios": "react-native-harness --harnessRunner ios"
   },
   "dependencies": {
     "react": "19.2.3",
