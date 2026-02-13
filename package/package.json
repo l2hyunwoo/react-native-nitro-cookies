@@ -72,22 +72,22 @@
     "registry": "https://registry.npmjs.org/"
   },
   "devDependencies": {
-    "@react-native/babel-preset": "0.81.1",
-    "@types/jest": "^30.0.0",
-    "@types/react": "^19.1.0",
-    "del-cli": "^6.0.0",
-    "jest": "^30.2.0",
-    "nitrogen": "^0.31.4",
-    "react": "19.1.0",
-    "react-native": "0.81.1",
-    "react-native-builder-bob": "^0.40.14",
-    "react-native-nitro-modules": "^0.31.4",
-    "typescript": "^5.9.2"
+    "@react-native/babel-preset": "0.84.0",
+    "@types/jest": "30.0.0",
+    "@types/react": "19.1.0",
+    "del-cli": "6.0.0",
+    "jest": "30.2.0",
+    "nitrogen": "0.33.9",
+    "react": "19.2.3",
+    "react-native": "0.84.0",
+    "react-native-builder-bob": "0.40.14",
+    "react-native-nitro-modules": "0.33.9",
+    "typescript": "5.9.2"
   },
   "peerDependencies": {
     "react": "*",
     "react-native": "*",
-    "react-native-nitro-modules": "^0.31.4"
+    "react-native-nitro-modules": "0.33.9"
   },
   "prettier": {
     "quoteProps": "consistent",
