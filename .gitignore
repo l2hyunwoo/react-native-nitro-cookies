@@ -44,6 +44,7 @@ android/build/
 **/android/build/
 *.apk
 *.aab
+.kotlin/
 
 # Cocoapods
 #

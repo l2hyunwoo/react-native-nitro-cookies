@@ -1,5 +1,7 @@
 package com.margelo.nitro.nitrocookies
 
+import android.os.Handler
+import android.os.Looper
 import android.webkit.CookieManager
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.Promise
@@ -8,8 +10,6 @@ import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 /** HybridNitroCookies - Android implementation of cookie management */
 @DoNotStrip
@@ -31,7 +31,12 @@ class NitroCookies : HybridNitroCookiesSpec() {
     // Expires attribute (convert ISO 8601 to RFC 1123)
     cookie.expires?.let { expiresISO ->
       try {
-        val date = iso8601Formatter.parse(expiresISO)
+        val normalizedISO = if (expiresISO.endsWith("Z")) {
+          expiresISO.dropLast(1) + "+00:00"
+        } else {
+          expiresISO
+        }
+        val date = iso8601Formatter.parse(normalizedISO)
         date?.let {
           val expiresRFC = rfc1123Formatter.format(it)
           parts.add("Expires=$expiresRFC")
@@ -324,12 +329,12 @@ class NitroCookies : HybridNitroCookiesSpec() {
 
   /** Clear all cookies */
   override fun clearAll(useWebKit: Boolean?): Promise<Boolean> {
-    return Promise.async {
+    val promise = Promise<Boolean>()
+    Handler(Looper.getMainLooper()).post {
       val cookieManager = CookieManager.getInstance()
-      suspendCoroutine { continuation ->
-        cookieManager.removeAllCookies { success -> continuation.resume(success) }
-      }
+      cookieManager.removeAllCookies { _ -> promise.resolve(true) }
     }
+    return promise
   }
 
   /** Parse and set cookies from Set-Cookie header */
@@ -418,12 +423,12 @@ class NitroCookies : HybridNitroCookiesSpec() {
 
   /** Remove session cookies (Android only) */
   override fun removeSessionCookies(): Promise<Boolean> {
-    return Promise.async {
+    val promise = Promise<Boolean>()
+    Handler(Looper.getMainLooper()).post {
       val cookieManager = CookieManager.getInstance()
-      suspendCoroutine { continuation ->
-        cookieManager.removeSessionCookies { success -> continuation.resume(success) }
-      }
+      cookieManager.removeSessionCookies { _ -> promise.resolve(true) }
     }
+    return promise
   }
 
   companion object {

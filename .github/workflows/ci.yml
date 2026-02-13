@@ -122,13 +122,11 @@ jobs:
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
   build-ios:
-    runs-on: macos-latest
+    runs-on: macos-15
 
     env:
-      XCODE_VERSION: 16.3
+      XCODE_VERSION: 16.4
       TURBO_CACHE_DIR: .turbo/ios
-      RCT_USE_RN_DEP: 1
-      RCT_USE_PREBUILT_RNCORE: 1
 
     steps:
       - name: Checkout
@@ -166,11 +164,10 @@ jobs:
           xcode-version: ${{ env.XCODE_VERSION }}
 
       - name: Install cocoapods
-        if: env.turbo_cache_hit != 1 && steps.cocoapods-cache.outputs.cache-hit != 'true'
+        if: env.turbo_cache_hit != 1
         run: |
           cd example
           bundle install
-          bundle exec pod repo update --verbose
           bundle exec pod install --project-directory=ios
 
       - name: Build example for iOS
