@@ -42,22 +42,49 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             .path: cookiePath
         ]
 
-        // Add expires if provided
         if let expiresString = cookie.expires,
            let expiresDate = Self.iso8601Formatter.date(from: expiresString) {
             properties[.expires] = expiresDate
         }
 
-        // Add secure flag
         if cookie.secure == true {
             properties[.secure] = "TRUE"
         }
 
-        // Note: HttpOnly is handled via the isHTTPOnly property, not in properties dict
-
         guard let httpCookie = HTTPCookie(properties: properties) else {
             throw NSError(domain: "NitroCookies", code: 1,
                          userInfo: [NSLocalizedDescriptionKey: "Failed to create HTTPCookie"])
+        }
+
+        // HTTPCookie(properties:) ignores httpOnly — there is no property key for it.
+        // When httpOnly is requested, rebuild via Set-Cookie header parsing which
+        // correctly handles the HttpOnly attribute, while preserving the original domain.
+        if cookie.httpOnly == true {
+            let originalDomain = httpCookie.domain
+            var parts: [String] = ["\(httpCookie.name)=\(httpCookie.value)"]
+            parts.append("Domain=\(originalDomain)")
+            parts.append("Path=\(httpCookie.path)")
+            if let expires = httpCookie.expiresDate {
+                let rfcFormatter = DateFormatter()
+                rfcFormatter.locale = Locale(identifier: "en_US_POSIX")
+                rfcFormatter.timeZone = TimeZone(abbreviation: "GMT")
+                rfcFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+                parts.append("Expires=\(rfcFormatter.string(from: expires))")
+            }
+            if httpCookie.isSecure {
+                parts.append("Secure")
+            }
+            parts.append("HttpOnly")
+
+            let setCookieHeader = parts.joined(separator: "; ")
+            let headerFields = ["Set-Cookie": setCookieHeader]
+            let parsed = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: url)
+
+            guard let httpOnlyCookie = parsed.first else {
+                throw NSError(domain: "NitroCookies", code: 1,
+                             userInfo: [NSLocalizedDescriptionKey: "Failed to create HTTPCookie with HttpOnly"])
+            }
+            return httpOnlyCookie
         }
 
         return httpCookie
@@ -71,11 +98,18 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             Self.iso8601Formatter.string(from: $0)
         }
 
+        // Strip leading dot from domain — NSHTTPCookieStorage and Set-Cookie
+        // parsing add a dot prefix per RFC 6265, but callers expect the bare domain.
+        var domain = httpCookie.domain
+        if domain.hasPrefix(".") {
+            domain = String(domain.dropFirst())
+        }
+
         return Cookie(
             name: httpCookie.name,
             value: httpCookie.value,
             path: httpCookie.path,
-            domain: httpCookie.domain,
+            domain: domain,
             version: String(httpCookie.version),
             expires: expiresString,
             secure: httpCookie.isSecure,
