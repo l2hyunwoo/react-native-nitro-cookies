@@ -110,3 +110,5 @@ CLAUDE.md
 .claude/
 .specify/
 specs/
+.omc/
+openspec/
