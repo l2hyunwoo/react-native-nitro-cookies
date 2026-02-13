@@ -25,6 +25,27 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return formatter
     }()
 
+    /// RFC 1123 date formatter for Set-Cookie Expires attribute
+    private static let rfc1123Formatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(abbreviation: "GMT")
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        return formatter
+    }()
+
+    /// Remove CR, LF, and NUL characters that could enable header injection
+    private static func sanitizeCookieToken(_ value: String) -> String {
+        var result = ""
+        result.reserveCapacity(value.count)
+        for scalar in value.unicodeScalars {
+            if scalar != "\r" && scalar != "\n" && scalar != "\0" {
+                result.append(String(scalar))
+            }
+        }
+        return result
+    }
+
     // MARK: - Helper Functions
 
     /**
@@ -61,15 +82,13 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         // correctly handles the HttpOnly attribute, while preserving the original domain.
         if cookie.httpOnly == true {
             let originalDomain = httpCookie.domain
-            var parts: [String] = ["\(httpCookie.name)=\(httpCookie.value)"]
+            let safeName = Self.sanitizeCookieToken(httpCookie.name)
+            let safeValue = Self.sanitizeCookieToken(httpCookie.value)
+            var parts: [String] = ["\(safeName)=\(safeValue)"]
             parts.append("Domain=\(originalDomain)")
             parts.append("Path=\(httpCookie.path)")
             if let expires = httpCookie.expiresDate {
-                let rfcFormatter = DateFormatter()
-                rfcFormatter.locale = Locale(identifier: "en_US_POSIX")
-                rfcFormatter.timeZone = TimeZone(abbreviation: "GMT")
-                rfcFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
-                parts.append("Expires=\(rfcFormatter.string(from: expires))")
+                parts.append("Expires=\(Self.rfc1123Formatter.string(from: expires))")
             }
             if httpCookie.isSecure {
                 parts.append("Secure")
@@ -129,7 +148,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         // Wildcard match (.example.com matches api.example.com)
         if cookieDomain.hasPrefix(".") {
             let domain = String(cookieDomain.dropFirst())
-            return urlHost.hasSuffix(domain) || urlHost == domain
+            return urlHost.hasSuffix("." + domain) || urlHost == domain
         }
 
         // Subdomain match (example.com matches api.example.com)
@@ -401,10 +420,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                               userInfo: [NSLocalizedDescriptionKey: "Not HTTP response"])
             }
 
-            let cookies = HTTPCookie.cookies(
-                withResponseHeaderFields: httpResponse.allHeaderFields as! [String: String],
-                for: url
-            )
+            let headerFields = httpResponse.allHeaderFields as? [String: String] ?? [:]
+            let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: url)
 
             return cookies.map { self.createCookieData(from: $0) }
         }
@@ -500,9 +517,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
      */
     public func flush() throws -> Promise<Void> {
         return Promise.async {
-            throw NSError(domain: "PLATFORM_UNSUPPORTED", code: 5,
-                          userInfo: [NSLocalizedDescriptionKey:
-                            "flush() is only available on Android"])
+            // No-op on iOS - cookies are automatically persisted
         }
     }
 
@@ -511,9 +526,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
      */
     public func removeSessionCookies() throws -> Promise<Bool> {
         return Promise.async {
-            throw NSError(domain: "PLATFORM_UNSUPPORTED", code: 5,
-                          userInfo: [NSLocalizedDescriptionKey:
-                            "removeSessionCookies() is only available on Android"])
+            return false
         }
     }
 }
