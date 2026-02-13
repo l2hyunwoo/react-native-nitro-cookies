@@ -22,8 +22,10 @@ import type { Cookie } from './types';
  * - Synchronous methods (xxxSync): Direct return values, no Promise wrapping
  * - Asynchronous methods: Return Promise for operations requiring callbacks/network
  */
-export interface NitroCookies
-  extends HybridObject<{ ios: 'swift'; android: 'kotlin' }> {
+export interface NitroCookies extends HybridObject<{
+  ios: 'swift';
+  android: 'kotlin';
+}> {
   // ========================================
   // SYNCHRONOUS METHODS
   // ========================================

@@ -19,3 +19,20 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Suppress deprecation warnings from third-party React Native library subprojects.
+// react-native-safe-area-context (5.6.2) and react-native-webview (13.16.0) are at their
+// latest versions but still use deprecated legacy architecture APIs (UIManagerModule,
+// RCTEventEmitter) and Android SDK APIs (allowFileAccessFromFileURLs, ForceDark, etc.).
+// TODO: Remove when these libraries release versions supporting RN 0.84 new architecture.
+gradle.projectsEvaluated {
+    subprojects { subproject ->
+        if (subproject.name != "app" && subproject.plugins.hasPlugin("org.jetbrains.kotlin.android")) {
+            subproject.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                compilerOptions {
+                    freeCompilerArgs.addAll(["-Xsuppress-warning=DEPRECATION", "-Xsuppress-warning=OVERRIDE_DEPRECATION"])
+                }
+            }
+        }
+    }
+}

@@ -25,6 +25,27 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return formatter
     }()
 
+    /// RFC 1123 date formatter for Set-Cookie Expires attribute
+    private static let rfc1123Formatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(abbreviation: "GMT")
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        return formatter
+    }()
+
+    /// Remove CR, LF, and NUL characters that could enable header injection
+    private static func sanitizeCookieToken(_ value: String) -> String {
+        var result = ""
+        result.reserveCapacity(value.count)
+        for scalar in value.unicodeScalars {
+            if scalar != "\r" && scalar != "\n" && scalar != "\0" {
+                result.append(String(scalar))
+            }
+        }
+        return result
+    }
+
     // MARK: - Helper Functions
 
     /**
@@ -42,22 +63,47 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             .path: cookiePath
         ]
 
-        // Add expires if provided
         if let expiresString = cookie.expires,
            let expiresDate = Self.iso8601Formatter.date(from: expiresString) {
             properties[.expires] = expiresDate
         }
 
-        // Add secure flag
         if cookie.secure == true {
             properties[.secure] = "TRUE"
         }
 
-        // Note: HttpOnly is handled via the isHTTPOnly property, not in properties dict
-
         guard let httpCookie = HTTPCookie(properties: properties) else {
             throw NSError(domain: "NitroCookies", code: 1,
                          userInfo: [NSLocalizedDescriptionKey: "Failed to create HTTPCookie"])
+        }
+
+        // HTTPCookie(properties:) ignores httpOnly — there is no property key for it.
+        // When httpOnly is requested, rebuild via Set-Cookie header parsing which
+        // correctly handles the HttpOnly attribute, while preserving the original domain.
+        if cookie.httpOnly == true {
+            let originalDomain = httpCookie.domain
+            let safeName = Self.sanitizeCookieToken(httpCookie.name)
+            let safeValue = Self.sanitizeCookieToken(httpCookie.value)
+            var parts: [String] = ["\(safeName)=\(safeValue)"]
+            parts.append("Domain=\(originalDomain)")
+            parts.append("Path=\(httpCookie.path)")
+            if let expires = httpCookie.expiresDate {
+                parts.append("Expires=\(Self.rfc1123Formatter.string(from: expires))")
+            }
+            if httpCookie.isSecure {
+                parts.append("Secure")
+            }
+            parts.append("HttpOnly")
+
+            let setCookieHeader = parts.joined(separator: "; ")
+            let headerFields = ["Set-Cookie": setCookieHeader]
+            let parsed = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: url)
+
+            guard let httpOnlyCookie = parsed.first else {
+                throw NSError(domain: "NitroCookies", code: 1,
+                             userInfo: [NSLocalizedDescriptionKey: "Failed to create HTTPCookie with HttpOnly"])
+            }
+            return httpOnlyCookie
         }
 
         return httpCookie
@@ -71,11 +117,18 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             Self.iso8601Formatter.string(from: $0)
         }
 
+        // Strip leading dot from domain — NSHTTPCookieStorage and Set-Cookie
+        // parsing add a dot prefix per RFC 6265, but callers expect the bare domain.
+        var domain = httpCookie.domain
+        if domain.hasPrefix(".") {
+            domain = String(domain.dropFirst())
+        }
+
         return Cookie(
             name: httpCookie.name,
             value: httpCookie.value,
             path: httpCookie.path,
-            domain: httpCookie.domain,
+            domain: domain,
             version: String(httpCookie.version),
             expires: expiresString,
             secure: httpCookie.isSecure,
@@ -95,7 +148,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         // Wildcard match (.example.com matches api.example.com)
         if cookieDomain.hasPrefix(".") {
             let domain = String(cookieDomain.dropFirst())
-            return urlHost.hasSuffix(domain) || urlHost == domain
+            return urlHost.hasSuffix("." + domain) || urlHost == domain
         }
 
         // Subdomain match (example.com matches api.example.com)
@@ -367,10 +420,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                               userInfo: [NSLocalizedDescriptionKey: "Not HTTP response"])
             }
 
-            let cookies = HTTPCookie.cookies(
-                withResponseHeaderFields: httpResponse.allHeaderFields as! [String: String],
-                for: url
-            )
+            let headerFields = httpResponse.allHeaderFields as? [String: String] ?? [:]
+            let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: url)
 
             return cookies.map { self.createCookieData(from: $0) }
         }
@@ -466,9 +517,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
      */
     public func flush() throws -> Promise<Void> {
         return Promise.async {
-            throw NSError(domain: "PLATFORM_UNSUPPORTED", code: 5,
-                          userInfo: [NSLocalizedDescriptionKey:
-                            "flush() is only available on Android"])
+            // No-op on iOS - cookies are automatically persisted
         }
     }
 
@@ -477,9 +526,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
      */
     public func removeSessionCookies() throws -> Promise<Bool> {
         return Promise.async {
-            throw NSError(domain: "PLATFORM_UNSUPPORTED", code: 5,
-                          userInfo: [NSLocalizedDescriptionKey:
-                            "removeSessionCookies() is only available on Android"])
+            return false
         }
     }
 }
