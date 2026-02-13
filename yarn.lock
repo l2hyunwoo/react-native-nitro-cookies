@@ -10814,7 +10814,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-native: "*"
-    react-native-nitro-modules: 0.33.9
+    react-native-nitro-modules: ~0.33.9
   languageName: unknown
   linkType: soft
 
