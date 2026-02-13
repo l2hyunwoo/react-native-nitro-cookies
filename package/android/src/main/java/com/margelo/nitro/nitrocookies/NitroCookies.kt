@@ -3,13 +3,15 @@ package com.margelo.nitro.nitrocookies
 import android.webkit.CookieManager
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.Promise
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 /** HybridNitroCookies - Android implementation of cookie management */
 @DoNotStrip
@@ -324,9 +326,9 @@ class NitroCookies : HybridNitroCookiesSpec() {
 
   /** Clear all cookies */
   override fun clearAll(useWebKit: Boolean?): Promise<Boolean> {
-    return Promise.async {
+    return Promise.async(mainScope) {
       val cookieManager = CookieManager.getInstance()
-      suspendCoroutine { continuation ->
+      suspendCancellableCoroutine { continuation ->
         cookieManager.removeAllCookies { success -> continuation.resume(success) }
       }
     }
@@ -418,15 +420,17 @@ class NitroCookies : HybridNitroCookiesSpec() {
 
   /** Remove session cookies (Android only) */
   override fun removeSessionCookies(): Promise<Boolean> {
-    return Promise.async {
+    return Promise.async(mainScope) {
       val cookieManager = CookieManager.getInstance()
-      suspendCoroutine { continuation ->
+      suspendCancellableCoroutine { continuation ->
         cookieManager.removeSessionCookies { success -> continuation.resume(success) }
       }
     }
   }
 
   companion object {
+    private val mainScope = CoroutineScope(Dispatchers.Main)
+
     /** ISO 8601 date formatter for cookie expires (yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ) */
     private val iso8601Formatter =
       SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", Locale.US).apply {
