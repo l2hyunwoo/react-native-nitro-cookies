@@ -211,16 +211,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         let url = try validateURL(urlString)
         try validateDomain(cookie: cookie, url: url)
 
-        // Apply defaults
-        var cookieWithDefaults = cookie
-        if cookieWithDefaults.path == nil {
-            cookieWithDefaults.path = "/"
-        }
-        if cookieWithDefaults.domain == nil {
-            cookieWithDefaults.domain = url.host
-        }
-
-        let httpCookie = try makeHTTPCookie(from: cookieWithDefaults, url: url)
+        let httpCookie = try makeHTTPCookie(from: cookie, url: url)
         HTTPCookieStorage.shared.setCookie(httpCookie)
         return true
     }
@@ -271,16 +262,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             let url = try self.validateURL(urlString)
             try self.validateDomain(cookie: cookie, url: url)
 
-            // Apply defaults
-            var cookieWithDefaults = cookie
-            if cookieWithDefaults.path == nil {
-                cookieWithDefaults.path = "/"
-            }
-            if cookieWithDefaults.domain == nil {
-                cookieWithDefaults.domain = url.host
-            }
-
-            let httpCookie = try self.makeHTTPCookie(from: cookieWithDefaults, url: url)
+            let httpCookie = try self.makeHTTPCookie(from: cookie, url: url)
 
             if useWebKit == true {
                 // Use WKHTTPCookieStore
