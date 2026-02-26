@@ -20,6 +20,14 @@ Pod::Spec.new do |s|
     "cpp/**/*.{hpp,cpp}",
   ]
 
+  s.pod_target_xcconfig = {
+    "HEADER_SEARCH_PATHS" => [
+      "${PODS_ROOT}/RCT-Folly",
+    ],
+    "GCC_PREPROCESSOR_DEFINITIONS" => "$(inherited) FOLLY_NO_CONFIG FOLLY_CFG_NO_COROUTINES",
+    "OTHER_CPLUSPLUSFLAGS" => "-DFOLLY_NO_CONFIG -DFOLLY_MOBILE=1 -DFOLLY_USE_LIBCPP=1",
+  }
+
   s.dependency 'React-jsi'
   s.dependency 'React-callinvoker'
 
