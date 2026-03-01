@@ -187,6 +187,45 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return url
     }
 
+    // MARK: - WebKit Main-Thread Helpers
+
+    /**
+     * Run a WKHTTPCookieStore operation on the main thread and return a result.
+     *
+     * All WKHTTPCookieStore interactions must happen on the main thread to avoid
+     * EXC_BREAKPOINT crashes in WebKit's non-thread-safe internal data structures.
+     */
+    @available(iOS 11.0, *)
+    private func withWebKitStore<T>(
+        _ operation: @escaping (WKHTTPCookieStore, @escaping (T) -> Void) -> Void
+    ) async -> T {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async {
+                let store = WKWebsiteDataStore.default().httpCookieStore
+                operation(store) { result in
+                    continuation.resume(returning: result)
+                }
+            }
+        }
+    }
+
+    /**
+     * Run a void WKHTTPCookieStore operation on the main thread.
+     */
+    @available(iOS 11.0, *)
+    private func withWebKitStoreVoid(
+        _ operation: @escaping (WKHTTPCookieStore, @escaping () -> Void) -> Void
+    ) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            DispatchQueue.main.async {
+                let store = WKWebsiteDataStore.default().httpCookieStore
+                operation(store) {
+                    continuation.resume(returning: ())
+                }
+            }
+        }
+    }
+
     // MARK: - Synchronous Cookie Operations
 
     /**
@@ -267,18 +306,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             if useWebKit == true {
                 // Use WKHTTPCookieStore
                 if #available(iOS 11.0, *) {
-                    // Accessing WKWebsiteDataStore.default() inside MainActor.run is necessary for iOS 11-12 compatibility,
-                    // since it is not marked @MainActor in those versions.
-                    // For iOS 13+, WKWebsiteDataStore.default() is already @MainActor, so wrapping in MainActor.run is redundant.
-                    // This workaround is safe for iOS 13+ and does not introduce any performance penalty or behavioral change,
-                    // as MainActor.run is a no-op when already on the main actor. This ensures compatibility across all supported iOS versions.
-                    let store = await MainActor.run {
-                        WKWebsiteDataStore.default().httpCookieStore
-                    }
-                    await withCheckedContinuation { continuation in
-                        store.setCookie(httpCookie) {
-                            continuation.resume(returning: ())
-                        }
+                    await self.withWebKitStoreVoid { store, done in
+                        store.setCookie(httpCookie) { done() }
                     }
                     return true
                 } else {
@@ -303,13 +332,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
 
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    let store = await MainActor.run {
-                        WKWebsiteDataStore.default().httpCookieStore
-                    }
-                    let httpCookies = await withCheckedContinuation { continuation in
-                        store.getAllCookies { cookies in
-                            continuation.resume(returning: cookies)
-                        }
+                    let httpCookies: [HTTPCookie] = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
                     }
                     let filteredCookies = httpCookies.filter { cookie in
                         self.isMatchingDomain(cookieDomain: cookie.domain,
@@ -339,20 +363,16 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return Promise.async {
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    let store = await MainActor.run {
-                        WKWebsiteDataStore.default().httpCookieStore
+                    let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
                     }
-                    let cookies = await withCheckedContinuation { continuation in
-                        store.getAllCookies { cookies in
-                            continuation.resume(returning: cookies)
+                    await self.withWebKitStoreVoid { store, done in
+                        let group = DispatchGroup()
+                        for cookie in cookies {
+                            group.enter()
+                            store.delete(cookie) { group.leave() }
                         }
-                    }
-                    for cookie in cookies {
-                        await withCheckedContinuation { continuation in
-                            store.delete(cookie) {
-                                continuation.resume(returning: ())
-                            }
-                        }
+                        group.notify(queue: .main) { done() }
                     }
                     return true
                 } else {
@@ -416,13 +436,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return Promise.async {
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    let store = await MainActor.run {
-                        WKWebsiteDataStore.default().httpCookieStore
-                    }
-                    let cookies = await withCheckedContinuation { continuation in
-                        store.getAllCookies { cookies in
-                            continuation.resume(returning: cookies)
-                        }
+                    let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
                     }
                     return cookies.map { self.createCookieData(from: $0) }
                 } else {
@@ -446,13 +461,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
 
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    let store = await MainActor.run {
-                        WKWebsiteDataStore.default().httpCookieStore
-                    }
-                    let cookies = await withCheckedContinuation { continuation in
-                        store.getAllCookies { cookies in
-                            continuation.resume(returning: cookies)
-                        }
+                    let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
                     }
                     let matchingCookie = cookies.first { cookie in
                         cookie.name == name &&
@@ -461,10 +471,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                     }
 
                     if let cookie = matchingCookie {
-                        await withCheckedContinuation { continuation in
-                            store.delete(cookie) {
-                                continuation.resume(returning: ())
-                            }
+                        await self.withWebKitStoreVoid { store, done in
+                            store.delete(cookie) { done() }
                         }
                         return true
                     } else {
