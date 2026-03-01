@@ -187,6 +187,45 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return url
     }
 
+    // MARK: - WebKit Main-Thread Helpers
+
+    /**
+     * Run a WKHTTPCookieStore operation on the main thread and return a result.
+     *
+     * All WKHTTPCookieStore interactions must happen on the main thread to avoid
+     * EXC_BREAKPOINT crashes in WebKit's non-thread-safe internal data structures.
+     */
+    @available(iOS 11.0, *)
+    private func withWebKitStore<T>(
+        _ operation: @escaping (WKHTTPCookieStore, @escaping (T) -> Void) -> Void
+    ) async -> T {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.main.async {
+                let store = WKWebsiteDataStore.default().httpCookieStore
+                operation(store) { result in
+                    continuation.resume(returning: result)
+                }
+            }
+        }
+    }
+
+    /**
+     * Run a void WKHTTPCookieStore operation on the main thread.
+     */
+    @available(iOS 11.0, *)
+    private func withWebKitStoreVoid(
+        _ operation: @escaping (WKHTTPCookieStore, @escaping () -> Void) -> Void
+    ) async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            DispatchQueue.main.async {
+                let store = WKWebsiteDataStore.default().httpCookieStore
+                operation(store) {
+                    continuation.resume(returning: ())
+                }
+            }
+        }
+    }
+
     // MARK: - Synchronous Cookie Operations
 
     /**
@@ -267,16 +306,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             if useWebKit == true {
                 // Use WKHTTPCookieStore
                 if #available(iOS 11.0, *) {
-                    // Both store access and setCookie must run on the main thread.
-                    // WKHTTPCookieStore operations require the main thread; dispatch
-                    // to main queue to ensure thread safety.
-                    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                        DispatchQueue.main.async {
-                            let store = WKWebsiteDataStore.default().httpCookieStore
-                            store.setCookie(httpCookie) {
-                                continuation.resume(returning: ())
-                            }
-                        }
+                    await self.withWebKitStoreVoid { store, done in
+                        store.setCookie(httpCookie) { done() }
                     }
                     return true
                 } else {
@@ -301,16 +332,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
 
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    // Both store access and getAllCookies must run on the main thread.
-                    // WKHTTPCookieStore callback-based APIs are not thread-safe;
-                    // dispatch to main queue to ensure thread safety.
-                    let httpCookies: [HTTPCookie] = await withCheckedContinuation { continuation in
-                        DispatchQueue.main.async {
-                            let store = WKWebsiteDataStore.default().httpCookieStore
-                            store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies)
-                            }
-                        }
+                    let httpCookies: [HTTPCookie] = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
                     }
                     let filteredCookies = httpCookies.filter { cookie in
                         self.isMatchingDomain(cookieDomain: cookie.domain,
@@ -340,28 +363,16 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return Promise.async {
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    // Get all cookies on main thread, then delete each on main thread.
-                    // WKHTTPCookieStore operations require the main thread for thread safety.
-                    let cookies: [HTTPCookie] = await withCheckedContinuation { continuation in
-                        DispatchQueue.main.async {
-                            let store = WKWebsiteDataStore.default().httpCookieStore
-                            store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies)
-                            }
-                        }
+                    let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
                     }
-                    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                        DispatchQueue.main.async {
-                            let store = WKWebsiteDataStore.default().httpCookieStore
-                            let group = DispatchGroup()
-                            for cookie in cookies {
-                                group.enter()
-                                store.delete(cookie) { group.leave() }
-                            }
-                            group.notify(queue: .main) {
-                                continuation.resume(returning: ())
-                            }
+                    await self.withWebKitStoreVoid { store, done in
+                        let group = DispatchGroup()
+                        for cookie in cookies {
+                            group.enter()
+                            store.delete(cookie) { group.leave() }
                         }
+                        group.notify(queue: .main) { done() }
                     }
                     return true
                 } else {
@@ -425,16 +436,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return Promise.async {
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    // Both store access and getAllCookies must run on the main thread.
-                    // WKHTTPCookieStore callback-based APIs are not thread-safe;
-                    // dispatch to main queue to ensure thread safety.
-                    let cookies: [HTTPCookie] = await withCheckedContinuation { continuation in
-                        DispatchQueue.main.async {
-                            let store = WKWebsiteDataStore.default().httpCookieStore
-                            store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies)
-                            }
-                        }
+                    let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
                     }
                     return cookies.map { self.createCookieData(from: $0) }
                 } else {
@@ -458,15 +461,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
 
             if useWebKit == true {
                 if #available(iOS 11.0, *) {
-                    // Both store access and WKHTTPCookieStore operations must run on the main thread.
-                    // dispatch to main queue to ensure thread safety.
-                    let cookies: [HTTPCookie] = await withCheckedContinuation { continuation in
-                        DispatchQueue.main.async {
-                            let store = WKWebsiteDataStore.default().httpCookieStore
-                            store.getAllCookies { cookies in
-                                continuation.resume(returning: cookies)
-                            }
-                        }
+                    let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
                     }
                     let matchingCookie = cookies.first { cookie in
                         cookie.name == name &&
@@ -475,13 +471,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                     }
 
                     if let cookie = matchingCookie {
-                        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                            DispatchQueue.main.async {
-                                let store = WKWebsiteDataStore.default().httpCookieStore
-                                store.delete(cookie) {
-                                    continuation.resume(returning: ())
-                                }
-                            }
+                        await self.withWebKitStoreVoid { store, done in
+                            store.delete(cookie) { done() }
                         }
                         return true
                     } else {
