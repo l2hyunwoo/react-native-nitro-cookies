@@ -15,7 +15,7 @@
     "react": "19.2.3",
     "react-native": "0.84.0",
     "react-native-nitro-cookies": "*",
-    "react-native-nitro-modules": "0.33.9",
+    "react-native-nitro-modules": "0.35.0",
     "react-native-safe-area-context": "5.6.2",
     "react-native-webview": "13.16.0"
   },
