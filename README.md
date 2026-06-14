@@ -78,6 +78,15 @@ NitroCookies.setFromResponseSync("https://example.com", "session=abc; path=/");
 
 // Remove specific cookie
 NitroCookies.clearByNameSync("https://example.com", "session");
+
+// Set several cookies at once
+NitroCookies.setManySync("https://example.com", [
+  { name: "session", value: "abc123" },
+  { name: "theme", value: "dark" },
+]);
+
+// Get the ready-to-send Cookie request header (e.g. "session=abc123; theme=dark")
+const header = NitroCookies.getCookieHeaderSync("https://example.com");
 ```
 
 ### Asynchronous Methods
@@ -88,6 +97,8 @@ For operations requiring WebKit access (iOS), network requests, or callback-base
 | ------------------------------------ | -------------------------------------- |
 | `get(url, useWebKit?)`               | Get cookies for URL                    |
 | `set(url, cookie, useWebKit?)`       | Set a cookie                           |
+| `setMany(url, cookies, useWebKit?)`  | Set several cookies for a URL          |
+| `getCookieHeader(url, useWebKit?)`   | Get the `Cookie` request-header string |
 | `clearAll(useWebKit?)`               | Clear all cookies                      |
 | `clearByName(url, name, useWebKit?)` | Remove specific cookie                 |
 | `setFromResponse(url, header)`       | Parse Set-Cookie header                |
@@ -119,6 +130,25 @@ interface Cookie {
   expires?: string; // ISO 8601 format
 }
 ```
+
+## Attaching cookies to a manual request
+
+`getCookieHeader` returns the exact value of the HTTP `Cookie` request header for
+a URL, so you can forward stored cookies on a `fetch` or `XMLHttpRequest` you build
+yourself:
+
+```typescript
+const header = await NitroCookies.getCookieHeader("https://api.example.com");
+
+await fetch("https://api.example.com/profile", {
+  headers: header ? { Cookie: header } : {},
+});
+```
+
+On iOS the header is built with `HTTPCookie.requestHeaderFields(with:)`, so name/value
+serialization follows the platform's RFC 6265 rules; on Android it maps directly to
+`CookieManager.getCookie(url)`. The synchronous `getCookieHeaderSync` is available for
+hot paths.
 
 ## WebView Integration (iOS)
 

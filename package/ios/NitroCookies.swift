@@ -291,6 +291,40 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         }
     }
 
+    /**
+     * Get the Cookie request-header string synchronously for a URL
+     * Uses NSHTTPCookieStorage only (WebKit not supported for sync operations)
+     */
+    public func getCookieHeaderSync(url urlString: String) throws -> String {
+        let url = try validateURL(urlString)
+        let allCookies = HTTPCookieStorage.shared.cookies ?? []
+        let matched = allCookies.filter { cookie in
+            self.isMatchingDomain(cookieDomain: cookie.domain,
+                                 urlHost: url.host ?? "")
+        }
+        return HTTPCookie.requestHeaderFields(with: matched)["Cookie"] ?? ""
+    }
+
+    /**
+     * Set multiple cookies synchronously
+     * Uses NSHTTPCookieStorage only (WebKit not supported for sync operations)
+     */
+    public func setManySync(url urlString: String, cookies: [Cookie]) throws -> Bool {
+        let url = try validateURL(urlString)
+
+        // Validate every cookie up front so a bad cookie doesn't leave a partial write
+        for cookie in cookies {
+            try validateDomain(cookie: cookie, url: url)
+        }
+
+        let storage = HTTPCookieStorage.shared
+        for cookie in cookies {
+            let httpCookie = try makeHTTPCookie(from: cookie, url: url)
+            storage.setCookie(httpCookie)
+        }
+        return true
+    }
+
     // MARK: - Asynchronous Cookie Operations
 
     /**
@@ -320,6 +354,73 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                 HTTPCookieStorage.shared.setCookie(httpCookie)
                 return true
             }
+        }
+    }
+
+    /**
+     * Set multiple cookies for a URL
+     */
+    public func setMany(url urlString: String, cookies: [Cookie], useWebKit: Bool?) throws -> Promise<Bool> {
+        return Promise.async {
+            let url = try self.validateURL(urlString)
+
+            // Validate every cookie up front so a bad cookie doesn't leave a partial write
+            for cookie in cookies {
+                try self.validateDomain(cookie: cookie, url: url)
+            }
+
+            let httpCookies = try cookies.map { try self.makeHTTPCookie(from: $0, url: url) }
+
+            if useWebKit == true {
+                if #available(iOS 11.0, *) {
+                    for httpCookie in httpCookies {
+                        await self.withWebKitStoreVoid { store, done in
+                            store.setCookie(httpCookie) { done() }
+                        }
+                    }
+                    return true
+                } else {
+                    throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
+                                 userInfo: [NSLocalizedDescriptionKey:
+                                    "WebKit requires iOS 11 or higher"])
+                }
+            } else {
+                let storage = HTTPCookieStorage.shared
+                for httpCookie in httpCookies {
+                    storage.setCookie(httpCookie)
+                }
+                return true
+            }
+        }
+    }
+
+    /**
+     * Get the Cookie request-header string for a URL
+     */
+    public func getCookieHeader(url urlString: String, useWebKit: Bool?) throws -> Promise<String> {
+        return Promise.async {
+            let url = try self.validateURL(urlString)
+
+            let httpCookies: [HTTPCookie]
+            if useWebKit == true {
+                if #available(iOS 11.0, *) {
+                    httpCookies = await self.withWebKitStore { store, done in
+                        store.getAllCookies { cookies in done(cookies) }
+                    }
+                } else {
+                    throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
+                                 userInfo: [NSLocalizedDescriptionKey:
+                                    "WebKit requires iOS 11 or higher"])
+                }
+            } else {
+                httpCookies = HTTPCookieStorage.shared.cookies ?? []
+            }
+
+            let matched = httpCookies.filter { cookie in
+                self.isMatchingDomain(cookieDomain: cookie.domain,
+                                     urlHost: url.host ?? "")
+            }
+            return HTTPCookie.requestHeaderFields(with: matched)["Cookie"] ?? ""
         }
     }
 

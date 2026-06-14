@@ -123,6 +123,53 @@ export const NitroCookies = {
     return NitroCookiesHybridObject.clearByNameSync(url, name);
   },
 
+  /**
+   * Get the `Cookie` request-header string for a URL synchronously.
+   *
+   * Returns the value you would put in an HTTP `Cookie` request header
+   * (e.g. `"name1=value1; name2=value2"`), built from every cookie that
+   * matches the URL. Handy for attaching cookies to a manual `fetch` or
+   * `XMLHttpRequest`. Returns an empty string when no cookies match.
+   *
+   * @param url - The URL to match cookies against (must include protocol)
+   * @returns The Cookie header string, or "" when no cookies match
+   * @throws {Error} INVALID_URL - URL is malformed or missing protocol
+   *
+   * @example
+   * ```typescript
+   * const header = NitroCookies.getCookieHeaderSync('https://example.com');
+   * await fetch('https://example.com/api', { headers: { Cookie: header } });
+   * ```
+   */
+  getCookieHeaderSync(url: string): string {
+    return NitroCookiesHybridObject.getCookieHeaderSync(url);
+  },
+
+  /**
+   * Set multiple cookies for a URL synchronously.
+   *
+   * Applies the same domain validation as `setSync` to every cookie. If any
+   * cookie's domain doesn't match the URL host, the whole call throws and no
+   * cookies are written.
+   *
+   * @param url - The URL for which to set the cookies (must include protocol)
+   * @param cookies - The cookie objects to store
+   * @returns true on success
+   * @throws {Error} INVALID_URL - URL is malformed or missing protocol
+   * @throws {Error} DOMAIN_MISMATCH - A cookie's domain doesn't match URL host
+   *
+   * @example
+   * ```typescript
+   * NitroCookies.setManySync('https://example.com', [
+   *   { name: 'session', value: 'abc123' },
+   *   { name: 'theme', value: 'dark' },
+   * ]);
+   * ```
+   */
+  setManySync(url: string, cookies: Cookie[]): boolean {
+    return NitroCookiesHybridObject.setManySync(url, cookies);
+  },
+
   // ========================================
   // ASYNCHRONOUS METHODS
   // ========================================
@@ -166,6 +213,63 @@ export const NitroCookies = {
     useWebKit?: boolean
   ): Promise<boolean> {
     return NitroCookiesHybridObject.set(url, cookie, useWebKit ?? false);
+  },
+
+  /**
+   * Set multiple cookies for a URL.
+   *
+   * Applies the same domain validation as `set` to every cookie. If any
+   * cookie's domain doesn't match the URL host, the whole call rejects and no
+   * cookies are written.
+   *
+   * @param url - The URL for which to set the cookies. Must include protocol.
+   * @param cookies - The cookie objects to store
+   * @param useWebKit - (iOS only) If true, use WKHTTPCookieStore instead of NSHTTPCookieStorage. Requires iOS 11+.
+   *
+   * @returns Promise that resolves to true on success
+   *
+   * @throws {Error} INVALID_URL - URL is malformed or missing protocol
+   * @throws {Error} DOMAIN_MISMATCH - A cookie's domain doesn't match URL host
+   * @throws {Error} WEBKIT_UNAVAILABLE - useWebKit=true on iOS < 11
+   *
+   * @example
+   * ```typescript
+   * await NitroCookies.setMany('https://example.com', [
+   *   { name: 'session', value: 'abc123', secure: true },
+   *   { name: 'theme', value: 'dark' },
+   * ]);
+   * ```
+   */
+  async setMany(
+    url: string,
+    cookies: Cookie[],
+    useWebKit?: boolean
+  ): Promise<boolean> {
+    return NitroCookiesHybridObject.setMany(url, cookies, useWebKit ?? false);
+  },
+
+  /**
+   * Get the `Cookie` request-header string for a URL.
+   *
+   * Returns the value you would put in an HTTP `Cookie` request header
+   * (e.g. `"name1=value1; name2=value2"`), built from every cookie that
+   * matches the URL. Returns an empty string when no cookies match.
+   *
+   * @param url - The URL to match cookies against. Must include protocol.
+   * @param useWebKit - (iOS only) If true, read from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   *
+   * @returns Promise that resolves to the Cookie header string, or "" when no cookies match
+   *
+   * @throws {Error} INVALID_URL - URL is malformed or missing protocol
+   *
+   * @example
+   * ```typescript
+   * const header = await NitroCookies.getCookieHeader('https://example.com');
+   * await fetch('https://example.com/api', { headers: { Cookie: header } });
+   * ```
+   */
+  async getCookieHeader(url: string, useWebKit?: boolean): Promise<string> {
+    return NitroCookiesHybridObject.getCookieHeader(url, useWebKit ?? false);
   },
 
   /**
