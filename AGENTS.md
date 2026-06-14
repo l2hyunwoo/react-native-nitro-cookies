@@ -14,7 +14,6 @@ High-performance HTTP cookie management library for React Native using Nitro Mod
 | `eslint.config.mjs` | ESLint flat config for the monorepo |
 | `babel.config.js` | Babel configuration |
 | `lefthook.yml` | Git hooks (commitlint) |
-| `CLAUDE.md` | AI assistant instructions and project guidelines |
 | `CHANGELOG.md` | Release changelog (v1.0.0) |
 | `CONTRIBUTING.md` | Contribution guidelines |
 
@@ -23,9 +22,6 @@ High-performance HTTP cookie management library for React Native using Nitro Mod
 | Directory | Purpose |
 |-----------|---------|
 | `package/` | The npm package source: TypeScript API, iOS Swift, Android Kotlin, Nitrogen codegen (see `package/AGENTS.md`) |
-| `specs/` | Feature specifications and design documents (see `specs/AGENTS.md`) |
-| `openspec/` | OpenSpec change proposal system (see `openspec/AGENTS.md`) |
-| `.specify/` | SpecKit templates, scripts, and memory for feature planning (see `.specify/AGENTS.md`) |
 | `example/` | React Native example app for testing the library |
 
 ## For AI Agents

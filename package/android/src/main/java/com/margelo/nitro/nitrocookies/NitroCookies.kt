@@ -268,6 +268,39 @@ class NitroCookies : HybridNitroCookiesSpec() {
     return false
   }
 
+  /**
+   * Get the Cookie request-header string synchronously for a URL.
+   *
+   * CookieManager.getCookie() already returns the value in the format of the
+   * 'Cookie' HTTP request header ("name1=value1; name2=value2"), so this is a
+   * near pass-through.
+   */
+  override fun getCookieHeaderSync(url: String): String {
+    validateURL(url)
+    return CookieManager.getInstance().getCookie(url) ?: ""
+  }
+
+  /** Set multiple cookies synchronously */
+  override fun setManySync(url: String, cookies: Array<Cookie>): Boolean {
+    val urlObj = validateURL(url)
+
+    // Validate every cookie up front so a bad cookie doesn't leave a partial write
+    for (cookie in cookies) {
+      validateDomain(cookie, urlObj)
+    }
+
+    val cookieManager = CookieManager.getInstance()
+    cookieManager.setAcceptCookie(true)
+
+    for (cookie in cookies) {
+      val cookieWithDefaults =
+        cookie.copy(path = cookie.path ?: "/", domain = cookie.domain ?: urlObj.host)
+      cookieManager.setCookie(url, toRFC6265String(cookieWithDefaults))
+    }
+
+    return true
+  }
+
   // MARK: - Asynchronous Cookie Operations
 
   /** Set a single cookie */
@@ -287,6 +320,42 @@ class NitroCookies : HybridNitroCookiesSpec() {
       cookieManager.setCookie(url, setCookieString)
 
       true
+    }
+  }
+
+  /** Set multiple cookies for a URL */
+  override fun setMany(url: String, cookies: Array<Cookie>, useWebKit: Boolean?): Promise<Boolean> {
+    return Promise.async {
+      val urlObj = validateURL(url)
+
+      // Validate every cookie up front so a bad cookie doesn't leave a partial write
+      for (cookie in cookies) {
+        validateDomain(cookie, urlObj)
+      }
+
+      val cookieManager = CookieManager.getInstance()
+      cookieManager.setAcceptCookie(true)
+
+      for (cookie in cookies) {
+        val cookieWithDefaults =
+          cookie.copy(path = cookie.path ?: "/", domain = cookie.domain ?: urlObj.host)
+        cookieManager.setCookie(url, toRFC6265String(cookieWithDefaults))
+      }
+
+      true
+    }
+  }
+
+  /**
+   * Get the Cookie request-header string for a URL.
+   *
+   * CookieManager.getCookie() already returns the value in the format of the
+   * 'Cookie' HTTP request header, so this is a near pass-through.
+   */
+  override fun getCookieHeader(url: String, useWebKit: Boolean?): Promise<String> {
+    return Promise.async {
+      validateURL(url)
+      CookieManager.getInstance().getCookie(url) ?: ""
     }
   }
 

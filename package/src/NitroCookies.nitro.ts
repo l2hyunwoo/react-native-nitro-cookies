@@ -75,6 +75,33 @@ export interface NitroCookies extends HybridObject<{
    */
   clearByNameSync(url: string, name: string): boolean;
 
+  /**
+   * Get the `Cookie` request-header string for a URL synchronously
+   *
+   * Returns the value you would put in an HTTP `Cookie` request header
+   * (e.g. "name1=value1; name2=value2"), built from every cookie that
+   * matches the URL. Use this to attach cookies to a manual `fetch`/
+   * `XMLHttpRequest`. Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   *
+   * @param url - The URL to match cookies against (must include protocol)
+   * @returns The Cookie header string, or "" when no cookies match
+   * @throws Error if URL is invalid
+   */
+  getCookieHeaderSync(url: string): string;
+
+  /**
+   * Set multiple cookies for a URL synchronously
+   *
+   * Applies the same domain validation as `setSync` to every cookie.
+   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   *
+   * @param url - The URL for which to set the cookies (must include protocol)
+   * @param cookies - The cookie objects to store
+   * @returns true on success
+   * @throws Error if URL is invalid or any cookie's domain mismatches
+   */
+  setManySync(url: string, cookies: Cookie[]): boolean;
+
   // ========================================
   // ASYNCHRONOUS METHODS
   // ========================================
@@ -88,6 +115,35 @@ export interface NitroCookies extends HybridObject<{
    * @returns Promise that resolves to true on success
    */
   set(url: string, cookie: Cookie, useWebKit?: boolean): Promise<boolean>;
+
+  /**
+   * Set multiple cookies for a URL
+   *
+   * Applies the same domain validation as `set` to every cookie.
+   *
+   * @param url - The URL for which to set the cookies (must include protocol)
+   * @param cookies - The cookie objects to store
+   * @param useWebKit - (iOS only) If true, use WKHTTPCookieStore instead of NSHTTPCookieStorage (requires iOS 11+)
+   * @returns Promise that resolves to true on success
+   */
+  setMany(
+    url: string,
+    cookies: Cookie[],
+    useWebKit?: boolean
+  ): Promise<boolean>;
+
+  /**
+   * Get the `Cookie` request-header string for a URL
+   *
+   * Returns the value you would put in an HTTP `Cookie` request header
+   * (e.g. "name1=value1; name2=value2"), built from every cookie that
+   * matches the URL.
+   *
+   * @param url - The URL to match cookies against (must include protocol)
+   * @param useWebKit - (iOS only) If true, read from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   * @returns Promise that resolves to the Cookie header string, or "" when no cookies match
+   */
+  getCookieHeader(url: string, useWebKit?: boolean): Promise<string>;
 
   /**
    * Get all cookies matching a specific URL's domain
