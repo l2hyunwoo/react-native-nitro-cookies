@@ -191,6 +191,10 @@ Drop-in replacement - just change the import:
 // All existing code works unchanged!
 ```
 
+## Prior Art
+
+This package is a from-scratch Nitro Modules implementation, not a fork, but its public API and behavior are modeled on [`@react-native-cookies/cookies`](https://github.com/react-native-cookies/cookies). Big thanks to its maintainers and contributors for the original implementation and long-term work on the project.
+
 ## Acknowledgement
 
 - [This Week In React](https://thisweekinreact.com/)
