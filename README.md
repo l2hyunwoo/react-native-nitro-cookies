@@ -179,6 +179,7 @@ try {
 | `WEBKIT_UNAVAILABLE`   | WebKit requested on iOS < 11               |
 | `PLATFORM_UNSUPPORTED` | Platform-specific method on wrong platform |
 | `NETWORK_ERROR`        | HTTP request failed                        |
+| `WEBVIEW_UNAVAILABLE`  | Android System WebView is missing, disabled or updating |
 
 ## Migration from @react-native-cookies/cookies
 
