@@ -192,7 +192,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
       it.code in 33..126 && it !in "()<>@,;:\"/[]?={}\\"
     }
     val validPath = identifier.path.startsWith("/") && identifier.path.all {
-      it.code in 33..126 && it != ';'
+      it.code in 32..126 && it != ';'
     }
     val domain = identifier.domain?.lowercase(Locale.ROOT)
     val bareDomain = domain?.removePrefix(".")

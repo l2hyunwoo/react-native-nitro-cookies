@@ -77,6 +77,16 @@ class CookieScopeTest {
   }
 
   @Test
+  fun deletionAcceptsSpacesInPaths() {
+    set("session=root; Path=/")
+    val identifier = CookieIdentifier("session", "/with space", null)
+    cookies.clearCookieSync(url, identifier)
+    await(cookies.flush())
+    await(cookies.clearCookie(url, identifier, false))
+    assertEquals(listOf("root"), cookies.getListSync(url).map { it.value })
+  }
+
+  @Test
   fun invalidSelectorsDoNotMutateStorage() {
     set("session=kept; Path=/")
     val identifiers = listOf(

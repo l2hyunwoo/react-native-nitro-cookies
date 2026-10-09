@@ -79,6 +79,31 @@ final class CookieScopeTests: XCTestCase {
         }
     }
 
+    func testPathsWithSpacesCanBeDeleted() async throws {
+        #if canImport(WebKit)
+        let stores = [false, true]
+        #else
+        let stores = [false]
+        #endif
+        let spaced = Cookie(name: "spaced", value: "value", path: "/with space", domain: nil,
+                            version: nil, expires: nil, secure: false, httpOnly: false)
+        for useWebKit in stores {
+            if !useWebKit {
+                _ = try cookies.setSync(url: url, cookie: spaced)
+                let stored = try XCTUnwrap(cookies.getListSync(url: url).first { $0.name == "spaced" })
+                XCTAssertEqual(stored.path, "/with space")
+                try cookies.clearCookieSync(url: url, identifier: identifier(stored))
+                XCTAssertFalse(try cookies.getListSync(url: url).contains { $0.name == "spaced" })
+            }
+            _ = try await cookies.set(url: url, cookie: spaced, useWebKit: useWebKit).await()
+            let listed = try await cookies.getList(url: url, useWebKit: useWebKit).await()
+            let stored = try XCTUnwrap(listed.first { $0.name == "spaced" })
+            try await cookies.clearCookie(url: url, identifier: identifier(stored), useWebKit: useWebKit).await()
+            let remaining = try await cookies.getList(url: url, useWebKit: useWebKit).await()
+            XCTAssertFalse(remaining.contains { $0.name == "spaced" })
+        }
+    }
+
     func testInvalidIdentifiersDoNotMutateStorage() async throws {
         _ = try cookies.setManySync(url: url, cookies: variants)
         defer {

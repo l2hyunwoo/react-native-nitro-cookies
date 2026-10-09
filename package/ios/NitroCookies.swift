@@ -275,7 +275,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             $0.value > 32 && $0.value < 127 && !separators.contains($0)
         }
         let validPath = identifier.path.hasPrefix("/") && identifier.path.unicodeScalars.allSatisfy {
-            $0.value > 32 && $0.value < 127 && $0 != ";"
+            $0.value >= 32 && $0.value < 127 && $0 != ";"
         }
         let domain = (identifier.domain ?? url.host!).lowercased()
         let bareDomain = domain.hasPrefix(".") ? String(domain.dropFirst()) : domain
