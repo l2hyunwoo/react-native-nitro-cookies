@@ -1,10 +1,10 @@
 # 쿠키 삭제
 
-정확한 식별자를 삭제하려면 범위 삭제를 사용하세요. 기존 이름 삭제는 플랫폼별 동작을 유지합니다.
-`useWebKit`의 기본값은 `false`이며, 지원하는 메서드에서 iOS WebKit 저장소를 선택합니다.
+쿠키 하나를 정확히 삭제하려면 scope를 지정하세요. 기존에 이름만으로 삭제하던 API는 플랫폼별 동작을 그대로 유지합니다.
+`useWebKit`의 기본값은 `false`입니다. 이 인자를 받는 메서드에서는 iOS WebKit cookie store를 선택할 수 있습니다.
 
-삭제 식별자에는 `name`과 절대 `path`가 필요합니다. 호스트 전용 삭제일 때만 `domain`을 생략하세요. 도메인을 명시하면 해당 범위를 선택합니다.
-잘못된 선택자는 `PARSE_ERROR`, 호환되지 않는 도메인은 `DOMAIN_MISMATCH`로 변경 전에 실패합니다.
+`CookieIdentifier`에는 `name`과 `/`로 시작하는 절대 `path`가 필요합니다. Host-only 쿠키를 삭제할 때만 `domain`을 생략하세요. `domain`을 지정하면 그 scope의 쿠키를 선택합니다.
+식별 정보가 잘못되면 `PARSE_ERROR`, URL과 domain이 호환되지 않으면 `DOMAIN_MISMATCH`로 실패합니다. 이 검증은 쿠키를 변경하기 전에 실행합니다.
 
 ## clearCookieSync
 
@@ -12,7 +12,7 @@
 clearCookieSync(url: string, identifier: CookieIdentifier): void
 ```
 
-**Next / 미출시.** 기본 저장소에서 정확한 식별자를 삭제합니다. void를 반환합니다. Apple에서는 해당 쿠키가 없으면 아무 작업도 하지 않습니다. Android는 승인 확인이나 존재 여부 보고 없이 만료 쓰기를 제출합니다.
+**Next / 미출시.** 기본 cookie store에서 식별 정보가 일치하는 쿠키를 삭제합니다. 반환형은 `void`입니다. Apple에서는 일치하는 쿠키가 없으면 아무 작업도 하지 않습니다. Android에서는 쿠키를 만료시키는 쓰기를 요청하며, 쓰기의 수락 여부나 쿠키의 존재 여부는 확인하지 않습니다.
 
 ## clearCookie
 
@@ -20,7 +20,7 @@ clearCookieSync(url: string, identifier: CookieIdentifier): void
 clearCookie(url: string, identifier: CookieIdentifier, useWebKit?: boolean): Promise<void>
 ```
 
-**Next / 미출시.** 선택한 저장소에서 정확한 식별자를 삭제합니다. Android는 쓰기 승인을 기다리며 거부된 쓰기를 오류로 처리합니다. 쿠키가 존재했는지는 알 수 없습니다. Secure 쿠키에는 HTTPS를 사용하세요.
+**Next / 미출시.** 선택한 cookie store에서 식별 정보가 일치하는 쿠키를 삭제합니다. Android에서는 CookieManager가 쓰기를 수락할 때까지 기다리고, 거절하면 오류로 처리합니다. 삭제 전에 쿠키가 존재했는지는 알 수 없습니다. Secure 쿠키를 삭제하려면 HTTPS를 사용하세요.
 
 ## clearByNameSync
 
@@ -28,7 +28,7 @@ clearCookie(url: string, identifier: CookieIdentifier, useWebKit?: boolean): Pro
 clearByNameSync(url: string, name: string): boolean
 ```
 
-기본 저장소에서 이름으로 삭제하는 기존 메서드입니다. Apple은 첫 번째 일치 결과를 삭제합니다. Android는 / 경로와 URL 호스트 Domain 속성으로 만료를 시도합니다. boolean 결과가 정확한 범위의 삭제를 뜻하지는 않습니다.
+기본 cookie store에서 이름만으로 삭제하는 기존 메서드입니다. Apple에서는 이름이 일치하는 첫 번째 쿠키를 삭제합니다. Android에서는 `Path=/`와 URL host의 `Domain` attribute를 사용해 쿠키 만료를 시도합니다. Boolean 반환값만으로 원하는 scope의 쿠키를 삭제했다고 판단하면 안 됩니다.
 
 ## clearByName
 
@@ -36,7 +36,7 @@ clearByNameSync(url: string, name: string): boolean
 clearByName(url: string, name: string, useWebKit?: boolean): Promise<boolean>
 ```
 
-기존 이름 삭제의 비동기 형태입니다. iOS WebKit 선택 플래그를 받습니다. 경로나 도메인이 겹치면 clearCookie를 사용하세요.
+이름만으로 삭제하는 기존 API의 async 메서드입니다. iOS WebKit cookie store를 선택하는 인자를 받습니다. 같은 이름의 쿠키가 여러 path나 domain에 있다면 `clearCookie`를 사용하세요.
 
 ## clearAll
 
@@ -44,6 +44,6 @@ clearByName(url: string, name: string, useWebKit?: boolean): Promise<boolean>
 clearAll(useWebKit?: boolean): Promise<boolean>
 ```
 
-관계없는 도메인까지 선택한 저장소 전체를 비웁니다. URL 인자는 없습니다. Apple은 완료 후 true를, Android는 CookieManager가 쿠키를 삭제했는지를 반환합니다. 저장소 전체를 비우려는 경우에만 사용하세요.
+선택한 cookie store 전체를 비웁니다. 앱이 요청하는 domain 외의 쿠키도 삭제하며, URL 인자는 받지 않습니다. Apple에서는 완료 후 `true`를 반환하고, Android에서는 CookieManager가 쿠키를 하나라도 삭제했는지 반환합니다. Cookie store 전체를 비우려는 경우에만 사용하세요.
 
-[타입](./types) · [오류](./errors) · [플랫폼 지원](./platforms)
+[Types](./types) · [Errors](./errors) · [플랫폼 지원](./platforms)

@@ -1,9 +1,9 @@
-# 헤더와 응답
+# Cookie header와 응답 쿠키
 
-요청 헤더 메서드는 저장소를 읽습니다. 응답 메서드는 네트워크 GET 요청을 수행하고 응답 쿠키를 파싱합니다.
-앱에서 전달한 Response 객체를 파싱하는 메서드는 아닙니다.
+`getCookieHeader*`는 cookie store에서 요청에 보낼 header를 만듭니다. `getFromResponse*`는 native `GET` 요청을 보내고 응답에서 쿠키를 파싱합니다.
+앱이 전달한 `Response` 객체를 파싱하는 메서드는 아닙니다.
 
-정확한 HTTP(S) 대상 URL을 사용하세요. 빈 헤더는 `''`, 빈 응답 결과는 `{}` 또는 `[]`를 반환합니다.
+실제 요청할 HTTP(S) URL을 사용하세요. 일치하는 쿠키가 없으면 header API는 `''`, 응답 조회 API는 `{}` 또는 `[]`를 반환합니다.
 
 ## getCookieHeaderSync
 
@@ -11,7 +11,7 @@
 getCookieHeaderSync(url: string): string
 ```
 
-기본 저장소에서 바로 보낼 수 있는 Cookie 헤더를 반환합니다. Apple은 호스트, 경로, Secure, 만료 조건으로 선택합니다. Android는 CookieManager의 URL 선택을 사용합니다. 일치하는 같은 이름의 쿠키도 문자열에 남습니다.
+기본 cookie store에서 요청에 바로 사용할 수 있는 `Cookie` header를 만듭니다. Apple은 host, path, Secure, 만료 조건을 적용하고, Android는 CookieManager의 URL 선택 규칙을 따릅니다. 이름이 같아도 URL에 일치하는 쿠키는 모두 header에 포함됩니다.
 
 ## getCookieHeader
 
@@ -19,7 +19,7 @@ getCookieHeaderSync(url: string): string
 getCookieHeader(url: string, useWebKit?: boolean): Promise<string>
 ```
 
-비동기 헤더 조회입니다. useWebKit의 기본값은 false이며 iOS WebKit 저장소를 선택할 수 있습니다. tvOS는 WebKit 접근을 거부합니다. 반환 헤더에 HttpOnly 쿠키가 포함될 수 있습니다.
+`Cookie` header를 async 방식으로 조회합니다. `useWebKit`의 기본값은 `false`이며, iOS WebKit cookie store를 선택할 수 있습니다. tvOS에서는 WebKit 접근이 실패합니다. 반환된 header에는 HttpOnly 쿠키도 포함될 수 있습니다.
 
 ## getFromResponse
 
@@ -27,7 +27,7 @@ getCookieHeader(url: string, useWebKit?: boolean): Promise<string>
 getFromResponse(url: string): Promise<Cookies>
 ```
 
-네이티브 GET 요청을 수행하고 파싱한 쿠키를 이름별로 반환합니다. 사용자 지정 요청 헤더나 본문 인자를 제공하지 않습니다. 범용 HTTP 클라이언트나 플랫폼 공통 저장소 가져오기 기능으로 사용하지 마세요.
+Native `GET` 요청을 보내고 응답에서 파싱한 쿠키를 이름별로 반환합니다. 별도의 request header나 body를 전달하는 인자는 없습니다. 범용 HTTP client로 사용하거나, 응답 쿠키를 모든 플랫폼의 cookie store에 동일하게 저장해 주는 API로 간주하지 마세요.
 
 ## getFromResponseList
 
@@ -35,6 +35,6 @@ getFromResponse(url: string): Promise<Cookies>
 getFromResponseList(url: string): Promise<Cookie[]>
 ```
 
-**Next / 미출시.** getFromResponse와 같은 네이티브 요청을 사용하며 이름을 합치지 않고 목록을 반환합니다. 파싱한 메타데이터를 보존합니다. 리다이렉트와 자동 쿠키 처리의 부수 효과는 네이티브 네트워크 계층을 따릅니다.
+**Next / 미출시.** `getFromResponse`와 같은 native 요청을 보내지만, 같은 이름의 쿠키를 합치지 않고 list로 반환합니다. 파싱한 metadata도 유지합니다. Redirect 처리와 자동 쿠키 저장 등 부수 효과는 native 네트워크 구현을 따릅니다.
 
-[타입](./types) · [오류](./errors) · [플랫폼 지원](./platforms)
+[Types](./types) · [Errors](./errors) · [플랫폼 지원](./platforms)

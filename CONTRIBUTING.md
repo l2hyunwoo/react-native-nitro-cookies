@@ -365,6 +365,8 @@ Add screenshots or videos
 The public site lives in `website/`, a separate Yarn project. Planning specifications are maintained in nunu-os.
 English is the default language. Add the matching Korean page under `website/content/ko/` when creating or changing a topic.
 Keep code identifiers and the API contracts consistent between languages.
+Write natural Korean sentences and retain familiar technical terms in English, such as cookie store, scope, host-only, and WebView provider.
+Keep terminology consistent across page titles, navigation, and body text.
 
 ```sh
 cd website

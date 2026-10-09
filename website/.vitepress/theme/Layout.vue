@@ -12,8 +12,8 @@ const { lang } = useData();
     </template>
     <template #doc-before>
       <div class="release-notice" v-if="lang === 'ko'">
-        <strong>Next 문서</strong> · 목록·범위 삭제 API와 오류 정규화는 미출시
-        변경입니다.
+        <strong>Next 문서</strong> · List API, scope를 지정하는 삭제 API, error
+        normalization은 아직 출시하지 않았습니다.
         <a
           href="https://github.com/l2hyunwoo/react-native-nitro-cookies/pull/24"
           >변경 사항 확인 ↗</a

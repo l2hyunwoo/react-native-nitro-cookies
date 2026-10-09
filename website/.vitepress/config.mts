@@ -7,23 +7,31 @@ const groups = [
     "시작하기",
     [
       ["Installation", "설치", "start/installation"],
-      ["Your first cookie", "첫 쿠키", "start/first-cookie"],
+      ["Your first cookie", "첫 쿠키 저장하기", "start/first-cookie"],
     ],
   ],
   [
     "Understand cookies",
     "쿠키 이해하기",
-    [["Stores and scope", "저장소와 범위", "concepts/storage"]],
+    [["Stores and scope", "Cookie store와 scope", "concepts/storage"]],
   ],
   [
     "Guides",
     "가이드",
     [
-      ["Send request headers", "요청 헤더 보내기", "guides/request-headers"],
-      ["Use a WebView store", "WebView 저장소 사용", "guides/webviews"],
+      [
+        "Send request headers",
+        "Request header 보내기",
+        "guides/request-headers",
+      ],
+      [
+        "Use a WebView store",
+        "WebView cookie store 사용하기",
+        "guides/webviews",
+      ],
       [
         "Delete one cookie scope",
-        "특정 범위의 쿠키 삭제",
+        "Scope를 지정해 쿠키 삭제",
         "guides/scoped-deletion",
       ],
       ["Migrate an existing app", "기존 앱 마이그레이션", "guides/migration"],
@@ -31,16 +39,24 @@ const groups = [
   ],
   [
     "Reference",
-    "참조",
+    "API Reference",
     [
       ["API overview", "API 개요", "reference/"],
       ["Read cookies", "쿠키 조회", "reference/reading"],
       ["Write cookies", "쿠키 저장", "reference/writing"],
-      ["Headers and responses", "헤더와 응답", "reference/requests"],
+      [
+        "Headers and responses",
+        "Cookie header와 응답 쿠키",
+        "reference/requests",
+      ],
       ["Delete cookies", "쿠키 삭제", "reference/deletion"],
-      ["Persistence and sessions", "영속 저장과 세션", "reference/lifecycle"],
-      ["Types", "타입", "reference/types"],
-      ["Errors", "오류", "reference/errors"],
+      [
+        "Persistence and sessions",
+        "Session cookie와 디스크 저장",
+        "reference/lifecycle",
+      ],
+      ["Types", "Types", "reference/types"],
+      ["Errors", "Errors", "reference/errors"],
       ["Platform support", "플랫폼 지원", "reference/platforms"],
     ],
   ],
@@ -90,7 +106,7 @@ export default defineConfig({
       label: "한국어",
       lang: "ko",
       description:
-        "React Native 네이티브 쿠키 관리. iOS, Android, tvOS를 위한 타입 안전한 동기·비동기 API.",
+        "React Native의 native HTTP 쿠키를 관리하세요. iOS, Android, tvOS에서 TypeScript로 sync·async API를 사용합니다.",
       themeConfig: {
         nav: [
           {
@@ -99,19 +115,19 @@ export default defineConfig({
             activeMatch: "/ko/(start|concepts|guides)/",
           },
           {
-            text: "API 참조",
+            text: "API Reference",
             link: "/ko/reference/",
             activeMatch: "/ko/reference/",
           },
         ],
         sidebar: sidebar(true),
-        outline: { label: "이 페이지에서", level: [2, 3] },
+        outline: { label: "목차", level: [2, 3] },
         docFooter: { prev: "이전", next: "다음" },
         sidebarMenuLabel: "메뉴",
         returnToTopLabel: "맨 위로",
         darkModeSwitchLabel: "테마",
-        lightModeSwitchTitle: "밝은 모드로 전환",
-        darkModeSwitchTitle: "어두운 모드로 전환",
+        lightModeSwitchTitle: "라이트 모드로 전환",
+        darkModeSwitchTitle: "다크 모드로 전환",
         langMenuLabel: "언어 변경",
         editLink: {
           pattern: `${repository}/edit/main/website/content/:path`,
@@ -135,7 +151,7 @@ export default defineConfig({
             translations: {
               button: { buttonText: "검색", buttonAriaLabel: "문서 검색" },
               modal: {
-                displayDetails: "자세히 표시",
+                displayDetails: "검색 결과 자세히 보기",
                 resetButtonTitle: "검색어 지우기",
                 backButtonTitle: "검색으로 돌아가기",
                 noResultsText: "검색 결과가 없습니다",

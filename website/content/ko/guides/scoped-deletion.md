@@ -1,9 +1,9 @@
-# 특정 범위의 쿠키 삭제
+# Scope를 지정해 쿠키 삭제
 
 같은 이름의 쿠키가 여러 개라면 Next `clearCookie` API를 사용하세요.
-다른 쿠키를 선택하지 않도록 원래 이름, 도메인, 경로를 전달합니다.
+다른 쿠키를 삭제하지 않도록 저장할 때 사용한 `name`, `domain`, `path`를 전달하세요.
 
-## Apple: 저장된 식별자 유지
+## Apple: 조회한 식별 정보 그대로 사용
 
 ```ts
 import NitroCookies from "react-native-nitro-cookies";
@@ -23,13 +23,13 @@ if (target?.path) {
 }
 ```
 
-목록 결과는 앞의 점을 포함해 Apple에 저장된 도메인을 보존합니다. 삭제할 때 같은 표현을 그대로 전달하세요.
-iOS WebKit 저장소를 사용한다면 두 비동기 호출에 모두 `true`를 전달하세요.
-해당 식별자의 쿠키가 없으면 다른 쿠키를 변경하지 않고 성공합니다.
+List 결과의 `domain`은 앞의 점까지 Apple에 저장된 값 그대로입니다. 삭제할 때도 이 값을 그대로 전달하세요.
+iOS WebKit cookie store를 사용한다면 두 async 호출에 모두 `true`를 전달하세요.
+일치하는 쿠키가 없으면 다른 쿠키를 변경하지 않고 완료됩니다.
 
-## Android: 저장할 때 원래 범위 보관
+## Android: 저장할 때 scope 보관
 
-Android URL 목록으로는 저장된 도메인과 경로를 복원할 수 없습니다. 저장할 때 해당 필드를 보관하세요.
+Android의 URL 조회 결과에서는 저장된 `domain`과 `path`를 확인할 수 없습니다. 쿠키를 저장할 때 이 필드들을 함께 보관하세요.
 
 ```ts
 const url = "https://api.example.com/admin";
@@ -43,18 +43,18 @@ await NitroCookies.set(url, {
 await NitroCookies.clearCookie(url, scope);
 ```
 
-도메인을 명시하면 앞의 점 유무와 관계없이 Domain 속성을 만듭니다.
-기존 Android `set`은 도메인을 생략해도 URL 호스트를 기본값으로 사용해 Domain 속성을 만듭니다.
-삭제할 때도 그 도메인을 전달하세요. `set` 인자의 생략만으로 호스트 전용 쿠키라고 판단하지 마세요.
+`domain`을 지정하면 앞의 점 유무와 관계없이 `Domain` attribute를 만듭니다.
+기존 Android `set`은 `domain`을 생략해도 URL의 host를 기본값으로 사용해 `Domain` attribute를 만듭니다.
+삭제할 때도 이 domain을 전달하세요. `set`에서 `domain`을 생략했다는 이유만으로 host-only 쿠키라고 판단하면 안 됩니다.
 
-Domain 없는 Set-Cookie 헤더처럼 실제로 호스트 전용으로 저장한 쿠키에만 삭제 도메인을 생략하세요.
-Secure 쿠키에는 HTTPS를 사용하세요.
+`Domain`이 없는 raw `Set-Cookie` header처럼, 실제로 host-only로 저장한 쿠키를 삭제할 때만 `domain`을 생략하세요.
+Secure 쿠키를 삭제하려면 HTTPS를 사용하세요.
 
-## 완료 시점과 검증
+## 완료 시점과 입력 검증
 
-Android의 `clearCookieSync`는 승인 확인 없이 만료 쓰기를 제출합니다.
-`clearCookie`는 쓰기 승인까지 기다립니다. 두 메서드 모두 쿠키가 존재했는지는 반환하지 않습니다.
-Apple에서는 선택한 저장소의 삭제 작업이 끝나면 완료합니다.
+Android의 `clearCookieSync`는 쿠키를 만료시키는 쓰기를 요청한 뒤, 수락 여부를 확인하지 않고 반환합니다.
+`clearCookie`는 CookieManager가 쓰기를 수락할 때까지 기다립니다. 어느 메서드도 삭제 전에 쿠키가 존재했는지는 알려 주지 않습니다.
+Apple에서는 선택한 cookie store의 삭제 작업이 끝나면 완료됩니다.
 
-선택자에는 유효한 쿠키 이름, 절대 경로, 호환되는 도메인이 필요합니다.
-잘못된 선택자는 변경 전에 실패합니다. [쿠키 삭제](../reference/deletion)와 [오류](../reference/errors)를 확인하세요.
+삭제할 쿠키를 지정하려면 유효한 `name`, `/`로 시작하는 절대 `path`, URL과 호환되는 `domain`이 필요합니다.
+입력이 잘못되면 쿠키를 변경하기 전에 실패합니다. 자세한 동작은 [쿠키 삭제](../reference/deletion)와 [Errors](../reference/errors)에서 확인하세요.
