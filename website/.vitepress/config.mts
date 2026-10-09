@@ -1,6 +1,8 @@
-import { defineConfig, type DefaultTheme } from "vitepress";
+import { defineConfig, type DefaultTheme, type HeadConfig } from "vitepress";
+import { generateLlmDocs } from "../scripts/llms.mjs";
 
 const repository = "https://github.com/l2hyunwoo/react-native-nitro-cookies";
+const siteUrl = "https://l2hyunwoo.github.io/react-native-nitro-cookies/";
 const groups = [
   [
     "Get started",
@@ -78,7 +80,33 @@ export default defineConfig({
   description:
     "Native cookie management for React Native. Typed synchronous and asynchronous APIs for iOS, Android, and tvOS.",
   srcDir: "content",
-  base: "/react-native-nitro-cookies/",
+  base: new URL(siteUrl).pathname,
+  buildEnd: (config) => generateLlmDocs(config, siteUrl, groups),
+  transformHead({ pageData }) {
+    const file = pageData.relativePath;
+    if (file === "404.md") return [];
+    const prefix = file.startsWith("ko/") ? "ko/" : "";
+    const head: HeadConfig[] = [
+      [
+        "link",
+        {
+          rel: "describedby",
+          href: new URL(`${prefix}llms.txt`, siteUrl).href,
+        },
+      ],
+    ];
+    if (file !== `${prefix}index.md`) {
+      head.push([
+        "link",
+        {
+          rel: "alternate",
+          type: "text/markdown",
+          href: new URL(file, siteUrl).href,
+        },
+      ]);
+    }
+    return head;
+  },
   cleanUrls: false,
   appearance: true,
   markdown: { theme: { light: "github-light", dark: "github-dark" } },

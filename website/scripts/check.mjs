@@ -3,8 +3,48 @@ import { access, readdir, readFile } from "node:fs/promises";
 import { sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
+import { createMarkdownRenderer } from "vitepress";
+import { markdownForAi } from "./llms.mjs";
 
 const root = new URL("../", import.meta.url);
+const siteUrl = "https://l2hyunwoo.github.io/react-native-nitro-cookies/";
+const markdown = await createMarkdownRenderer(fileURLToPath(root));
+const fixture = [
+  "---",
+  "title: Fixture",
+  "---",
+  "# Fixture",
+  "",
+  "::: code-group",
+  "",
+  "```ts",
+  "const link = '[Code](../do-not-rewrite)';",
+  "```",
+  "",
+  ":::",
+  "",
+  "[Types](../reference/types#cookie) and `code [link](../unchanged)`.",
+  "[Reference](../reference/) [External](https://example.com/page)",
+].join("\n");
+assert.equal(
+  markdownForAi(fixture, "guides/fixture.md", siteUrl, markdown),
+  [
+    "# Fixture",
+    "",
+    "",
+    "",
+    "```ts",
+    "const link = '[Code](../do-not-rewrite)';",
+    "```",
+    "",
+    "",
+    "",
+    `[Types](${siteUrl}reference/types.md#cookie) and \`code [link](../unchanged)\`.`,
+    `[Reference](${siteUrl}reference/index.md) [External](https://example.com/page)`,
+    "",
+  ].join("\n"),
+  "AI Markdown must remove frontmatter and containers while preserving code",
+);
 const files = (await readdir(new URL("content/", root), { recursive: true }))
   .filter((file) => file.endsWith(".md"))
   .map((file) => file.split(sep).join("/"));
@@ -36,6 +76,99 @@ const methods = declaration.initializer.properties.filter(
 assert.ok(methods.length > 0, "Public operations must be discovered");
 
 for (const prefix of ["", "ko/"]) {
+  const index = await readFile(
+    new URL(`.vitepress/dist/${prefix}llms.txt`, root),
+    "utf8",
+  );
+  const full = await readFile(
+    new URL(`.vitepress/dist/${prefix}llms-full.txt`, root),
+    "utf8",
+  );
+  assert.ok(index.startsWith("# Nitro Cookies\n\n> "));
+  assert.ok(full.startsWith("# Nitro Cookies\n\n> "));
+  assert.ok(index.includes("## Optional\n"));
+  assert.ok(
+    full.includes(prefix ? "아직 출시하지 않았습니다" : "are unreleased"),
+  );
+  const documents = english.filter((file) => file !== "index.md");
+  const indexPages = [...index.matchAll(/^- \[[^\]]+\]\(([^)]+\.md)\)$/gm)].map(
+    ([, url]) => url,
+  );
+  assert.deepEqual(
+    [...indexPages].sort(),
+    documents.map((file) => `${siteUrl}${prefix}${file}`).sort(),
+  );
+  assert.deepEqual(
+    [...full.matchAll(/^(?:Source|원문): \[[^\]]+\]\(([^)]+)\)$/gm)].map(
+      ([, url]) => url,
+    ),
+    indexPages,
+    "Full-text pages must follow the index order",
+  );
+  const exports = [index, full];
+  for (const file of documents) {
+    const exported = await readFile(
+      new URL(`.vitepress/dist/${prefix}${file}`, root),
+      "utf8",
+    );
+    const original = await readFile(
+      new URL(`content/${prefix}${file}`, root),
+      "utf8",
+    );
+    const fences = (text) =>
+      markdown
+        .parse(text, {})
+        .filter(
+          (token) => token.type === "fence" || token.type === "code_block",
+        )
+        .map(({ content, info }) => ({ content, info }));
+    assert.deepEqual(
+      fences(exported),
+      fences(original),
+      `${prefix}${file}: exported code changed`,
+    );
+    const body = exported.slice(exported.indexOf("\n\n") + 2);
+    assert.ok(
+      full.includes(body),
+      `${prefix}${file}: full text missing page content`,
+    );
+    exports.push(exported);
+  }
+  for (const text of exports) {
+    const links = markdown
+      .parse(text, {})
+      .flatMap((token) => token.children ?? [])
+      .filter(
+        (token) =>
+          token.type === "link_open" &&
+          token.attrGet("class") !== "header-anchor",
+      );
+    for (const link of links) {
+      const target = new URL(link.attrGet("href"));
+      if (target.origin !== new URL(siteUrl).origin) continue;
+      assert.ok(
+        target.pathname.startsWith(new URL(siteUrl).pathname),
+        "AI link escapes the project base",
+      );
+      const relative = decodeURIComponent(
+        target.pathname.slice(new URL(siteUrl).pathname.length),
+      );
+      await access(new URL(`.vitepress/dist/${relative}`, root));
+      if (target.hash && relative.endsWith(".md")) {
+        const html = await readFile(
+          new URL(
+            `.vitepress/dist/${relative.replace(/\.md$/, ".html")}`,
+            root,
+          ),
+          "utf8",
+        );
+        assert.ok(
+          html.includes(`id="${decodeURIComponent(target.hash.slice(1))}"`),
+          `AI link has a missing anchor: ${target.href}`,
+        );
+      }
+    }
+  }
   const references = files.filter((file) =>
     file.startsWith(`${prefix}reference/`),
   );
@@ -57,6 +190,10 @@ for (const prefix of ["", "ko/"]) {
       referenceText.replace(/\s/g, "").includes(signature.replace(/\s/g, "")),
       `${prefix}reference has an outdated signature for ${name}`,
     );
+    assert.ok(
+      full.replace(/\s/g, "").includes(signature.replace(/\s/g, "")),
+      `${prefix}llms-full.txt missing public signature for ${name}`,
+    );
   }
   for (const file of english) {
     const htmlFile = file.replace(/\.md$/, ".html");
@@ -72,6 +209,16 @@ for (const prefix of ["", "ko/"]) {
       html.includes("/react-native-nitro-cookies/assets/"),
       `${file}: missing project base path`,
     );
+    assert.ok(
+      html.includes(`rel="describedby" href="${siteUrl}${prefix}llms.txt"`),
+    );
+    if (file !== "index.md") {
+      assert.ok(
+        html.includes(
+          `rel="alternate" type="text/markdown" href="${siteUrl}${prefix}${file}"`,
+        ),
+      );
+    }
     const pageUrl = new URL(
       `/react-native-nitro-cookies/${prefix}${htmlFile}`,
       "https://site.invalid",
@@ -104,5 +251,8 @@ for (const prefix of ["", "ko/"]) {
 }
 console.log(
   `Verified ${english.length} pages per language and ${methods.length} public operations.`,
+);
+console.log(
+  "Verified English/Korean AI indexes, full text, Markdown pages, code, and links.",
 );
 console.log(`Build: ${fileURLToPath(new URL(".vitepress/dist/", root))}`);

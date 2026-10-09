@@ -35,3 +35,8 @@ List API, scope를 지정하는 삭제 API, error normalization은 **Next 변경
 소스 문서와 npm 릴리스의 차이는 [설치](../start/installation)에서 확인하세요.
 
 데이터 구조는 [Types](./types), 메서드별 지원 여부는 [플랫폼 지원](./platforms)에서 확인하세요.
+
+## AI 도구에서 문서 읽기
+
+[llms.txt](../llms.txt)에서 주제별 Markdown 문서를 찾거나, [llms-full.txt](../llms-full.txt)에서 한국어 문서 전체를 한 번에 읽을 수 있습니다.
+두 파일은 이 문서에서 자동으로 생성하며, 릴리스 안내와 플랫폼 제약도 그대로 포함합니다.

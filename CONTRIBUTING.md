@@ -378,6 +378,12 @@ Run `yarn typecheck` and `yarn build` before submitting documentation changes.
 The build checks internal links, language coverage, and reference coverage for every public operation.
 Run `yarn preview` to inspect the production site under `/react-native-nitro-cookies/`.
 
+Each build also generates `llms.txt`, `llms-full.txt`, and individual Markdown pages under the site's project path.
+The root exports are English; `ko/` contains the Korean exports. Each full-text file includes all 16 documentation pages in sidebar order.
+The visual landing pages are excluded; the exports start with a project summary and release guidance.
+Edit `website/content/` and the sidebar in `website/.vitepress/config.mts`, not the generated files in `.vitepress/dist/`.
+The build fails if a documentation page is missing from the sidebar or an exported link is broken.
+
 The `.github/workflows/documentation.yml` workflow builds and deploys the site automatically:
 
 - Pull requests targeting any branch build both languages and check the documentation contracts.
