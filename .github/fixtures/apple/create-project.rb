@@ -15,6 +15,7 @@ tests.add_dependency(host)
     config.build_settings.merge!({
       'PRODUCT_BUNDLE_IDENTIFIER' => "dev.nitrocookies.#{target.name}",
       'GENERATE_INFOPLIST_FILE' => 'YES',
+      'INFOPLIST_KEY_UIApplicationSceneManifest_Generation' => 'YES',
       'SWIFT_VERSION' => '5.0',
       'CLANG_CXX_LANGUAGE_STANDARD' => 'c++20',
       'SWIFT_OBJC_INTEROP_MODE' => 'objcxx',
