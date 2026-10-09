@@ -16,7 +16,7 @@ Dictionary queries overwrite cookies with the same name. Name-only deletion cann
 - Android deletion expires the explicitly supplied scope. It cannot verify existence from CookieManager metadata.
 - Synchronous Android deletion submits a write without acknowledgment. Asynchronous deletion waits for acceptance and rejects rejected writes.
 - Use HTTPS to delete Secure cookies. An explicit Android domain emits a Domain attribute, with or without a leading dot.
-- Validate HTTP(S) URL and host, domain compatibility, absolute path, cookie name, and header delimiters before mutation.
+- Validate HTTP(S) URL and host, domain compatibility, absolute path, cookie name, and header delimiters before mutation. Allow spaces in paths, as permitted by RFC 6265.
 - Report invalid selectors with `PARSE_ERROR` and incompatible domains with `DOMAIN_MISMATCH`.
 - Preserve tvOS WebKit-unavailable and Android WebView-unavailable behavior for new native operations.
 
@@ -39,8 +39,8 @@ Merge the P1 pull request first.
 - [CookieManager.setCookie](https://developer.android.com/reference/android/webkit/CookieManager#setCookie(java.lang.String,%20java.lang.String,%20android.webkit.ValueCallback%3Cjava.lang.Boolean%3E)) supplies asynchronous write acceptance.
 
 ## Validation results
-- iOS 26.5 simulator, Xcode 27.0: all five native tests pass, including shared and WebKit list/deletion tests and the two P1 header tests.
-- Android API 35 emulator: all four scope tests pass. Both WebView-unavailable tests pass with the new native methods included.
+- iOS 26.3 simulator, Xcode 27.0: all six native tests pass, including shared and WebKit list/deletion tests and the two P1 header tests.
+- Android API 35 emulator: all five scope tests pass. Both WebView-unavailable tests pass with the new native methods included.
 - `yarn test --runInBand`: all 20 JavaScript tests pass.
 - `yarn lint`, `yarn typecheck`, `yarn nitrogen`, and `yarn prepare`: passed.
 - `git diff --check`: passed. Generated bridges remain untracked build output.
