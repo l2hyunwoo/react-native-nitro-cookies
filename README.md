@@ -138,17 +138,24 @@ a URL, so you can forward stored cookies on a `fetch` or `XMLHttpRequest` you bu
 yourself:
 
 ```typescript
-const header = await NitroCookies.getCookieHeader("https://api.example.com");
+const url = "https://api.example.com/profile";
+const header = await NitroCookies.getCookieHeader(url);
 
-await fetch("https://api.example.com/profile", {
+await fetch(url, {
   headers: header ? { Cookie: header } : {},
 });
 ```
 
-On iOS the header is built with `HTTPCookie.requestHeaderFields(with:)`, so name/value
-serialization follows the platform's RFC 6265 rules; on Android it maps directly to
-`CookieManager.getCookie(url)`. The synchronous `getCookieHeaderSync` is available for
-hot paths.
+Pass the full request URL, including its path. On iOS, both header APIs select
+cookies for that URL's host, path, scheme, and expiration. Secure cookies require
+HTTPS; host-only cookies stay on their exact host. HttpOnly cookies are included,
+and duplicate names with different matching paths are preserved. No matching
+cookies returns an empty string. The `get` and `getSync` dictionary queries retain
+their domain-based behavior.
+
+On iOS, `HTTPCookie.requestHeaderFields(with:)` serializes the selected cookies.
+On Android, the header maps directly to `CookieManager.getCookie(url)`.
+The synchronous `getCookieHeaderSync` is available for hot paths.
 
 ## WebView Integration (iOS)
 
