@@ -43,3 +43,5 @@ Tests use unique domains and clean up only their cookies.
 - [Foundation URL cookie selection](https://developer.apple.com/documentation/foundation/httpcookiestorage/cookies(for:))
 - [Foundation domain representation](https://developer.apple.com/documentation/foundation/httpcookie/domain): a domain without a leading dot is host-only.
 - [RFC 6265, path matching and request cookie selection](https://www.rfc-editor.org/rfc/rfc6265#section-5.4)
+
+CI also runs for pull requests targeting `feature/**` branches so dependent pull requests receive the same checks.
