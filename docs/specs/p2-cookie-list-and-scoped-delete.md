@@ -45,4 +45,6 @@ Merge the P1 pull request first.
 - `yarn lint`, `yarn typecheck`, `yarn nitrogen`, and `yarn prepare`: passed.
 - `git diff --check`: passed. Generated bridges remain untracked build output.
 
-No physical devices were used. The local Xcode installation has no tvOS runtime, so tvOS execution runs in GitHub CI.
+tvOS 27 simulator, Xcode 27.0: all eight native tests pass, including scoped deletion and the new WebKit-unavailable entry points.
+
+No physical devices were used.
