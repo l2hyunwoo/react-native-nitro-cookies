@@ -174,12 +174,19 @@ class NitroCookies : HybridNitroCookiesSpec() {
     return url
   }
 
+  private fun cookieManagerOrThrow(): CookieManager =
+    try {
+      CookieManager.getInstance()
+    } catch (e: Exception) {
+      throw Exception("WEBVIEW_UNAVAILABLE: ${e.message}", e)
+    }
+
   // MARK: - Synchronous Cookie Operations
 
   /** Get cookies synchronously for a URL */
   override fun getSync(url: String): Array<Cookie> {
     val urlObj = validateURL(url)
-    val cookieManager = CookieManager.getInstance()
+    val cookieManager = cookieManagerOrThrow()
     val cookieString = cookieManager.getCookie(url)
 
     if (cookieString.isNullOrEmpty()) {
@@ -220,7 +227,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     val cookieWithDefaults =
       cookie.copy(path = cookie.path ?: "/", domain = cookie.domain ?: urlObj.host)
 
-    val cookieManager = CookieManager.getInstance()
+    val cookieManager = cookieManagerOrThrow()
     cookieManager.setAcceptCookie(true)
 
     val setCookieString = toRFC6265String(cookieWithDefaults)
@@ -232,7 +239,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
   /** Parse and set cookies from Set-Cookie header synchronously */
   override fun setFromResponseSync(url: String, value: String): Boolean {
     validateURL(url) // Validate URL format
-    val cookieManager = CookieManager.getInstance()
+    val cookieManager = cookieManagerOrThrow()
     cookieManager.setAcceptCookie(true)
 
     // Set-Cookie header can contain multiple cookies
@@ -249,7 +256,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
   /** Clear a specific cookie by name synchronously */
   override fun clearByNameSync(url: String, name: String): Boolean {
     val urlObj = validateURL(url)
-    val cookieManager = CookieManager.getInstance()
+    val cookieManager = cookieManagerOrThrow()
 
     // Check if the cookie exists for the given URL
     val cookieString = cookieManager.getCookie(url)
@@ -277,7 +284,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
    */
   override fun getCookieHeaderSync(url: String): String {
     validateURL(url)
-    return CookieManager.getInstance().getCookie(url) ?: ""
+    return cookieManagerOrThrow().getCookie(url) ?: ""
   }
 
   /** Set multiple cookies synchronously */
@@ -289,7 +296,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
       validateDomain(cookie, urlObj)
     }
 
-    val cookieManager = CookieManager.getInstance()
+    val cookieManager = cookieManagerOrThrow()
     cookieManager.setAcceptCookie(true)
 
     for (cookie in cookies) {
@@ -313,7 +320,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
       val cookieWithDefaults =
         cookie.copy(path = cookie.path ?: "/", domain = cookie.domain ?: urlObj.host)
 
-      val cookieManager = CookieManager.getInstance()
+      val cookieManager = cookieManagerOrThrow()
       cookieManager.setAcceptCookie(true)
 
       val setCookieString = toRFC6265String(cookieWithDefaults)
@@ -333,7 +340,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
         validateDomain(cookie, urlObj)
       }
 
-      val cookieManager = CookieManager.getInstance()
+      val cookieManager = cookieManagerOrThrow()
       cookieManager.setAcceptCookie(true)
 
       for (cookie in cookies) {
@@ -355,7 +362,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
   override fun getCookieHeader(url: String, useWebKit: Boolean?): Promise<String> {
     return Promise.async {
       validateURL(url)
-      CookieManager.getInstance().getCookie(url) ?: ""
+      cookieManagerOrThrow().getCookie(url) ?: ""
     }
   }
 
@@ -363,7 +370,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
   override fun get(url: String, useWebKit: Boolean?): Promise<Array<Cookie>> {
     return Promise.async {
       val urlObj = validateURL(url)
-      val cookieManager = CookieManager.getInstance()
+      val cookieManager = cookieManagerOrThrow()
       val cookieString = cookieManager.getCookie(url)
 
       if (cookieString.isNullOrEmpty()) {
@@ -401,7 +408,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     val promise = Promise<Boolean>()
     Handler(Looper.getMainLooper()).post {
       try {
-        val cookieManager = CookieManager.getInstance()
+        val cookieManager = cookieManagerOrThrow()
         cookieManager.removeAllCookies { removed -> promise.resolve(removed) }
       } catch (e: Exception) {
         promise.reject(e)
@@ -414,7 +421,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
   override fun setFromResponse(url: String, value: String): Promise<Boolean> {
     return Promise.async {
       val urlObj = validateURL(url)
-      val cookieManager = CookieManager.getInstance()
+      val cookieManager = cookieManagerOrThrow()
       cookieManager.setAcceptCookie(true)
 
       // Set-Cookie header can contain multiple cookies
@@ -466,7 +473,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
   override fun clearByName(url: String, name: String, useWebKit: Boolean?): Promise<Boolean> {
     return Promise.async {
       val urlObj = validateURL(url)
-      val cookieManager = CookieManager.getInstance()
+      val cookieManager = cookieManagerOrThrow()
 
       // Check if the cookie exists for the given URL
       val cookieString = cookieManager.getCookie(url)
@@ -489,7 +496,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
   /** Flush cookies to persistent storage (Android only) */
   override fun flush(): Promise<Unit> {
     return Promise.async {
-      val cookieManager = CookieManager.getInstance()
+      val cookieManager = cookieManagerOrThrow()
       cookieManager.flush()
       Unit
     }
@@ -500,7 +507,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     val promise = Promise<Boolean>()
     Handler(Looper.getMainLooper()).post {
       try {
-        val cookieManager = CookieManager.getInstance()
+        val cookieManager = cookieManagerOrThrow()
         cookieManager.removeSessionCookies { removed -> promise.resolve(removed) }
       } catch (e: Exception) {
         promise.reject(e)

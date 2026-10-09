@@ -1,0 +1,10 @@
+{
+  "name": "nitro-cookies-tvos-tests",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "19.2.7",
+    "react-native": "npm:react-native-tvos@0.85.3-3",
+    "react-native-nitro-modules": "0.35.9"
+  }
+}

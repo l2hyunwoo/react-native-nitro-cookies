@@ -11,7 +11,7 @@ High-performance HTTP cookie management for React Native using Nitro Modules JSI
 
 - **5x+ Faster** than bridge-based cookie libraries thanks to JSI (JavaScript Interface)
 - **Synchronous API** for performance-critical code paths (no async/await needed!)
-- **Cross-platform** support for iOS (11+) and Android (API 21+)
+- **Cross-platform** support for iOS (11+), tvOS and Android (API 21+)
 - **WebView synchronization** with iOS WKWebView cookie storage
 - **Automatic HTTP header parsing** from Set-Cookie headers
 - **Type-safe API** with full TypeScript support
@@ -162,6 +162,8 @@ await NitroCookies.set(url, cookie, true); // useWebKit = true
 await NitroCookies.set(url, cookie, false); // useWebKit = false
 ```
 
+> **tvOS**: WebKit APIs (`useWebKit: true`) are unavailable and reject with `WEBKIT_UNAVAILABLE`; NSHTTPCookieStorage APIs work.
+
 ## Error Handling
 
 ```typescript
@@ -172,13 +174,14 @@ try {
 }
 ```
 
-| Error Code             | Description                                |
-| ---------------------- | ------------------------------------------ |
-| `INVALID_URL`          | URL malformed or missing protocol          |
-| `DOMAIN_MISMATCH`      | Cookie domain doesn't match URL            |
-| `WEBKIT_UNAVAILABLE`   | WebKit requested on iOS < 11               |
-| `PLATFORM_UNSUPPORTED` | Platform-specific method on wrong platform |
-| `NETWORK_ERROR`        | HTTP request failed                        |
+| Error Code             | Description                                             |
+| ---------------------- | ------------------------------------------------------- |
+| `INVALID_URL`          | URL malformed or missing protocol                       |
+| `DOMAIN_MISMATCH`      | Cookie domain doesn't match URL                         |
+| `WEBKIT_UNAVAILABLE`   | WebKit requested on iOS < 11 or on tvOS                 |
+| `WEBVIEW_UNAVAILABLE`  | Android System WebView is missing, disabled or updating |
+| `PLATFORM_UNSUPPORTED` | Platform-specific method on wrong platform              |
+| `NETWORK_ERROR`        | HTTP request failed                                     |
 
 ## Migration from @react-native-cookies/cookies
 

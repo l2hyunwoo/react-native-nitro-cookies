@@ -73,6 +73,8 @@ export enum CookieErrorCode {
   PLATFORM_UNSUPPORTED = 'PLATFORM_UNSUPPORTED',
   /** WebKit operations on iOS < 11 */
   WEBKIT_UNAVAILABLE = 'WEBKIT_UNAVAILABLE',
+  /** Android System WebView is missing, disabled or updating */
+  WEBVIEW_UNAVAILABLE = 'WEBVIEW_UNAVAILABLE',
   /** Failed to parse Set-Cookie header */
   PARSE_ERROR = 'PARSE_ERROR',
   /** Network request failed */

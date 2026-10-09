@@ -1,0 +1,20 @@
+require_relative './node_modules/react-native/scripts/react_native_pods'
+
+platform :tvos, '15.1'
+prepare_react_native_project!
+
+repo = ENV.fetch('NITRO_COOKIES_ROOT')
+
+target 'NitroCookiesTV' do
+  use_react_native!(:path => './node_modules/react-native', :app_path => __dir__)
+  pod 'NitroModules', :path => './node_modules/react-native-nitro-modules'
+  pod 'NitroCookies', :path => File.join(repo, 'package')
+
+  target 'CookieTests' do
+    inherit! :search_paths
+  end
+
+  post_install do |installer|
+    react_native_post_install(installer, './node_modules/react-native', :mac_catalyst_enabled => false)
+  end
+end

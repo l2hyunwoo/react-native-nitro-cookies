@@ -94,3 +94,14 @@ describe('setMany', () => {
     expect(mockHybrid.setMany).toHaveBeenCalledWith(URL, cookies, true);
   });
 });
+
+describe('get', () => {
+  it('propagates a WEBKIT_UNAVAILABLE rejection from the native layer', async () => {
+    const error = new Error(
+      'Error Domain=WEBKIT_UNAVAILABLE Code=3 "WebKit is not available on this platform"'
+    );
+    mockHybrid.get.mockRejectedValue(error);
+    await expect(NitroCookies.get(URL, true)).rejects.toBe(error);
+    expect(mockHybrid.get).toHaveBeenCalledWith(URL, true);
+  });
+});

@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(WebKit)
 import WebKit
+#endif
 import NitroModules
 
 /**
@@ -187,6 +189,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return url
     }
 
+    #if canImport(WebKit)
     // MARK: - WebKit Main-Thread Helpers
 
     /**
@@ -224,6 +227,12 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                 }
             }
         }
+    }
+    #endif
+
+    private func webKitUnavailableError() -> NSError {
+        return NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
+                       userInfo: [NSLocalizedDescriptionKey: "WebKit is not available on this platform"])
     }
 
     // MARK: - Synchronous Cookie Operations
@@ -338,6 +347,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             let httpCookie = try self.makeHTTPCookie(from: cookie, url: url)
 
             if useWebKit == true {
+                #if canImport(WebKit)
                 // Use WKHTTPCookieStore
                 if #available(iOS 11.0, *) {
                     await self.withWebKitStoreVoid { store, done in
@@ -349,6 +359,9 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                                  userInfo: [NSLocalizedDescriptionKey:
                                     "WebKit requires iOS 11 or higher"])
                 }
+                #else
+                throw self.webKitUnavailableError()
+                #endif
             } else {
                 // Use NSHTTPCookieStorage
                 HTTPCookieStorage.shared.setCookie(httpCookie)
@@ -372,6 +385,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             let httpCookies = try cookies.map { try self.makeHTTPCookie(from: $0, url: url) }
 
             if useWebKit == true {
+                #if canImport(WebKit)
                 if #available(iOS 11.0, *) {
                     for httpCookie in httpCookies {
                         await self.withWebKitStoreVoid { store, done in
@@ -384,6 +398,9 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                                  userInfo: [NSLocalizedDescriptionKey:
                                     "WebKit requires iOS 11 or higher"])
                 }
+                #else
+                throw self.webKitUnavailableError()
+                #endif
             } else {
                 let storage = HTTPCookieStorage.shared
                 for httpCookie in httpCookies {
@@ -403,6 +420,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
 
             let httpCookies: [HTTPCookie]
             if useWebKit == true {
+                #if canImport(WebKit)
                 if #available(iOS 11.0, *) {
                     httpCookies = await self.withWebKitStore { store, done in
                         store.getAllCookies { cookies in done(cookies) }
@@ -412,6 +430,9 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                                  userInfo: [NSLocalizedDescriptionKey:
                                     "WebKit requires iOS 11 or higher"])
                 }
+                #else
+                throw self.webKitUnavailableError()
+                #endif
             } else {
                 httpCookies = HTTPCookieStorage.shared.cookies ?? []
             }
@@ -432,6 +453,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             let url = try self.validateURL(urlString)
 
             if useWebKit == true {
+                #if canImport(WebKit)
                 if #available(iOS 11.0, *) {
                     let httpCookies: [HTTPCookie] = await self.withWebKitStore { store, done in
                         store.getAllCookies { cookies in done(cookies) }
@@ -446,6 +468,9 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                                  userInfo: [NSLocalizedDescriptionKey:
                                     "WebKit requires iOS 11 or higher"])
                 }
+                #else
+                throw self.webKitUnavailableError()
+                #endif
             } else {
                 let allCookies = HTTPCookieStorage.shared.cookies ?? []
                 let filteredCookies = allCookies.filter { cookie in
@@ -463,6 +488,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     public func clearAll(useWebKit: Bool?) throws -> Promise<Bool> {
         return Promise.async {
             if useWebKit == true {
+                #if canImport(WebKit)
                 if #available(iOS 11.0, *) {
                     let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
                         store.getAllCookies { cookies in done(cookies) }
@@ -481,6 +507,9 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                                   userInfo: [NSLocalizedDescriptionKey:
                                     "WebKit requires iOS 11 or higher"])
                 }
+                #else
+                throw self.webKitUnavailableError()
+                #endif
             } else {
                 let storage = HTTPCookieStorage.shared
                 let cookies = storage.cookies ?? []
@@ -536,6 +565,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     public func getAll(useWebKit: Bool?) throws -> Promise<[Cookie]> {
         return Promise.async {
             if useWebKit == true {
+                #if canImport(WebKit)
                 if #available(iOS 11.0, *) {
                     let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
                         store.getAllCookies { cookies in done(cookies) }
@@ -546,6 +576,9 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                                   userInfo: [NSLocalizedDescriptionKey:
                                     "WebKit requires iOS 11 or higher"])
                 }
+                #else
+                throw self.webKitUnavailableError()
+                #endif
             } else {
                 let cookies = HTTPCookieStorage.shared.cookies ?? []
                 return cookies.map { self.createCookieData(from: $0) }
@@ -561,6 +594,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             let url = try self.validateURL(urlString)
 
             if useWebKit == true {
+                #if canImport(WebKit)
                 if #available(iOS 11.0, *) {
                     let cookies: [HTTPCookie] = await self.withWebKitStore { store, done in
                         store.getAllCookies { cookies in done(cookies) }
@@ -584,6 +618,9 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                                  userInfo: [NSLocalizedDescriptionKey:
                                     "WebKit requires iOS 11 or higher"])
                 }
+                #else
+                throw self.webKitUnavailableError()
+                #endif
             } else {
                 let storage = HTTPCookieStorage.shared
                 let cookies = storage.cookies ?? []
