@@ -48,9 +48,27 @@ The normalizer creates a new Error, preserves its original cause, message and av
 - `yarn prepare`: passed. JavaScript and declaration output export `CookieErrorCode` as a runtime value. Nitrogen regenerated bridge files without a tracked native-interface change.
 - `git diff --check`: passed.
 
-Native device execution is not part of this TypeScript wrapper check. Parsing is based on the inspected Nitro 0.35.9 formats; a future bridge format may use the fallback code until its format is supported. Build warnings about the existing autolinking syntax and browser data remain outside this change.
+Parsing is based on the inspected Nitro 0.35.9 formats; a future bridge format may use the fallback code until its format is supported. Build warnings about the existing autolinking syntax and browser data remain outside this change.
 
 ## Dependency
 This pull request builds on the cookie-list and scoped-deletion branch.
 Normalize the six new public methods together with the original 17 operations.
 Response-list failures use the same NETWORK_ERROR fallback as response dictionary queries.
+
+## Emulator and simulator verification
+- Real Hermes/Nitro bridge: iOS 26.3.1 passes 9 tests; Android API 35 passes 11 tests.
+- Android TV API 36 passes the same 11 tests with WebView installed. After uninstalling WebView for the emulator user, all 19 store operations expose `WEBVIEW_UNAVAILABLE` as a JavaScript Error with the original cause.
+- The new harness cases cover invalid URLs, domain mismatch, malformed scope, Android unsupported queries, error context, and successful duplicate-list/scoped-delete results.
+- The inherited native suite passes 8 tests on tvOS 27. The JavaScript harness was run on iOS and Android; it was not run on tvOS.
+
+Configure `rn-harness.config.mjs` with an available `appleSimulator` or `androidEmulator` runner, then run from `example/`:
+
+```sh
+yarn react-native-harness --harnessRunner <runner> --testPathPatterns cookies-normalized-errors
+```
+
+The Android TV provider-absence fixture is opt-in and excluded from the default harness pattern. On a disposable Android TV emulator without a WebView provider:
+
+```sh
+yarn react-native-harness --harnessRunner <tv-runner> --testMatch '**/cookies-tv-unavailable.evidence.ts'
+```
