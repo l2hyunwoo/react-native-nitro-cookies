@@ -211,22 +211,42 @@ await NitroCookies.set(url, cookie, false); // useWebKit = false
 
 ## Error Handling
 
+All operation failures throw or reject with an `Error` that has a string `code`.
+Use the exported `CookieErrorCode` values to handle known failures:
+
 ```typescript
+import NitroCookies, { CookieErrorCode } from "react-native-nitro-cookies";
+
 try {
-  await NitroCookies.set("example.com", cookie); // Missing protocol!
+  await NitroCookies.set("example.com", { name: "session", value: "abc" });
 } catch (error) {
-  // INVALID_URL: URLs must include protocol (http:// or https://)
+  if (error instanceof Error && "code" in error) {
+    if (error.code === CookieErrorCode.INVALID_URL) {
+      // Supply a URL with an http:// or https:// protocol.
+    }
+  }
 }
 ```
 
-| Error Code             | Description                                             |
-| ---------------------- | ------------------------------------------------------- |
-| `INVALID_URL`          | URL malformed or missing protocol                       |
-| `DOMAIN_MISMATCH`      | Cookie domain doesn't match URL                         |
-| `WEBKIT_UNAVAILABLE`   | WebKit requested on iOS < 11 or on tvOS                 |
+Synchronous methods use the same error contract. The wrapper preserves the original
+message and stack and exposes the original thrown value as `cause`. Context fields
+contain the supplied `url` and, for single-cookie set and clear operations,
+`cookieName`. The wrapper does not add cookie values to context.
+
+Existing nonempty string codes are preserved. Unclassified `getFromResponse` and `getFromResponseList`
+failures use `NETWORK_ERROR`; other unclassified failures use `STORAGE_ERROR`.
+Module initialization failures are outside this operation contract.
+
+| Error Code             | Description                                            |
+| ---------------------- | ------------------------------------------------------ |
+| `INVALID_URL`          | URL malformed or missing protocol                      |
+| `DOMAIN_MISMATCH`      | Cookie domain does not match URL                       |
+| `WEBKIT_UNAVAILABLE`   | WebKit requested on iOS < 11 or on tvOS                  |
 | `WEBVIEW_UNAVAILABLE`  | Android System WebView is missing, disabled or updating |
-| `PLATFORM_UNSUPPORTED` | Platform-specific method on wrong platform              |
-| `NETWORK_ERROR`        | HTTP request failed                                     |
+| `PLATFORM_UNSUPPORTED` | Platform-specific method on wrong platform             |
+| `PARSE_ERROR`          | Set-Cookie header could not be parsed                   |
+| `NETWORK_ERROR`        | HTTP request failed                                    |
+| `STORAGE_ERROR`        | Unclassified cookie operation failed                   |
 
 ## Migration from @react-native-cookies/cookies
 
@@ -270,7 +290,7 @@ import NitroCookies, {
   type Cookies,
   type CookieIdentifier,
   type CookieError,
-  type CookieErrorCode,
+  CookieErrorCode,
 } from "react-native-nitro-cookies";
 ```
 
