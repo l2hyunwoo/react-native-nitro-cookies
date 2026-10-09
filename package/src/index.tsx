@@ -1,12 +1,8 @@
 import { NitroModules } from 'react-native-nitro-modules';
 import type { NitroCookies as NitroCookiesType } from './NitroCookies.nitro';
-import type {
-  Cookie,
-  CookieIdentifier,
-  Cookies,
-  CookieErrorCode,
-  CookieError,
-} from './types';
+import { CookieErrorCode } from './types';
+import type { Cookie, CookieIdentifier, Cookies, CookieError } from './types';
+import { normalizeCookieError } from './errors';
 
 const NitroCookiesHybridObject =
   NitroModules.createHybridObject<NitroCookiesType>('NitroCookies');
@@ -41,27 +37,47 @@ function cookiesToDictionary(cookies: Cookie[]): Cookies {
 export const NitroCookies = {
   /** Return a list that preserves duplicate names and available scope metadata. */
   getListSync(url: string): Cookie[] {
-    return NitroCookiesHybridObject.getListSync(url);
+    try {
+      return NitroCookiesHybridObject.getListSync(url);
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /** Return a list that preserves duplicate names and available scope metadata. */
   async getList(url: string, useWebKit?: boolean): Promise<Cookie[]> {
-    return NitroCookiesHybridObject.getList(url, useWebKit ?? false);
+    try {
+      return await NitroCookiesHybridObject.getList(url, useWebKit ?? false);
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /** Return all cookies with stored scope metadata. Apple platforms only. */
   async getAllList(useWebKit?: boolean): Promise<Cookie[]> {
-    return NitroCookiesHybridObject.getAllList(useWebKit ?? false);
+    try {
+      return await NitroCookiesHybridObject.getAllList(useWebKit ?? false);
+    } catch (error) {
+      throw normalizeCookieError(error);
+    }
   },
 
   /** Return every response cookie, including cookies with duplicate names. */
   async getFromResponseList(url: string): Promise<Cookie[]> {
-    return NitroCookiesHybridObject.getFromResponse(url);
+    try {
+      return await NitroCookiesHybridObject.getFromResponse(url);
+    } catch (error) {
+      throw normalizeCookieError(error, { url }, CookieErrorCode.NETWORK_ERROR);
+    }
   },
 
   /** Submit deletion for one exact scope. Android cannot acknowledge sync writes. */
   clearCookieSync(url: string, identifier: CookieIdentifier): void {
-    return NitroCookiesHybridObject.clearCookieSync(url, identifier);
+    try {
+      return NitroCookiesHybridObject.clearCookieSync(url, identifier);
+    } catch (error) {
+      throw normalizeCookieError(error, { url, cookieName: identifier?.name });
+    }
   },
 
   /** Delete one exact scope. Retain the original scope for Android cookies. */
@@ -70,11 +86,15 @@ export const NitroCookies = {
     identifier: CookieIdentifier,
     useWebKit?: boolean
   ): Promise<void> {
-    return NitroCookiesHybridObject.clearCookie(
-      url,
-      identifier,
-      useWebKit ?? false
-    );
+    try {
+      return await NitroCookiesHybridObject.clearCookie(
+        url,
+        identifier,
+        useWebKit ?? false
+      );
+    } catch (error) {
+      throw normalizeCookieError(error, { url, cookieName: identifier?.name });
+    }
   },
   // ========================================
   // SYNCHRONOUS METHODS
@@ -98,7 +118,11 @@ export const NitroCookies = {
    * ```
    */
   getSync(url: string): Cookies {
-    return cookiesToDictionary(NitroCookiesHybridObject.getSync(url));
+    try {
+      return cookiesToDictionary(NitroCookiesHybridObject.getSync(url));
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /**
@@ -125,7 +149,11 @@ export const NitroCookies = {
    * ```
    */
   setSync(url: string, cookie: Cookie): boolean {
-    return NitroCookiesHybridObject.setSync(url, cookie);
+    try {
+      return NitroCookiesHybridObject.setSync(url, cookie);
+    } catch (error) {
+      throw normalizeCookieError(error, { url, cookieName: cookie?.name });
+    }
   },
 
   /**
@@ -145,7 +173,11 @@ export const NitroCookies = {
    * ```
    */
   setFromResponseSync(url: string, value: string): boolean {
-    return NitroCookiesHybridObject.setFromResponseSync(url, value);
+    try {
+      return NitroCookiesHybridObject.setFromResponseSync(url, value);
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /**
@@ -163,7 +195,11 @@ export const NitroCookies = {
    * ```
    */
   clearByNameSync(url: string, name: string): boolean {
-    return NitroCookiesHybridObject.clearByNameSync(url, name);
+    try {
+      return NitroCookiesHybridObject.clearByNameSync(url, name);
+    } catch (error) {
+      throw normalizeCookieError(error, { url, cookieName: name });
+    }
   },
 
   /**
@@ -185,7 +221,11 @@ export const NitroCookies = {
    * ```
    */
   getCookieHeaderSync(url: string): string {
-    return NitroCookiesHybridObject.getCookieHeaderSync(url);
+    try {
+      return NitroCookiesHybridObject.getCookieHeaderSync(url);
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /**
@@ -210,7 +250,11 @@ export const NitroCookies = {
    * ```
    */
   setManySync(url: string, cookies: Cookie[]): boolean {
-    return NitroCookiesHybridObject.setManySync(url, cookies);
+    try {
+      return NitroCookiesHybridObject.setManySync(url, cookies);
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   // ========================================
@@ -255,7 +299,15 @@ export const NitroCookies = {
     cookie: Cookie,
     useWebKit?: boolean
   ): Promise<boolean> {
-    return NitroCookiesHybridObject.set(url, cookie, useWebKit ?? false);
+    try {
+      return await NitroCookiesHybridObject.set(
+        url,
+        cookie,
+        useWebKit ?? false
+      );
+    } catch (error) {
+      throw normalizeCookieError(error, { url, cookieName: cookie?.name });
+    }
   },
 
   /**
@@ -288,7 +340,15 @@ export const NitroCookies = {
     cookies: Cookie[],
     useWebKit?: boolean
   ): Promise<boolean> {
-    return NitroCookiesHybridObject.setMany(url, cookies, useWebKit ?? false);
+    try {
+      return await NitroCookiesHybridObject.setMany(
+        url,
+        cookies,
+        useWebKit ?? false
+      );
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /**
@@ -312,7 +372,14 @@ export const NitroCookies = {
    * ```
    */
   async getCookieHeader(url: string, useWebKit?: boolean): Promise<string> {
-    return NitroCookiesHybridObject.getCookieHeader(url, useWebKit ?? false);
+    try {
+      return await NitroCookiesHybridObject.getCookieHeader(
+        url,
+        useWebKit ?? false
+      );
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /**
@@ -336,8 +403,15 @@ export const NitroCookies = {
    * ```
    */
   async get(url: string, useWebKit?: boolean): Promise<Cookies> {
-    const cookies = await NitroCookiesHybridObject.get(url, useWebKit ?? false);
-    return cookiesToDictionary(cookies);
+    try {
+      const cookies = await NitroCookiesHybridObject.get(
+        url,
+        useWebKit ?? false
+      );
+      return cookiesToDictionary(cookies);
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /**
@@ -354,7 +428,11 @@ export const NitroCookies = {
    * ```
    */
   async clearAll(useWebKit?: boolean): Promise<boolean> {
-    return NitroCookiesHybridObject.clearAll(useWebKit ?? false);
+    try {
+      return await NitroCookiesHybridObject.clearAll(useWebKit ?? false);
+    } catch (error) {
+      throw normalizeCookieError(error);
+    }
   },
 
   /**
@@ -380,7 +458,11 @@ export const NitroCookies = {
    * ```
    */
   async setFromResponse(url: string, value: string): Promise<boolean> {
-    return NitroCookiesHybridObject.setFromResponse(url, value);
+    try {
+      return await NitroCookiesHybridObject.setFromResponse(url, value);
+    } catch (error) {
+      throw normalizeCookieError(error, { url });
+    }
   },
 
   /**
@@ -403,8 +485,12 @@ export const NitroCookies = {
    * ```
    */
   async getFromResponse(url: string): Promise<Cookies> {
-    const cookies = await NitroCookiesHybridObject.getFromResponse(url);
-    return cookiesToDictionary(cookies);
+    try {
+      const cookies = await NitroCookiesHybridObject.getFromResponse(url);
+      return cookiesToDictionary(cookies);
+    } catch (error) {
+      throw normalizeCookieError(error, { url }, CookieErrorCode.NETWORK_ERROR);
+    }
   },
 
   /**
@@ -431,8 +517,12 @@ export const NitroCookies = {
    * ```
    */
   async getAll(useWebKit?: boolean): Promise<Cookies> {
-    const cookies = await NitroCookiesHybridObject.getAll(useWebKit ?? false);
-    return cookiesToDictionary(cookies);
+    try {
+      const cookies = await NitroCookiesHybridObject.getAll(useWebKit ?? false);
+      return cookiesToDictionary(cookies);
+    } catch (error) {
+      throw normalizeCookieError(error);
+    }
   },
 
   /**
@@ -462,7 +552,15 @@ export const NitroCookies = {
     name: string,
     useWebKit?: boolean
   ): Promise<boolean> {
-    return NitroCookiesHybridObject.clearByName(url, name, useWebKit ?? false);
+    try {
+      return await NitroCookiesHybridObject.clearByName(
+        url,
+        name,
+        useWebKit ?? false
+      );
+    } catch (error) {
+      throw normalizeCookieError(error, { url, cookieName: name });
+    }
   },
 
   /**
@@ -487,7 +585,11 @@ export const NitroCookies = {
    * ```
    */
   async flush(): Promise<void> {
-    return NitroCookiesHybridObject.flush();
+    try {
+      return await NitroCookiesHybridObject.flush();
+    } catch (error) {
+      throw normalizeCookieError(error);
+    }
   },
 
   /**
@@ -513,12 +615,17 @@ export const NitroCookies = {
    * ```
    */
   async removeSessionCookies(): Promise<boolean> {
-    return NitroCookiesHybridObject.removeSessionCookies();
+    try {
+      return await NitroCookiesHybridObject.removeSessionCookies();
+    } catch (error) {
+      throw normalizeCookieError(error);
+    }
   },
 };
 
 // Export types
-export type { Cookie, CookieIdentifier, Cookies, CookieErrorCode, CookieError };
+export { CookieErrorCode };
+export type { Cookie, CookieIdentifier, Cookies, CookieError };
 
 // Default export for convenience
 export default NitroCookies;

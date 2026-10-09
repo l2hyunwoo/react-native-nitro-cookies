@@ -91,7 +91,8 @@ export enum CookieErrorCode {
 }
 
 /**
- * Structured error for cookie operations
+ * Error thrown or rejected by public cookie operations.
+ * The original message and stack are preserved. Context never includes cookie values.
  */
 export interface CookieError extends Error {
   /** Error code for programmatic handling */
@@ -100,9 +101,12 @@ export interface CookieError extends Error {
   /** Human-readable error message */
   message: string;
 
-  /** URL that caused the error (if applicable) */
+  /** Original thrown value, without changes */
+  cause?: unknown;
+
+  /** URL supplied to the operation (if applicable) */
   url?: string;
 
-  /** Cookie name that caused the error (if applicable) */
+  /** Cookie name supplied to set or clearByName (if applicable) */
   cookieName?: string;
 }
