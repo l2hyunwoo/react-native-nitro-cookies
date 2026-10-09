@@ -166,9 +166,8 @@ jobs:
           arch: x86_64
           target: google_apis
           script: |
-            cd example/android
-            ./gradlew :app:connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=com.margelo.nitro.nitrocookies.WebViewUnavailableTest --no-daemon --console=plain
-            ./gradlew :app:connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=com.margelo.nitro.nitrocookies.CookieScopeTest --no-daemon --console=plain
+            cd example/android && ./gradlew :app:connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=com.margelo.nitro.nitrocookies.WebViewUnavailableTest --no-daemon --console=plain
+            cd example/android && ./gradlew :app:connectedDebugAndroidTest -PreactNativeArchitectures=x86_64 -Pandroid.testInstrumentationRunnerArguments.class=com.margelo.nitro.nitrocookies.CookieScopeTest --no-daemon --console=plain
 
   test-tvos:
     runs-on: macos-15
