@@ -158,6 +158,31 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     }
 
     /**
+     * Select WebKit cookies that can be sent to the request URL.
+     */
+    private func cookiesForRequest(_ cookies: [HTTPCookie], url: URL) -> [HTTPCookie] {
+        guard let host = url.host?.lowercased() else { return [] }
+        let encodedPath = URLComponents(url: url, resolvingAgainstBaseURL: false)?.percentEncodedPath ?? ""
+        let path = encodedPath.isEmpty ? "/" : encodedPath
+        let now = Date()
+
+        return cookies.filter { cookie in
+            let domain = cookie.domain.lowercased()
+            // Foundation uses a leading dot to distinguish domain cookies from host-only cookies.
+            let domainMatches = domain.hasPrefix(".")
+                ? self.isMatchingDomain(cookieDomain: domain, urlHost: host)
+                : domain == host
+            let cookiePath = cookie.path.isEmpty ? "/" : cookie.path
+            let pathMatches = path == cookiePath ||
+                path.hasPrefix(cookiePath.hasSuffix("/") ? cookiePath : cookiePath + "/")
+
+            return domainMatches && pathMatches &&
+                (!cookie.isSecure || url.scheme == "https") &&
+                (cookie.expiresDate.map { $0 > now } ?? true)
+        }
+    }
+
+    /**
      * Validate that cookie domain matches URL host
      */
     private func validateDomain(cookie: Cookie, url: URL) throws {
@@ -306,12 +331,8 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
      */
     public func getCookieHeaderSync(url urlString: String) throws -> String {
         let url = try validateURL(urlString)
-        let allCookies = HTTPCookieStorage.shared.cookies ?? []
-        let matched = allCookies.filter { cookie in
-            self.isMatchingDomain(cookieDomain: cookie.domain,
-                                 urlHost: url.host ?? "")
-        }
-        return HTTPCookie.requestHeaderFields(with: matched)["Cookie"] ?? ""
+        let cookies = HTTPCookieStorage.shared.cookies(for: url) ?? []
+        return HTTPCookie.requestHeaderFields(with: cookies)["Cookie"] ?? ""
     }
 
     /**
@@ -422,9 +443,10 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             if useWebKit == true {
                 #if canImport(WebKit)
                 if #available(iOS 11.0, *) {
-                    httpCookies = await self.withWebKitStore { store, done in
+                    let storedCookies: [HTTPCookie] = await self.withWebKitStore { store, done in
                         store.getAllCookies { cookies in done(cookies) }
                     }
+                    httpCookies = self.cookiesForRequest(storedCookies, url: url)
                 } else {
                     throw NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
                                  userInfo: [NSLocalizedDescriptionKey:
@@ -434,14 +456,10 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
                 throw self.webKitUnavailableError()
                 #endif
             } else {
-                httpCookies = HTTPCookieStorage.shared.cookies ?? []
+                httpCookies = HTTPCookieStorage.shared.cookies(for: url) ?? []
             }
 
-            let matched = httpCookies.filter { cookie in
-                self.isMatchingDomain(cookieDomain: cookie.domain,
-                                     urlHost: url.host ?? "")
-            }
-            return HTTPCookie.requestHeaderFields(with: matched)["Cookie"] ?? ""
+            return HTTPCookie.requestHeaderFields(with: httpCookies)["Cookie"] ?? ""
         }
     }
 

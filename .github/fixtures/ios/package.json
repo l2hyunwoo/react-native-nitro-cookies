@@ -1,0 +1,10 @@
+{
+  "name": "nitro-cookies-ios-tests",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "19.2.7",
+    "react-native": "0.85.3",
+    "react-native-nitro-modules": "0.35.9"
+  }
+}
