@@ -25,6 +25,8 @@ class WebViewUnavailableTest {
   fun synchronousOperationsThrowWhenWebViewIsUnavailable() {
     val operations = listOf<() -> Any>(
       { cookies.getSync(url) },
+      { cookies.getListSync(url) },
+      { cookies.clearCookieSync(url, CookieIdentifier("session", "/", null)) },
       { cookies.setSync(url, cookie) },
       { cookies.setFromResponseSync(url, "session=value") },
       { cookies.clearByNameSync(url, "session") },
@@ -43,6 +45,8 @@ class WebViewUnavailableTest {
       { cookies.setMany(url, arrayOf(cookie), false) },
       { cookies.getCookieHeader(url, false) },
       { cookies.get(url, false) },
+      { cookies.getList(url, false) },
+      { cookies.clearCookie(url, CookieIdentifier("session", "/", null), false) },
       { cookies.setFromResponse(url, "session=value") },
       { cookies.clearByName(url, "session", false) },
       { cookies.flush() },

@@ -114,7 +114,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     /**
      * Convert NSHTTPCookie to Cookie struct
      */
-    private func createCookieData(from httpCookie: HTTPCookie) -> Cookie {
+    private func createCookieData(from httpCookie: HTTPCookie, preserveDomain: Bool = false) -> Cookie {
         let expiresString = httpCookie.expiresDate.map {
             Self.iso8601Formatter.string(from: $0)
         }
@@ -122,7 +122,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         // Strip leading dot from domain — NSHTTPCookieStorage and Set-Cookie
         // parsing add a dot prefix per RFC 6265, but callers expect the bare domain.
         var domain = httpCookie.domain
-        if domain.hasPrefix(".") {
+        if !preserveDomain && domain.hasPrefix(".") {
             domain = String(domain.dropFirst())
         }
 
@@ -258,6 +258,109 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     private func webKitUnavailableError() -> NSError {
         return NSError(domain: "WEBKIT_UNAVAILABLE", code: 3,
                        userInfo: [NSLocalizedDescriptionKey: "WebKit is not available on this platform"])
+    }
+
+    private func validateListURL(_ urlString: String) throws -> URL {
+        let url = try validateURL(urlString)
+        guard let host = url.host, !host.isEmpty else {
+            throw NSError(domain: "INVALID_URL", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "URL has no host"])
+        }
+        return url
+    }
+
+    private func validateIdentifier(_ identifier: CookieIdentifier, url: URL) throws -> String {
+        let separators = CharacterSet(charactersIn: "()<>@,;:\"/[]?={} \\ ")
+        let validName = !identifier.name.isEmpty && identifier.name.unicodeScalars.allSatisfy {
+            $0.value > 32 && $0.value < 127 && !separators.contains($0)
+        }
+        let validPath = identifier.path.hasPrefix("/") && identifier.path.unicodeScalars.allSatisfy {
+            $0.value > 32 && $0.value < 127 && $0 != ";"
+        }
+        let domain = (identifier.domain ?? url.host!).lowercased()
+        let bareDomain = domain.hasPrefix(".") ? String(domain.dropFirst()) : domain
+        let validDomain = !bareDomain.isEmpty && !bareDomain.hasPrefix(".") &&
+            !bareDomain.hasSuffix(".") && domain.unicodeScalars.allSatisfy {
+                CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789.-").contains($0)
+            }
+        guard validName && validPath && (identifier.domain == nil || validDomain) else {
+            throw NSError(domain: "PARSE_ERROR", code: 5,
+                          userInfo: [NSLocalizedDescriptionKey: "Invalid cookie identifier"])
+        }
+        guard isMatchingDomain(cookieDomain: bareDomain, urlHost: url.host!.lowercased()) else {
+            throw NSError(domain: "DOMAIN_MISMATCH", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "Cookie domain does not match URL host"])
+        }
+        return domain
+    }
+
+    private func storedCookies(useWebKit: Bool?) async throws -> [HTTPCookie] {
+        if useWebKit != true { return HTTPCookieStorage.shared.cookies ?? [] }
+        #if canImport(WebKit)
+        if #available(iOS 11.0, *) {
+            return await withWebKitStore { store, done in
+                store.getAllCookies { done($0) }
+            }
+        }
+        #endif
+        throw webKitUnavailableError()
+    }
+
+    public func getListSync(url urlString: String) throws -> [Cookie] {
+        let url = try validateListURL(urlString)
+        return (HTTPCookieStorage.shared.cookies ?? []).filter {
+            isMatchingDomain(cookieDomain: $0.domain, urlHost: url.host!)
+        }.map { createCookieData(from: $0, preserveDomain: true) }
+    }
+
+    public func getList(url urlString: String, useWebKit: Bool?) throws -> Promise<[Cookie]> {
+        return Promise.async {
+            let url = try self.validateListURL(urlString)
+            return try await self.storedCookies(useWebKit: useWebKit).filter {
+                self.isMatchingDomain(cookieDomain: $0.domain, urlHost: url.host!)
+            }.map { self.createCookieData(from: $0, preserveDomain: true) }
+        }
+    }
+
+    public func getAllList(useWebKit: Bool?) throws -> Promise<[Cookie]> {
+        return Promise.async {
+            return try await self.storedCookies(useWebKit: useWebKit).map {
+                self.createCookieData(from: $0, preserveDomain: true)
+            }
+        }
+    }
+
+    public func clearCookieSync(url urlString: String, identifier: CookieIdentifier) throws {
+        let url = try validateListURL(urlString)
+        let domain = try validateIdentifier(identifier, url: url)
+        let storage = HTTPCookieStorage.shared
+        for cookie in storage.cookies ?? [] where cookie.name == identifier.name &&
+            cookie.path == identifier.path && cookie.domain.lowercased() == domain {
+            storage.deleteCookie(cookie)
+        }
+    }
+
+    public func clearCookie(url urlString: String, identifier: CookieIdentifier, useWebKit: Bool?) throws -> Promise<Void> {
+        return Promise.async {
+            let url = try self.validateListURL(urlString)
+            let domain = try self.validateIdentifier(identifier, url: url)
+            let cookies = try await self.storedCookies(useWebKit: useWebKit).filter {
+                $0.name == identifier.name && $0.path == identifier.path && $0.domain.lowercased() == domain
+            }
+            if useWebKit == true {
+                #if canImport(WebKit)
+                if #available(iOS 11.0, *) {
+                    for cookie in cookies {
+                        await self.withWebKitStoreVoid { store, done in
+                            store.delete(cookie) { done() }
+                        }
+                    }
+                }
+                #endif
+            } else {
+                for cookie in cookies { HTTPCookieStorage.shared.deleteCookie(cookie) }
+            }
+        }
     }
 
     // MARK: - Synchronous Cookie Operations

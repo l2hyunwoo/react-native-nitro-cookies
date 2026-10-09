@@ -1,6 +1,12 @@
 import { NitroModules } from 'react-native-nitro-modules';
 import type { NitroCookies as NitroCookiesType } from './NitroCookies.nitro';
-import type { Cookie, Cookies, CookieErrorCode, CookieError } from './types';
+import type {
+  Cookie,
+  CookieIdentifier,
+  Cookies,
+  CookieErrorCode,
+  CookieError,
+} from './types';
 
 const NitroCookiesHybridObject =
   NitroModules.createHybridObject<NitroCookiesType>('NitroCookies');
@@ -33,6 +39,43 @@ function cookiesToDictionary(cookies: Cookie[]): Cookies {
  * ```
  */
 export const NitroCookies = {
+  /** Return a list that preserves duplicate names and available scope metadata. */
+  getListSync(url: string): Cookie[] {
+    return NitroCookiesHybridObject.getListSync(url);
+  },
+
+  /** Return a list that preserves duplicate names and available scope metadata. */
+  async getList(url: string, useWebKit?: boolean): Promise<Cookie[]> {
+    return NitroCookiesHybridObject.getList(url, useWebKit ?? false);
+  },
+
+  /** Return all cookies with stored scope metadata. Apple platforms only. */
+  async getAllList(useWebKit?: boolean): Promise<Cookie[]> {
+    return NitroCookiesHybridObject.getAllList(useWebKit ?? false);
+  },
+
+  /** Return every response cookie, including cookies with duplicate names. */
+  async getFromResponseList(url: string): Promise<Cookie[]> {
+    return NitroCookiesHybridObject.getFromResponse(url);
+  },
+
+  /** Submit deletion for one exact scope. Android cannot acknowledge sync writes. */
+  clearCookieSync(url: string, identifier: CookieIdentifier): void {
+    return NitroCookiesHybridObject.clearCookieSync(url, identifier);
+  },
+
+  /** Delete one exact scope. Retain the original scope for Android cookies. */
+  async clearCookie(
+    url: string,
+    identifier: CookieIdentifier,
+    useWebKit?: boolean
+  ): Promise<void> {
+    return NitroCookiesHybridObject.clearCookie(
+      url,
+      identifier,
+      useWebKit ?? false
+    );
+  },
   // ========================================
   // SYNCHRONOUS METHODS
   // ========================================
@@ -475,7 +518,7 @@ export const NitroCookies = {
 };
 
 // Export types
-export type { Cookie, Cookies, CookieErrorCode, CookieError };
+export type { Cookie, CookieIdentifier, Cookies, CookieErrorCode, CookieError };
 
 // Default export for convenience
 export default NitroCookies;
