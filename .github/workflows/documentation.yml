@@ -2,13 +2,26 @@ name: Documentation
 
 on:
   pull_request:
-    branches: [main, "feature/**"]
     paths:
-      ["website/**", "package/src/**", ".github/workflows/documentation.yml"]
+      - "website/**"
+      - "package/src/**"
+      - "package.json"
+      - ".nvmrc"
+      - ".yarnrc.yml"
+      - ".yarn/releases/**"
+      - ".yarn/plugins/**"
+      - ".github/workflows/documentation.yml"
   push:
     branches: [main]
     paths:
-      ["website/**", "package/src/**", ".github/workflows/documentation.yml"]
+      - "website/**"
+      - "package/src/**"
+      - "package.json"
+      - ".nvmrc"
+      - ".yarnrc.yml"
+      - ".yarn/releases/**"
+      - ".yarn/plugins/**"
+      - ".github/workflows/documentation.yml"
   workflow_dispatch:
 
 permissions:
@@ -56,6 +69,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

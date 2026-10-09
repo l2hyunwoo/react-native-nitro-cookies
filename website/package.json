@@ -7,7 +7,8 @@
     "dev": "vitepress dev --host 127.0.0.1",
     "typecheck": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck .vitepress/config.mts",
     "build": "vitepress build && node scripts/check.mjs",
-    "preview": "vitepress preview --host 127.0.0.1"
+    "preview": "vitepress preview --host 127.0.0.1",
+    "deploy": "gh workflow run documentation.yml --ref main"
   },
   "devDependencies": {
     "typescript": "5.9.3",

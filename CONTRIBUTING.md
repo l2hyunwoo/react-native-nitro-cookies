@@ -376,9 +376,24 @@ Run `yarn typecheck` and `yarn build` before submitting documentation changes.
 The build checks internal links, language coverage, and reference coverage for every public operation.
 Run `yarn preview` to inspect the production site under `/react-native-nitro-cookies/`.
 
-The Documentation workflow builds pull requests, including stacked PRs.
-Deployment runs only from `main`. Before the first deployment, set the repository's Pages source to **GitHub Actions**.
-The workflow does not deploy pull-request code.
+The `.github/workflows/documentation.yml` workflow builds and deploys the site automatically:
+
+- Pull requests targeting any branch build both languages and check the documentation contracts.
+- Matching pushes to `main` build the site, check the GitHub Pages configuration, and deploy the artifact.
+- A manual **Run workflow** on `main` rebuilds and redeploys the site without a new commit.
+
+Automatic runs watch `website/`, `package/src/`, the root package manifest, the workflow file, `.nvmrc`, and the shared Yarn configuration, releases, and plugins.
+Before the first deployment, set the repository's **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
+The `configure-pages` step checks that setup; it does not enable Pages on the repository.
+Deployment runs only from `main`, and the `github-pages` environment shows the deployed site URL.
+
+After installing the repository dependencies and merging the workflow into `main`, you can request a manual deployment from the repository root:
+
+```sh
+yarn docs:deploy
+```
+
+This requires an authenticated GitHub CLI with permission to run workflows. It builds and deploys the committed `main` branch.
 
 ## Sending a Pull Request
 
