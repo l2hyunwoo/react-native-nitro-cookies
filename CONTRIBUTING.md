@@ -360,6 +360,26 @@ Add screenshots or videos
 - Keep the PR focused on a single feature/fix
 - Rebase if needed to keep history clean
 
+## Documentation site
+
+The public site lives in `website/`, a separate Yarn project. Planning specifications are maintained in nunu-os.
+English is the default language. Add the matching Korean page under `website/content/ko/` when creating or changing a topic.
+Keep code identifiers and the API contracts consistent between languages.
+
+```sh
+cd website
+yarn install --immutable
+yarn dev
+```
+
+Run `yarn typecheck` and `yarn build` before submitting documentation changes.
+The build checks internal links, language coverage, and reference coverage for every public operation.
+Run `yarn preview` to inspect the production site under `/react-native-nitro-cookies/`.
+
+The Documentation workflow builds pull requests, including stacked PRs.
+Deployment runs only from `main`. Before the first deployment, set the repository's Pages source to **GitHub Actions**.
+The workflow does not deploy pull-request code.
+
 ## Sending a Pull Request
 
 > **Working on your first pull request?** You can learn how from this free series: [How to Contribute to an Open Source Project on GitHub](https://app.egghead.io/playlists/how-to-contribute-to-an-open-source-project-on-github).

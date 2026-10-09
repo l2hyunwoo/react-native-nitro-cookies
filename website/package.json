@@ -1,0 +1,17 @@
+{
+  "name": "nitro-cookies-website",
+  "private": true,
+  "type": "module",
+  "packageManager": "yarn@3.6.1",
+  "scripts": {
+    "dev": "vitepress dev --host 127.0.0.1",
+    "typecheck": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck .vitepress/config.mts",
+    "build": "vitepress build && node scripts/check.mjs",
+    "preview": "vitepress preview --host 127.0.0.1"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vitepress": "1.6.4",
+    "vue": "3.5.43"
+  }
+}
