@@ -131,6 +131,44 @@ interface Cookie {
 }
 ```
 
+## Cookie lists and scoped deletion
+
+Use list queries when cookies can share a name. Dictionary queries retain their
+existing behavior: the last cookie with a given name replaces earlier entries.
+
+```typescript
+const cookies = await NitroCookies.getList("https://api.example.com/admin", true);
+const allCookies = await NitroCookies.getAllList(true); // Apple platforms only
+const responseCookies = await NitroCookies.getFromResponseList("https://example.com/login");
+const cached = NitroCookies.getListSync("https://api.example.com");
+
+await NitroCookies.clearCookie("https://api.example.com", {
+  name: "session",
+  domain: ".example.com",
+  path: "/admin",
+}, true);
+
+NitroCookies.clearCookieSync("https://api.example.com", {
+  name: "session",
+  path: "/", // Omit domain for a host-only cookie.
+});
+```
+
+On Apple platforms, lists preserve stored domains, including leading dots, and paths.
+Pass those fields to `clearCookie` to delete only that identity. Missing cookies are a no-op.
+URL lists use the same domain selection as the existing queries, rather than request-header filtering.
+
+On Android, URL lists contain name/value pairs only. `CookieManager` does not expose
+original domains, paths, flags, or expiration dates. Retain the original domain and
+path when setting cookies so you can supply the deletion scope later. Omit `domain`
+for a host-only cookie. An explicit domain emits a `Domain` attribute in the expiration header.
+Use an HTTPS URL when deleting Secure cookies.
+
+Android synchronous deletion submits an expiration write without an acknowledgment.
+Asynchronous deletion waits for the platform callback and rejects rejected writes.
+Neither Android method reports whether the cookie existed. Existing `clearByName`
+methods retain their previous behavior. `getAllList` remains unavailable on Android.
+
 ## Attaching cookies to a manual request
 
 `getCookieHeader` returns the exact value of the HTTP `Cookie` request header for
@@ -230,6 +268,7 @@ yarn android
 import NitroCookies, {
   type Cookie,
   type Cookies,
+  type CookieIdentifier,
   type CookieError,
   type CookieErrorCode,
 } from "react-native-nitro-cookies";

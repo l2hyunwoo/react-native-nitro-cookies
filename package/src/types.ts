@@ -55,6 +55,13 @@ export interface Cookie {
   httpOnly?: boolean;
 }
 
+/** Exact cookie scope for deletion. Omit domain for a host-only cookie. */
+export interface CookieIdentifier {
+  name: string;
+  path: string;
+  domain?: string;
+}
+
 /**
  * Collection of cookies keyed by cookie name
  * Using type alias instead of interface for Nitrogen compatibility

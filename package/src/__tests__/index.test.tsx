@@ -7,6 +7,11 @@ import type { Cookie } from '../types';
 jest.mock('react-native-nitro-modules', () => {
   const hybrid = {
     getSync: jest.fn(),
+    getListSync: jest.fn(),
+    getList: jest.fn(),
+    getAllList: jest.fn(),
+    clearCookieSync: jest.fn(),
+    clearCookie: jest.fn(),
     setSync: jest.fn(),
     setFromResponseSync: jest.fn(),
     clearByNameSync: jest.fn(),
@@ -103,5 +108,92 @@ describe('get', () => {
     mockHybrid.get.mockRejectedValue(error);
     await expect(NitroCookies.get(URL, true)).rejects.toBe(error);
     expect(mockHybrid.get).toHaveBeenCalledWith(URL, true);
+  });
+});
+
+describe('cookie lists', () => {
+  const duplicates: Cookie[] = [
+    { name: 'session', value: 'root', domain: '.example.com', path: '/' },
+    { name: 'session', value: 'admin', domain: '.example.com', path: '/admin' },
+  ];
+
+  it('preserves duplicate names, scope, and order in synchronous lists', () => {
+    mockHybrid.getListSync.mockReturnValue(duplicates);
+    expect(NitroCookies.getListSync(URL)).toBe(duplicates);
+    expect(mockHybrid.getListSync).toHaveBeenCalledWith(URL);
+  });
+
+  it.each([undefined, false, true])(
+    'forwards async list flags: %s',
+    async (flag) => {
+      mockHybrid.getList.mockResolvedValue(duplicates);
+      await expect(NitroCookies.getList(URL, flag)).resolves.toBe(duplicates);
+      expect(mockHybrid.getList).toHaveBeenCalledWith(URL, flag ?? false);
+      mockHybrid.getAllList.mockResolvedValue(duplicates);
+      await expect(NitroCookies.getAllList(flag)).resolves.toBe(duplicates);
+      expect(mockHybrid.getAllList).toHaveBeenCalledWith(flag ?? false);
+    }
+  );
+
+  it('preserves every response cookie and the legacy dictionary result', async () => {
+    mockHybrid.getFromResponse.mockResolvedValue(duplicates);
+    await expect(NitroCookies.getFromResponseList(URL)).resolves.toBe(
+      duplicates
+    );
+    await expect(NitroCookies.getFromResponse(URL)).resolves.toEqual({
+      session: duplicates[1],
+    });
+  });
+
+  it('keeps Android name/value entries without inventing metadata', async () => {
+    const pairs = [
+      { name: 'session', value: 'root' },
+      { name: 'session', value: 'admin' },
+    ];
+    mockHybrid.getList.mockResolvedValue(pairs);
+    await expect(NitroCookies.getList(URL)).resolves.toEqual(pairs);
+  });
+
+  it('propagates unavailable storage failures', async () => {
+    const error = new Error('WEBKIT_UNAVAILABLE');
+    mockHybrid.getList.mockRejectedValue(error);
+    await expect(NitroCookies.getList(URL, true)).rejects.toBe(error);
+    mockHybrid.getAllList.mockRejectedValue(error);
+    await expect(NitroCookies.getAllList(true)).rejects.toBe(error);
+  });
+});
+
+describe('scoped deletion', () => {
+  const identifier = {
+    name: 'session',
+    domain: '.example.com',
+    path: '/admin',
+  };
+
+  it('forwards the exact scope synchronously', () => {
+    mockHybrid.clearCookieSync.mockReturnValue(undefined);
+    expect(NitroCookies.clearCookieSync(URL, identifier)).toBeUndefined();
+    expect(mockHybrid.clearCookieSync).toHaveBeenCalledWith(URL, identifier);
+  });
+
+  it.each([undefined, false, true])(
+    'forwards async scope flags: %s',
+    async (flag) => {
+      mockHybrid.clearCookie.mockResolvedValue(undefined);
+      await expect(
+        NitroCookies.clearCookie(URL, identifier, flag)
+      ).resolves.toBeUndefined();
+      expect(mockHybrid.clearCookie).toHaveBeenCalledWith(
+        URL,
+        identifier,
+        flag ?? false
+      );
+    }
+  );
+
+  it('leaves the host-only domain omitted', () => {
+    const hostOnly = { name: 'session', path: '/' };
+    NitroCookies.clearCookieSync(URL, hostOnly);
+    expect(mockHybrid.clearCookieSync).toHaveBeenCalledWith(URL, hostOnly);
   });
 });
