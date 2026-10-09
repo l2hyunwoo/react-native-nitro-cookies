@@ -7,9 +7,6 @@ const { lang } = useData();
 
 <template>
   <DefaultTheme.Layout>
-    <template #nav-bar-title-after>
-      <span class="version-label">Next</span>
-    </template>
     <template #doc-before>
       <div class="release-notice" v-if="lang === 'ko'">
         <strong>Next 문서</strong> · List API, scope를 지정하는 삭제 API, error

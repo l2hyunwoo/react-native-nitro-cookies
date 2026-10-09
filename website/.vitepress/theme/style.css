@@ -51,14 +51,6 @@ button:focus-visible {
   letter-spacing: -1px;
   font-size: 19px;
 }
-.version-label {
-  margin-left: 10px;
-  padding: 3px 8px;
-  border: 1px solid var(--vp-c-divider);
-  border-radius: 5px;
-  font: 11px var(--vp-font-family-mono);
-  color: var(--vp-c-text-2);
-}
 .VPNavBar {
   backdrop-filter: blur(14px);
 }
