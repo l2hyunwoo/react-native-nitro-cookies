@@ -84,8 +84,8 @@ for (const prefix of ["", "ko/"]) {
     new URL(`.vitepress/dist/${prefix}llms-full.txt`, root),
     "utf8",
   );
-  assert.ok(index.startsWith("# Nitro Cookies\n\n> "));
-  assert.ok(full.startsWith("# Nitro Cookies\n\n> "));
+  assert.ok(index.startsWith("\uFEFF# Nitro Cookies\n\n> "));
+  assert.ok(full.startsWith("\uFEFF# Nitro Cookies\n\n> "));
   assert.ok(index.includes("## Optional\n"));
   assert.ok(
     full.includes(prefix ? "아직 출시하지 않았습니다" : "are unreleased"),
@@ -114,6 +114,10 @@ for (const prefix of ["", "ko/"]) {
     const original = await readFile(
       new URL(`content/${prefix}${file}`, root),
       "utf8",
+    );
+    assert.ok(
+      exported.startsWith("\uFEFF"),
+      `${prefix}${file}: missing UTF-8 BOM`,
     );
     const fences = (text) =>
       markdown

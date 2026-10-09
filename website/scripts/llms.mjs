@@ -79,7 +79,8 @@ export async function generateLlmDocs(config, siteUrl, groups) {
         const body = markdownForAi(source, file, siteUrl, markdown);
         const destination = join(config.outDir, file);
         await mkdir(dirname(destination), { recursive: true });
-        await writeFile(destination, `> ${notice}\n\n${body}`);
+        // A BOM keeps Korean readable when a static host omits the charset.
+        await writeFile(destination, `\uFEFF> ${notice}\n\n${body}`);
         index.push(`- [${title}](${url})`);
         full.push(
           `---\n\n${korean ? "원문" : "Source"}: [${title}](${url})\n\n${body}`,
@@ -95,11 +96,11 @@ export async function generateLlmDocs(config, siteUrl, groups) {
     );
     await writeFile(
       join(config.outDir, prefix, "llms.txt"),
-      `${index.join("\n\n")}\n`,
+      `\uFEFF${index.join("\n\n")}\n`,
     );
     await writeFile(
       join(config.outDir, prefix, "llms-full.txt"),
-      `${full.join("\n\n")}\n`,
+      `\uFEFF${full.join("\n\n")}\n`,
     );
   }
   assert.deepEqual(
