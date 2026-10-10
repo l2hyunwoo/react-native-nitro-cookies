@@ -9,6 +9,10 @@ These are **Next** docs for the source branch. List queries, scoped deletion, an
 The package manifest currently declares `1.2.1`; that version number does not mean these additions are published.
 Check the [release history](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases) before using a Next API with an npm package.
 
+The published `1.2.1` API does not include list queries, `clearCookie*`, or the runtime `CookieErrorCode` export.
+The source branch also changes existing behavior, including Apple request-header matching, tvOS support, and Android WebView availability errors.
+Do not infer those changes from the unchanged manifest version. Check the installed release before depending on them.
+
 ## Install the packages
 
 ::: code-group
@@ -64,3 +68,5 @@ yarn nitrogen
 Follow the example app's native build setup before running it. This is a contributor checkout, not an npm installation command.
 
 Continue with [your first cookie](./first-cookie).
+For configured dependency combinations, see [platform support](../reference/platforms#repository-configurations).
+If setup or cookie operations fail, follow [troubleshooting](../guides/troubleshooting).

@@ -23,13 +23,13 @@ if (target?.path) {
 }
 ```
 
-List 결과의 `domain`은 앞의 점까지 Apple에 저장된 값 그대로입니다. 삭제할 때도 이 값을 그대로 전달하세요.
+Apple의 list 결과는 `domain` 앞의 점까지 저장된 그대로 유지합니다. 삭제할 때도 이 값을 그대로 전달하세요.
 iOS WebKit cookie store를 사용한다면 두 async 호출에 모두 `true`를 전달하세요.
 일치하는 쿠키가 없으면 다른 쿠키를 변경하지 않고 완료됩니다.
 
 ## Android: 저장할 때 scope 보관
 
-Android의 URL 조회 결과에서는 저장된 `domain`과 `path`를 확인할 수 없습니다. 쿠키를 저장할 때 이 필드들을 함께 보관하세요.
+Android의 URL 조회 결과에서는 저장된 `domain`과 `path`를 확인할 수 없습니다. 쿠키를 저장할 때 이 필드의 값도 보관하세요.
 
 ```ts
 const url = "https://api.example.com/admin";
@@ -52,9 +52,38 @@ Secure 쿠키를 삭제하려면 HTTPS를 사용하세요.
 
 ## 완료 시점과 입력 검증
 
-Android의 `clearCookieSync`는 쿠키를 만료시키는 쓰기를 요청한 뒤, 수락 여부를 확인하지 않고 반환합니다.
-`clearCookie`는 CookieManager가 쓰기를 수락할 때까지 기다립니다. 어느 메서드도 삭제 전에 쿠키가 존재했는지는 알려 주지 않습니다.
+Android의 `clearCookieSync`는 쿠키를 만료시키는 쓰기 작업을 요청한 뒤, 수락 여부를 확인하지 않고 반환합니다.
+`clearCookie`는 CookieManager가 쓰기를 수락할 때까지 기다립니다. 두 메서드 모두 삭제 전에 쿠키가 존재했는지는 알려 주지 않습니다.
 Apple에서는 선택한 cookie store의 삭제 작업이 끝나면 완료됩니다.
 
 삭제할 쿠키를 지정하려면 유효한 `name`, `/`로 시작하는 절대 `path`, URL과 호환되는 `domain`이 필요합니다.
 입력이 잘못되면 쿠키를 변경하기 전에 실패합니다. 자세한 동작은 [쿠키 삭제](../reference/deletion)와 [Errors](../reference/errors)에서 확인하세요.
+
+## 다른 domain을 유지하며 로그아웃 {#targeted-logout}
+
+로그인에 사용한 모든 쿠키의 식별 정보를 보관하세요. 이름이 같아도 path가 다르면 별도 쿠키입니다.
+Apple에서는 선택한 cookie store도 기억해야 합니다. Android에서는 조회 결과로 scope를 복원하지 못하므로 저장할 때 기록하세요.
+
+```ts
+import NitroCookies, {
+  type CookieIdentifier,
+} from "react-native-nitro-cookies";
+
+const url = "https://api.example.com/account";
+const identities: CookieIdentifier[] = [
+  { name: "session", domain: "api.example.com", path: "/" },
+  { name: "session", domain: "api.example.com", path: "/account" },
+];
+
+for (const identity of identities) {
+  await NitroCookies.clearCookie(url, identity);
+}
+```
+
+이 Next 예제는 기본 cookie store에서 식별 정보가 일치하는 쿠키만 삭제합니다.
+iOS WebKit으로 로그인했다면 각 `clearCookie` 호출의 세 번째 인자에 `true`를 전달하세요.
+각 domain과 호환되는 URL을 사용해야 합니다. 하나의 URL로 서로 관계없는 domain의 쿠키를 모두 선택할 수는 없습니다.
+
+`clearAll`은 관계없는 domain을 포함해 선택한 cookie store 전체를 비웁니다. Store 전체를 초기화하려는 경우에만 사용하세요.
+로컬 쿠키를 삭제해도 서버의 session이 무효화되거나 다른 cookie store·HTTP client의 인증 정보가 삭제되지는 않습니다.
+앱의 인증 흐름에 맞게 서버 로그아웃과 client별 정리를 함께 처리하세요.

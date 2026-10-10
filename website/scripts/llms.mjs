@@ -54,7 +54,7 @@ export async function generateLlmDocs(config, siteUrl, groups) {
   for (const korean of [false, true]) {
     const prefix = korean ? "ko/" : "";
     const notice = korean
-      ? "소스 브랜치 기준 문서입니다. List API, scope를 지정하는 삭제 API, error normalization은 아직 출시하지 않았습니다. npm 패키지에서 사용하기 전에 설치 문서와 release history를 확인하세요."
+      ? "소스 브랜치 기준 문서입니다. List API, scope를 지정하는 삭제 API, error normalization은 아직 출시하지 않았습니다. npm 패키지에서 사용하기 전에 설치 문서와 릴리스 이력을 확인하세요."
       : "These docs describe the source branch. List APIs, scoped deletion, and normalized errors are unreleased. Check the installation guide and release history before using them with an npm package.";
     const description = korean
       ? config.site.locales.ko.description

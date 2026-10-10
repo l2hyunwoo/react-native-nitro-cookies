@@ -58,3 +58,32 @@ Apple deletion resolves after the selected store operation.
 
 The selector requires a valid cookie name, an absolute path, and a compatible domain.
 Invalid selectors fail before mutation. See [delete cookies](../reference/deletion) and [errors](../reference/errors).
+
+## Log out without clearing unrelated domains
+
+Retain every cookie identity used by the login flow, including cookies with the same name at different paths.
+On Apple, retain the chosen store too. On Android, record the original write scopes because reads cannot reconstruct them.
+
+```ts
+import NitroCookies, {
+  type CookieIdentifier,
+} from "react-native-nitro-cookies";
+
+const url = "https://api.example.com/account";
+const identities: CookieIdentifier[] = [
+  { name: "session", domain: "api.example.com", path: "/" },
+  { name: "session", domain: "api.example.com", path: "/account" },
+];
+
+for (const identity of identities) {
+  await NitroCookies.clearCookie(url, identity);
+}
+```
+
+This Next example deletes only the supplied identities from the default store.
+For an iOS WebKit login, pass `true` as the third argument of each `clearCookie` call.
+Use a compatible URL for each domain; a single URL cannot select unrelated domains.
+
+`clearAll` clears the entire selected store, including unrelated domains. Reserve it for a deliberate full-store reset.
+Local cookie deletion does not revoke a server session or remove credentials held by another store or HTTP client.
+Complete server logout and any client-specific cleanup according to your app's authentication flow.
