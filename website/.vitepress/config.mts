@@ -81,6 +81,16 @@ export default defineConfig({
     "Native cookie management for React Native. Typed synchronous and asynchronous APIs for iOS, Android, and tvOS.",
   srcDir: "content",
   base: new URL(siteUrl).pathname,
+  head: [
+    [
+      "link",
+      {
+        rel: "icon",
+        type: "image/png",
+        href: `${new URL(siteUrl).pathname}nitro-cookies.png`,
+      },
+    ],
+  ],
   buildEnd: (config) => generateLlmDocs(config, siteUrl, groups),
   transformHead({ pageData }) {
     const file = pageData.relativePath;
@@ -166,7 +176,13 @@ export default defineConfig({
     },
   },
   themeConfig: {
-    siteTitle: "nitro cookies",
+    siteTitle: false,
+    logo: {
+      src: "/nitro-cookies.png",
+      alt: "Nitro Cookies",
+      width: 52,
+      height: 52,
+    },
     outline: { level: [2, 3] },
     socialLinks: [{ icon: "github", link: repository }],
     editLink: { pattern: `${repository}/edit/main/website/content/:path` },

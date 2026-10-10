@@ -214,6 +214,27 @@ for (const prefix of ["", "ko/"]) {
       `${file}: missing project base path`,
     );
     assert.ok(
+      html.includes('alt="Nitro Cookies"'),
+      `${file}: missing accessible logo`,
+    );
+    for (const [tag] of html.matchAll(/<img\b[^>]*>/g)) {
+      assert.ok(/\balt="[^"]*"/.test(tag), `${file}: image needs alt text`);
+      const src = tag.match(/\bsrc="([^"]+)"/)?.[1];
+      assert.ok(src, `${file}: image needs a source`);
+      const image = new URL(src, siteUrl);
+      if (image.origin !== new URL(siteUrl).origin) continue;
+      assert.ok(
+        image.pathname.startsWith(new URL(siteUrl).pathname),
+        `${file}: image escapes the project base`,
+      );
+      await access(
+        new URL(
+          `.vitepress/dist/${image.pathname.slice(new URL(siteUrl).pathname.length)}`,
+          root,
+        ),
+      );
+    }
+    assert.ok(
       html.includes(`rel="describedby" href="${siteUrl}${prefix}llms.txt"`),
     );
     if (file !== "index.md") {

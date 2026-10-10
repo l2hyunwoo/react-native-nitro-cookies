@@ -8,7 +8,7 @@ titleTemplate: Nitro Cookies
 <a class="home-release" href="./start/installation.html">NEXT 문서 · 아직 출시하지 않은 API 포함 <span aria-hidden="true">↗</span></a>
 <div class="hero-grid">
 <div class="hero-copy">
-<p class="eyebrow">REACT NATIVE / NITRO MODULES</p>
+<p class="eyebrow">NITRO COOKIES / REACT NATIVE</p>
 <h1>Native 쿠키를<br><span>하나의 API로.</span></h1>
 <p class="hero-description">Native HTTP 쿠키를 읽고 저장하고 관리하세요. 값이 바로 필요하면 sync API를, WebKit이나 네트워크 작업에는 async API를 사용하세요.</p>
 <div class="hero-actions">
@@ -17,6 +17,15 @@ titleTemplate: Nitro Cookies
 </div>
 <p class="platform-line">iOS &nbsp;/&nbsp; Android &nbsp;/&nbsp; tvOS<br>TypeScript · Native cookie store · MIT 라이선스</p>
 </div>
+<div class="hero-art" aria-hidden="true"><img src="/nitro-cookies.png" alt="" width="1254" height="1254" fetchpriority="high" decoding="async"></div>
+</div>
+<div class="principle-strip">
+<div class="principle"><p class="eyebrow">01 / DIRECT</p><h2>필요할 때 바로 조회</h2><p>Sync JavaScript 호출로 저장된 쿠키를 읽거나 request header를 만듭니다.</p></div>
+<div class="principle"><p class="eyebrow">02 / EXPLICIT</p><h2>Cookie store를 명확하게</h2><p>Apple shared cookie store와 iOS WebKit cookie store 중에서 선택하세요. Android는 CookieManager를 사용합니다.</p></div>
+<div class="principle"><p class="eyebrow">03 / TYPED</p><h2>쿠키의 scope까지 확인</h2><p>TypeScript 타입으로 쿠키를 다루고, list API와 scope를 지정하는 삭제 API로 domain과 path를 구분하세요.</p></div>
+</div>
+<div class="example-grid">
+<div class="example-copy"><p class="eyebrow">JAVASCRIPT에서 NATIVE로</p><h2>익숙한 API로<br>Cookie store에 접근하세요.</h2><p>Session cookie를 저장한 뒤, request URL에 맞는 쿠키로 header를 만드는 예제입니다.</p><a href="./guides/request-headers.html">Request header 가이드 읽기 →</a></div>
 <div class="hero-code">
 <div class="code-caption"><span>session.ts</span><span>JavaScript → native</span></div>
 
@@ -38,11 +47,6 @@ const header = NitroCookies.getCookieHeaderSync(url);
 
 <div class="code-result"><b>Cookie</b> &nbsp; session=demo-token</div>
 </div>
-</div>
-<div class="principle-strip">
-<div class="principle"><p class="eyebrow">01 / DIRECT</p><h2>필요할 때 바로 조회</h2><p>Sync JavaScript 호출로 저장된 쿠키를 읽거나 request header를 만듭니다.</p></div>
-<div class="principle"><p class="eyebrow">02 / EXPLICIT</p><h2>Cookie store를 명확하게</h2><p>Apple shared cookie store와 iOS WebKit cookie store 중에서 선택하세요. Android는 CookieManager를 사용합니다.</p></div>
-<div class="principle"><p class="eyebrow">03 / TYPED</p><h2>쿠키의 scope까지 확인</h2><p>TypeScript 타입으로 쿠키를 다루고, list API와 scope를 지정하는 삭제 API로 domain과 path를 구분하세요.</p></div>
 </div>
 <div class="section-heading"><div><p class="eyebrow">문서 둘러보기</p><h2>지금 필요한 작업부터 시작하세요.</h2></div><p>첫 쿠키를 저장하는 방법부터 실제 앱에서 확인해야 할 동작까지 안내합니다.</p></div>
 <div class="path-grid">
