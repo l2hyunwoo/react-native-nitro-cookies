@@ -58,3 +58,32 @@ Apple에서는 선택한 cookie store의 삭제 작업이 끝나면 완료됩니
 
 삭제할 쿠키를 지정하려면 유효한 `name`, `/`로 시작하는 절대 `path`, URL과 호환되는 `domain`이 필요합니다.
 입력이 잘못되면 쿠키를 변경하기 전에 실패합니다. 자세한 동작은 [쿠키 삭제](../reference/deletion)와 [Errors](../reference/errors)에서 확인하세요.
+
+## 다른 domain을 유지하며 로그아웃 {#targeted-logout}
+
+로그인에 사용한 모든 쿠키의 식별 정보를 보관하세요. 이름이 같아도 path가 다르면 별도 쿠키입니다.
+Apple에서는 선택한 cookie store도 기억해야 합니다. Android에서는 조회 결과로 scope를 복원하지 못하므로 저장할 때 기록하세요.
+
+```ts
+import NitroCookies, {
+  type CookieIdentifier,
+} from "react-native-nitro-cookies";
+
+const url = "https://api.example.com/account";
+const identities: CookieIdentifier[] = [
+  { name: "session", domain: "api.example.com", path: "/" },
+  { name: "session", domain: "api.example.com", path: "/account" },
+];
+
+for (const identity of identities) {
+  await NitroCookies.clearCookie(url, identity);
+}
+```
+
+이 Next 예제는 기본 cookie store에서 지정한 식별 정보에 해당하는 쿠키만 삭제합니다.
+iOS WebKit으로 로그인했다면 각 `clearCookie` 호출의 세 번째 인자에 `true`를 전달하세요.
+각 domain과 호환되는 URL을 사용해야 합니다. 하나의 URL로 관계없는 domain을 모두 선택할 수는 없습니다.
+
+`clearAll`은 관계없는 domain을 포함해 선택한 cookie store 전체를 비웁니다. Store 전체를 초기화하려는 경우에만 사용하세요.
+로컬 쿠키를 삭제해도 서버의 session이 무효화되거나 다른 cookie store·HTTP client의 인증 정보가 삭제되지는 않습니다.
+앱의 인증 흐름에 맞게 서버 로그아웃과 client별 정리를 함께 처리하세요.

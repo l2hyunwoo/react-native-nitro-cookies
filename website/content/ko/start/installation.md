@@ -9,6 +9,10 @@ Nitro Cookies와 native runtime을 설치한 뒤 React Native 앱을 다시 빌�
 현재 `package.json`의 버전은 `1.2.1`이지만, 새 API를 이 버전으로 배포했다는 뜻은 아닙니다.
 npm 패키지에서 Next API를 사용하기 전에 [릴리스 이력](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases)을 확인하세요.
 
+배포된 `1.2.1`에는 list 조회, `clearCookie*`, runtime의 `CookieErrorCode` export가 없습니다.
+소스 브랜치에서는 기존 API의 동작도 바뀌었습니다. Apple request header의 URL 매칭, tvOS 지원, Android WebView 부재 오류가 여기에 포함됩니다.
+Manifest 버전이 그대로라고 해서 이 변경 사항이 배포됐다고 판단하면 안 됩니다. 사용하는 릴리스에 포함됐는지 확인하세요.
+
 ## 패키지 설치
 
 ::: code-group
@@ -64,3 +68,5 @@ yarn nitrogen
 예제 앱의 native 빌드 설정을 마친 뒤 실행하세요. 위 명령은 기여자가 소스를 직접 확인하는 절차입니다. npm 패키지를 설치하는 절차와는 다릅니다.
 
 설치를 마쳤다면 [첫 쿠키를 저장하고 조회](./first-cookie)해 보세요.
+저장소에 설정한 dependency 조합은 [플랫폼 지원](../reference/platforms#repository-configurations)에서 확인하세요.
+설치나 쿠키 작업이 실패하면 [쿠키 문제 해결](../guides/troubleshooting)을 참고하세요.

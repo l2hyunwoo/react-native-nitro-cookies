@@ -31,3 +31,16 @@ Redirect와 자동 쿠키 처리는 네트워크 라이브러리의 정책을 �
 
 `get`이나 `getList` 결과로 request header를 직접 만들지 마세요. Apple에서는 두 조회 API의 쿠키 선택 규칙이 request header API와 다릅니다.
 전체 signature는 [Cookie header와 응답 쿠키](../reference/requests)에서 확인하세요.
+
+## HTTP client와 연결
+
+위 예제는 React Native `fetch`에 header를 직접 전달합니다.
+Axios 같은 다른 client에서도 동일한 URL에 보내는 요청의 [headers 옵션](https://axios-http.com/docs/req_config)으로 값을 전달하세요.
+요청마다 host와 path가 다를 수 있으므로 인증 header를 전역 기본값으로 설정하지 마세요.
+
+Header를 전달했다고 해서 Nitro Cookies와 client 사이에 쿠키가 자동으로 공유되거나 응답 쿠키가 자동으로 저장되는 것은 아닙니다.
+이 패키지는 client의 credentials, redirect 처리, native cookie jar를 설정하지 않습니다.
+설치한 client와 플랫폼 버전에서 각각의 동작을 확인하세요.
+
+WebView 로그인은 [WebView cookie store 선택](./webviews)을 참고하세요.
+로그인 후에는 [필요한 쿠키만 삭제하는 로그아웃](./scoped-deletion#targeted-logout)에 쓸 cookie store와 식별 정보를 보관하세요.

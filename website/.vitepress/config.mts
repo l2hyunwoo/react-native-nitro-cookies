@@ -37,6 +37,7 @@ const groups = [
         "guides/scoped-deletion",
       ],
       ["Migrate an existing app", "기존 앱 마이그레이션", "guides/migration"],
+      ["Troubleshoot cookies", "쿠키 문제 해결", "guides/troubleshooting"],
     ],
   ],
   [
