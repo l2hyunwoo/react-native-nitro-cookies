@@ -49,7 +49,7 @@ Android는 autolinking을 사용합니다. 패키지를 설치한 뒤 Android �
 
 ## Expo 프로젝트
 
-두 native 패키지를 포함한 [development build](https://docs.expo.dev/workflow/customizing/)를 사용하세요.
+두 native 패키지를 포함한 development build를 사용하세요. 설치·실행·재빌드 절차는 [Expo development build](./expo-development-build)를 참고하세요.
 Expo Go에는 이 모듈이 포함되어 있지 않습니다. Native dependency가 바뀌면 development client를 다시 빌드해야 합니다.
 
 ## 소스에서 Next API 확인
