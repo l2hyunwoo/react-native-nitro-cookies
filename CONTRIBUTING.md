@@ -52,8 +52,6 @@ The hooks lint staged JavaScript and TypeScript files and check commit messages.
 | `.github/scripts/` | Apple fixture test scripts |
 | `website/` | English and Korean documentation, site configuration, and documentation checks |
 
-Planning specifications are maintained in nunu-os, outside this repository.
-
 ## Development and validation
 
 Run these commands from the repository root:

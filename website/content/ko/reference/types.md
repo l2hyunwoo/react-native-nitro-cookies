@@ -51,7 +51,7 @@ interface CookieIdentifier {
 ```
 
 `path`는 필수이며 `/`로 시작해야 합니다. `domain`을 생략하면 URL host의 host-only 쿠키를 삭제합니다.
-`domain`을 지정하면 그 scope의 쿠키를 선택합니다. Android에서는 호출하는 쪽에서 저장할 때 사용한 scope를 보관해야 합니다. URL 조회 결과만으로는 원래 scope를 알 수 없습니다.
+`domain`을 지정하면 그 scope의 쿠키를 선택합니다. Android에서는 호출자가 저장할 때 사용한 scope를 보관해야 합니다. URL 조회 결과만으로는 원래 scope를 알 수 없습니다.
 Android의 저장 기본값과 삭제 인자의 차이는 [scope를 지정해 쿠키 삭제](../guides/scoped-deletion)에서 확인하세요.
 
 ## CookieError

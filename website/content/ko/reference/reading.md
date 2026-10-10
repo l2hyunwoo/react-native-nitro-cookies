@@ -1,6 +1,6 @@
 # 쿠키 조회
 
-이름으로 쿠키를 찾으려면 dictionary를, 같은 이름의 쿠키를 모두 조회하려면 list를 사용하세요.
+쿠키를 이름으로 찾으려면 dictionary를, 이름이 같은 쿠키를 모두 조회하려면 list를 사용하세요.
 Apple의 URL 조회는 domain을 기준으로 쿠키를 선택합니다. 실제 요청에 보낼 쿠키가 필요하면 [request header API](./requests)를 사용하세요.
 
 `useWebKit`의 기본값은 `false`입니다. `true`를 전달하면 iOS WebKit cookie store를 선택합니다. tvOS에서는 이 요청이 실패하며, Android에서는 이 인자를 무시합니다.
@@ -20,7 +20,7 @@ getSync(url: string): Cookies
 get(url: string, useWebKit?: boolean): Promise<Cookies>
 ```
 
-선택한 cookie store를 async 방식으로 조회합니다. 같은 이름의 쿠키는 기존 dictionary API와 동일하게 처리합니다. Android에서 반환하는 metadata는 실제 저장된 scope가 아니라 URL을 기준으로 만든 값입니다.
+선택한 cookie store를 async 방식으로 조회합니다. 같은 이름의 쿠키는 기존 dictionary API와 같은 방식으로 처리합니다. Android에서 반환하는 metadata는 실제 저장된 scope가 아니라 URL을 기준으로 만든 값입니다.
 
 ## getListSync
 
@@ -52,6 +52,6 @@ Domain과 관계없이 선택한 Apple cookie store의 모든 쿠키를 조회�
 getAllList(useWebKit?: boolean): Promise<Cookie[]>
 ```
 
-**Next / 미출시.** 선택한 Apple cookie store의 모든 쿠키를 조회합니다. 같은 이름의 쿠키와 저장된 scope를 모두 유지합니다. Android에서는 `PLATFORM_UNSUPPORTED`로 실패합니다.
+**Next / 미출시.** 선택한 Apple cookie store의 모든 쿠키를 조회합니다. 이름이 같은 쿠키도 빠짐없이 반환하며, 저장된 scope를 유지합니다. Android에서는 `PLATFORM_UNSUPPORTED`로 실패합니다.
 
 [Types](./types) · [Errors](./errors) · [플랫폼 지원](./platforms)

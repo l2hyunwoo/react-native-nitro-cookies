@@ -1,6 +1,6 @@
 # Errors
 
-**Next 규칙.** 23개 공개 메서드에서 발생한 오류는 문자열 `code`가 있는 `Error`로 전달됩니다. Sync 호출은 이 Error를 throw하고, async 호출은 이 Error로 Promise를 reject합니다.
+**Next 오류 처리 규칙.** 23개 공개 메서드에서 발생한 오류는 문자열 `code`가 있는 `Error`로 전달됩니다. Sync 호출은 이 오류를 throw하고, async 호출은 이 오류로 Promise를 reject합니다.
 알려진 오류 코드를 처리할 때는 패키지가 export하는 runtime enum을 사용하세요.
 
 ```ts
@@ -34,15 +34,15 @@ WebView provider가 없다는 사실을 감지해도 WebView를 설치하거나 
 
 ## 오류에 포함되는 정보
 
-Wrapper는 새 `Error`를 만들고 원래 던진 값을 `cause`에 담습니다. 원래 메시지와 stack이 있으면 함께 보존합니다.
+Wrapper는 새 `Error`를 만들고 원래 throw한 값을 `cause`에 담습니다. 원래 메시지와 stack이 있으면 함께 보존합니다.
 호출할 때 전달한 `url`도 추가합니다. 쿠키 하나를 저장하거나 삭제하는 작업에서는 `cookieName`도 추가합니다.
 Wrapper가 쿠키 값을 오류 정보에 추가하지는 않습니다. 다만 원래 오류 메시지나 URL에는 앱 데이터가 포함될 수 있습니다.
 
 원래 오류에 비어 있지 않은 문자열 `code`가 있으면, 알려지지 않은 코드여도 그대로 유지합니다.
 코드를 분류할 수 없는 `getFromResponse`·`getFromResponseList` 오류는 `NETWORK_ERROR`로, 다른 메서드의 오류는 `STORAGE_ERROR`로 처리합니다.
-Bridge 메시지 파싱은 Nitro 0.35.9 형식을 기준으로 합니다. Bridge가 바뀌면 파싱 규칙도 수정해야 할 수 있습니다.
+Bridge 메시지는 Nitro 0.35.9의 형식을 기준으로 파싱합니다. Bridge가 바뀌면 파싱 규칙도 수정해야 할 수 있습니다.
 
 ## 초기화 실패
 
-Import 시점에 hybrid object를 생성하는 과정에는 위 error normalization 규칙을 적용하지 않습니다.
+Import 시점에 HybridObject를 생성하는 과정에는 위 error normalization 규칙을 적용하지 않습니다.
 Native module을 찾을 수 없다면 먼저 설치 상태를 확인하고 앱을 다시 빌드하세요. 그다음 쿠키 메서드의 동작을 확인하세요.

@@ -22,7 +22,7 @@ Android의 기본 최소 지원 버전은 API 24입니다. Apple deployment targ
 
 ## 저장소의 검증 구성 {#repository-configurations}
 
-현재 예제 앱과 native fixture에 설정한 버전입니다. 모든 React Native 버전과의 호환성을 보장하는 표는 아닙니다.
+아래 표는 현재 예제 앱과 native fixture에 설정한 버전입니다. 모든 React Native 버전과의 호환성을 보장하지는 않습니다.
 플랫폼 변경을 검토할 때는 해당 CI 실행 결과도 확인하세요.
 
 | 프로젝트                | React Native                 | Nitro Modules | 추가 설정                                            |
@@ -32,7 +32,7 @@ Android의 기본 최소 지원 버전은 API 24입니다. Apple deployment targ
 | tvOS native fixture     | `react-native-tvos 0.85.3-3` | `0.35.9`      | `test-tvos.sh`로 XCTest 실행                         |
 | Android instrumentation | 예제 앱의 dependency 사용    | `0.35.9`      | CI API 35, `google_apis`, x86_64                     |
 
-Android CI는 phone 이미지를 사용합니다. Provider 부재 테스트는 해당 실패 경로를 확인하며, Android TV system image에서의 검증을 대신하지는 않습니다.
+Android CI는 phone 이미지를 사용합니다. WebView provider가 없는 경우의 테스트는 그 실패 경로를 확인하는 데 그치며, Android TV system image에서의 검증을 대신하지는 않습니다.
 Nitro의 peer 범위는 `react-native-nitro-modules >=0.35.0 <1.0.0`입니다. `react-native: *`라는 peer 선언도 모든 React Native 버전에서 검증했다는 뜻은 아닙니다.
 Expo에서는 native 패키지를 포함한 development build를 사용하세요. 자세한 설정은 [설치](../start/installation)와 [CI workflow](https://github.com/l2hyunwoo/react-native-nitro-cookies/blob/main/.github/workflows/ci.yml)를 참고하세요.
 
@@ -48,4 +48,4 @@ WebView가 없는 Android TV 기기에서 이 패키지를 설치해도 cookie s
 `WEBVIEW_UNAVAILABLE`이 발생하면 cookie store를 사용할 수 없는 상태로 처리하세요.
 
 플랫폼별 동작 차이는 [cookie store와 scope](../concepts/storage), 오류 처리 방법은 [Errors](./errors)에서 확인하세요.
-증상별 확인 순서는 [쿠키 문제 해결](../guides/troubleshooting)을 참고하세요.
+증상별 확인 순서는 [트러블슈팅](../guides/troubleshooting)을 참고하세요.
