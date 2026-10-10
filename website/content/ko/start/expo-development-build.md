@@ -5,7 +5,7 @@ Expo Go에는 두 native module이 포함되어 있지 않습니다. JavaScript 
 
 이 가이드는 Expo SDK 56, React Native 0.85.3, Nitro Modules 0.35.9를 사용합니다.
 같은 구성을 재현할 수 있도록 blank TypeScript template의 버전을 고정합니다.
-아래 `set()`·`get()` 예제는 npm 1.2.1 API로 실행할 수 있습니다. Next API는 [소스 빌드](./installation)가 필요합니다.
+아래 설치 명령은 Nitro Cookies 1.3.0을 사용합니다. API 지원 버전은 [설치 문서](./installation)에서 확인하세요.
 
 ## 앱 생성
 
@@ -20,7 +20,7 @@ npx create-expo@4.0.4 cookie-check \
 cd cookie-check
 npm install
 npx expo install expo-dev-client@56.0.27
-npm install --save-exact react-native-nitro-cookies@1.2.1 \
+npm install --save-exact react-native-nitro-cookies@1.3.0 \
   react-native-nitro-modules@0.35.9
 ```
 
@@ -101,9 +101,9 @@ npx expo run:android
 `--clean`은 `ios/`와 `android/`를 삭제하고 다시 만듭니다. 이 디렉터리에서 직접 수정한 내용도 사라집니다. Native 설정 변경을 app config나 config plugin에 옮긴 뒤 사용하세요.
 Metro 재시작만으로 native dependency가 다시 빌드되지는 않습니다.
 
-## npm 1.2.1 대신 현재 소스 테스트
+## 로컬 소스 변경 사항 테스트
 
-현재 소스와 npm 패키지는 모두 버전을 1.2.1로 선언하지만 제공하는 API가 다릅니다.
+배포된 1.3.0 이후의 로컬 변경 사항을 테스트하려면 source tarball을 설치하세요.
 소스를 테스트하려면 저장소 checkout에서 라이브러리를 빌드하고 tarball로 묶으세요. Expo 앱의 native 프로젝트를 생성하기 전에 이 tarball을 설치하세요.
 
 ```sh
@@ -118,7 +118,7 @@ npm install /tmp/react-native-nitro-cookies-source.tgz
 ```
 
 `prepare`는 JavaScript, 타입, Nitro binding을 빌드합니다. `pack`은 패키지에 문서를 넣는 단계도 실행합니다.
-소스를 테스트할 때 `npm install react-native-nitro-cookies@1.2.1`로 대체하면 npm 배포본이 설치됩니다.
+소스를 테스트할 때 `npm install react-native-nitro-cookies@1.3.0`로 대체하면 npm 배포본이 설치됩니다.
 소스를 바꿔 다시 묶을 때는 새 tarball 파일명을 사용하세요. 앱에 다시 설치한 뒤 development client를 재빌드하세요.
 
 ## 검증한 구성
@@ -126,7 +126,7 @@ npm install /tmp/react-native-nitro-cookies-source.tgz
 Expo `56.0.23`, React Native `0.85.3`, Nitro Modules `0.35.9`, `expo-dev-client` `56.0.27` 조합에서 위 검사를 실행했습니다.
 iPhone 17 Pro simulator의 iOS 26.5와 Android 15 (API 35) emulator에서 development build를 설치하고 `set()`·`get()` 검사가 통과하는지 확인했습니다. Android 빌드에는 JDK 17을 사용했습니다.
 
-검증 대상은 commit [`827a165`](https://github.com/l2hyunwoo/react-native-nitro-cookies/commit/827a1655ef2f227982f6aefe84f6b08a826e2d62)의 source tarball입니다. npm 1.2.1 배포본을 별도로 실행 검증하지는 않았습니다.
+검증 대상은 commit [`827a165`](https://github.com/l2hyunwoo/react-native-nitro-cookies/commit/827a1655ef2f227982f6aefe84f6b08a826e2d62)의 source tarball입니다. 당시 검증에서 npm 1.3.0 배포본을 별도로 실행하지는 않았습니다.
 다른 SDK 조합, EAS build, WebView·HTTP client와의 쿠키 공유는 검증 범위에 포함하지 않습니다.
 
 ## 참고 자료

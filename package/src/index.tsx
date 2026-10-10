@@ -22,7 +22,7 @@ function cookiesToDictionary(cookies: Cookie[]): Cookies {
  * - Synchronous methods return values from the default store.
  * - Asynchronous methods return Promises; supported methods can select iOS WebKit.
  *
- * List queries, scoped deletion, and normalized errors are Next / unreleased.
+ * List queries, scoped deletion, and normalized errors were added in 1.3.0.
  * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
  *
  * @example
@@ -39,7 +39,7 @@ function cookiesToDictionary(cookies: Cookie[]): Cookies {
  */
 export const NitroCookies = {
   /**
-   * Read a list from the default store. Next / unreleased.
+   * Read a list from the default store. Added in 1.3.0.
    *
    * Preserves duplicate names and native order. Apple results preserve stored domains and paths.
    * Android provides name/value pairs only; domain, path, flags, and expiry are unknown.
@@ -61,7 +61,7 @@ export const NitroCookies = {
   },
 
   /**
-   * Read a list from the selected store. Next / unreleased.
+   * Read a list from the selected store. Added in 1.3.0.
    *
    * Preserves duplicate names and native order. Apple results preserve stored domains and paths.
    * Android provides name/value pairs only; retain the original write scope for deletion.
@@ -83,7 +83,7 @@ export const NitroCookies = {
   },
 
   /**
-   * Read every cookie from the selected Apple store. Next / unreleased.
+   * Read every cookie from the selected Apple store. Added in 1.3.0.
    *
    * Preserves duplicate names and stored scope. The default store supports iOS and tvOS.
    * Android rejects with PLATFORM_UNSUPPORTED.
@@ -103,7 +103,7 @@ export const NitroCookies = {
   },
 
   /**
-   * Make an HTTP GET request and parse response cookies. Next / unreleased.
+   * Make an HTTP GET request and parse response cookies. Added in 1.3.0.
    *
    * Preserves duplicate names. Parsing and available metadata follow the native platform.
    * This method has no WebKit selector.
@@ -123,7 +123,7 @@ export const NitroCookies = {
   },
 
   /**
-   * Delete one exact identity from the default store. Next / unreleased.
+   * Delete one exact identity from the default store. Added in 1.3.0.
    *
    * Apple treats a missing identity as a no-op. Android submits an expiration write without acknowledgment.
    * Retain the original Android write scope; URL queries cannot recover it.
@@ -145,7 +145,7 @@ export const NitroCookies = {
   },
 
   /**
-   * Delete one exact identity from the selected store. Next / unreleased.
+   * Delete one exact identity from the selected store. Added in 1.3.0.
    *
    * Apple treats a missing identity as a no-op. Android awaits expiration-write acceptance and rejects rejected writes.
    * Retain the original Android write scope; URL queries cannot recover it. Use HTTPS for Secure cookies.
@@ -263,7 +263,7 @@ export const NitroCookies = {
    *
    * Android checks name visibility, then submits expiration at Path=/ with the URL host Domain attribute.
    * A true result does not prove deletion of the original scope or every cookie with that name.
-   * For exact deletion, retain the identity and use `clearCookieSync` (Next / unreleased).
+   * For exact deletion, retain the identity and use `clearCookieSync` (since 1.3.0).
    *
    * @param url - Absolute HTTP(S) URL used for domain selection.
    * @param name - Cookie name to remove.
@@ -617,7 +617,7 @@ export const NitroCookies = {
    *
    * Android checks name visibility, then submits expiration at Path=/ with the URL host Domain attribute.
    * A true result does not prove deletion of the original scope or every cookie with that name.
-   * For exact deletion, retain the identity and use `clearCookie` (Next / unreleased).
+   * For exact deletion, retain the identity and use `clearCookie` (since 1.3.0).
    *
    * @param url - Absolute HTTP(S) URL used for domain selection.
    * @param name - Cookie name to remove.

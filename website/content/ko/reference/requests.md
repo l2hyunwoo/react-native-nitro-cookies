@@ -35,6 +35,6 @@ Native `GET` 요청을 보내고 응답에서 파싱한 쿠키를 이름별로 �
 getFromResponseList(url: string): Promise<Cookie[]>
 ```
 
-**Next / 미출시.** `getFromResponse`와 같은 native 요청을 보내지만, 이름이 같은 쿠키도 빠짐없이 list로 반환합니다. 파싱한 metadata도 유지합니다. Redirect 처리와 자동 쿠키 저장 등 부수 효과는 native 네트워크 구현을 따릅니다.
+**1.3.0부터 지원합니다.** `getFromResponse`와 같은 native 요청을 보내지만, 이름이 같은 쿠키도 빠짐없이 list로 반환합니다. 파싱한 metadata도 유지합니다. Redirect 처리와 자동 쿠키 저장 등 부수 효과는 native 네트워크 구현을 따릅니다.
 
 [Types](./types) · [Errors](./errors) · [플랫폼 지원](./platforms)

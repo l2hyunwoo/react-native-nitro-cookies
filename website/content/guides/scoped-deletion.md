@@ -1,6 +1,6 @@
 # Delete one cookie scope
 
-Use the Next `clearCookie` APIs when multiple cookies share a name.
+Use the `clearCookie` APIs when multiple cookies share a name.
 Supply the original name, domain, and path to avoid selecting a sibling cookie.
 
 ## Apple: retain the stored identity
@@ -80,7 +80,7 @@ for (const identity of identities) {
 }
 ```
 
-This Next example deletes only the supplied identities from the default store.
+This example deletes only the supplied identities from the default store.
 For an iOS WebKit login, pass `true` as the third argument of each `clearCookie` call.
 Use a compatible URL for each domain; a single URL cannot select unrelated domains.
 

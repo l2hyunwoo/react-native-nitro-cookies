@@ -53,7 +53,7 @@ export interface Cookie {
 }
 
 /**
- * Exact cookie identity for scoped deletion. Next / unreleased.
+ * Exact cookie identity for scoped deletion. Added in 1.3.0.
  * Android callers must retain the original write scope; URL queries cannot recover it.
  * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/guides/scoped-deletion
  * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
@@ -74,7 +74,7 @@ export interface CookieIdentifier {
 export type Cookies = Record<string, Cookie>;
 
 /**
- * Error codes for cookie operations. Runtime enum export is Next / unreleased.
+ * Error codes for cookie operations. Runtime enum export added in 1.3.0.
  * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/errors
  */
 export enum CookieErrorCode {
@@ -97,7 +97,7 @@ export enum CookieErrorCode {
 }
 
 /**
- * Normalized operation error. Next / unreleased; this interface is not a runtime class.
+ * Normalized operation error. Added in 1.3.0; this interface is not a runtime class.
  * The wrapper preserves the original message and available stack, and sets cause.
  * It adds url and cookieName context, without a cookie-value field.
  * The URL, message, or cause can still contain sensitive data; review them before logging.

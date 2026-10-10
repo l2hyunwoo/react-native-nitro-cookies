@@ -35,8 +35,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [example/README.md](example/README.md
 `package/src/NitroCookies.nitro.ts` defines the native interface. Regenerate bridges when that contract changes.
 Do not edit `package/nitrogen/generated/` or `package/lib/`; these are generated code and build output.
 Keep wrapper signatures, native behavior, public JSDoc, and both documentation languages consistent.
-List queries, scoped deletion, normalized operation errors, and the runtime error enum export are Next / unreleased additions.
-The manifest version alone does not establish that these APIs are published.
+List queries, scoped deletion, normalized operation errors, and the runtime error enum export were released in 1.3.0.
+Keep availability guidance aligned with the published release history.
 
 Apple shared storage and WebKit storage are separate. The library does not copy cookies between them.
 Android requires a usable WebView provider, including on Android TV. tvOS supports shared storage and rejects WebKit selection.

@@ -1,6 +1,6 @@
 # Errors
 
-**Next contract.** All 23 public operation failures throw or reject with an `Error` carrying a string `code`.
+**Since 1.3.0.** All 23 public operation failures throw or reject with an `Error` carrying a string `code`.
 Use the exported runtime enum to handle known cases.
 
 ```ts

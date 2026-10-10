@@ -5,7 +5,7 @@ titleTemplate: Nitro Cookies
 ---
 
 <div class="cookie-home">
-<a class="home-release" href="./start/installation.html">NEXT 문서 · 아직 출시하지 않은 API 포함 <span aria-hidden="true">↗</span></a>
+<a class="home-release" href="./start/installation.html">1.3.0 문서 <span aria-hidden="true">↗</span></a>
 <div class="hero-grid">
 <div class="hero-copy">
 <p class="eyebrow">NITRO COOKIES / REACT NATIVE</p>

@@ -29,10 +29,10 @@ import NitroCookies, {
 - `useWebKit`은 생략 가능한 boolean 인자입니다. 옵션 객체를 받지 않으며, 기본값은 `false`입니다.
 - Sync 메서드는 기본 cookie store를 사용합니다. Async 메서드는 Promise를 반환하지만, 완료 시점은 플랫폼과 작업에 따라 다릅니다.
 - Dictionary는 쿠키 이름을 key로 사용합니다. List는 이름이 같은 쿠키를 모두 유지합니다.
-- Next wrapper에서 발생한 오류에는 문자열 형태의 `code`가 있습니다. 오류 처리 코드를 작성하기 전에 [Errors](./errors)를 확인하세요.
+- 공개 wrapper에서 발생한 오류에는 문자열 형태의 `code`가 있습니다. 오류 처리 코드를 작성하기 전에 [Errors](./errors)를 확인하세요.
 
-List API, scope를 지정하는 삭제 API, error normalization은 **아직 출시하지 않은 Next 변경 사항**입니다.
-소스 문서와 npm 릴리스의 차이는 [설치](../start/installation)에서 확인하세요.
+List API, scope를 지정하는 삭제 API, error normalization은 **1.3.0부터 사용할 수 있습니다**.
+지원 버전과 업데이트 절차는 [설치](../start/installation)에서 확인하세요.
 
 데이터 구조는 [Types](./types), 메서드별 지원 여부는 [플랫폼 지원](./platforms)에서 확인하세요.
 

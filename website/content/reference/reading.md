@@ -28,7 +28,7 @@ Read the selected store asynchronously. Dictionary results retain the existing n
 getListSync(url: string): Cookie[]
 ```
 
-**Next / unreleased.** Read the default store without losing duplicate names. Apple results preserve stored domains and paths. Android URL results contain name/value pairs only.
+**Added in 1.3.0.** Read the default store without losing duplicate names. Apple results preserve stored domains and paths. Android URL results contain name/value pairs only.
 
 ## getList
 
@@ -36,7 +36,7 @@ getListSync(url: string): Cookie[]
 getList(url: string, useWebKit?: boolean): Promise<Cookie[]>
 ```
 
-**Next / unreleased.** Read a list from the selected store. Order follows the native result. Do not treat Android list entries as deletion identifiers without the original write scope.
+**Added in 1.3.0.** Read a list from the selected store. Order follows the native result. Do not treat Android list entries as deletion identifiers without the original write scope.
 
 ## getAll
 
@@ -52,6 +52,6 @@ Read all cookies from the selected Apple store, regardless of domain. Duplicate 
 getAllList(useWebKit?: boolean): Promise<Cookie[]>
 ```
 
-**Next / unreleased.** Read every cookie from the selected Apple store while preserving duplicate names and stored scope. Android rejects with PLATFORM_UNSUPPORTED.
+**Added in 1.3.0.** Read every cookie from the selected Apple store while preserving duplicate names and stored scope. Android rejects with PLATFORM_UNSUPPORTED.
 
 [Types](./types) · [Errors](./errors) · [Platform support](./platforms)

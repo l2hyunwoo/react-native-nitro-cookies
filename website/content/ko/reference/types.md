@@ -40,7 +40,7 @@ Dictionary의 key는 쿠키 이름입니다. Native 결과에 같은 이름의 �
 
 ## CookieIdentifier
 
-**Next / 미출시.** `clearCookie`와 `clearCookieSync`에서 사용합니다.
+**1.3.0부터 지원합니다.** `clearCookie`와 `clearCookieSync`에서 사용합니다.
 
 ```ts
 interface CookieIdentifier {
@@ -66,5 +66,5 @@ interface CookieError extends Error {
 ```
 
 `CookieError`는 TypeScript interface입니다. Runtime class가 아니므로 `instanceof CookieError`로 검사할 수 없습니다.
-Next wrapper는 원래 던진 값을 `cause`에 넣고, 원래 메시지와 stack이 있으면 보존합니다.
+공개 wrapper는 원래 던진 값을 `cause`에 넣고, 원래 메시지와 stack이 있으면 보존합니다.
 Runtime enum과 기본 오류 코드 선택 규칙은 [Errors](./errors)에서 확인하세요.

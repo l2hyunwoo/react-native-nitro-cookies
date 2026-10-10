@@ -12,7 +12,7 @@ Invalid selectors fail with `PARSE_ERROR`; incompatible domains fail with `DOMAI
 clearCookieSync(url: string, identifier: CookieIdentifier): void
 ```
 
-**Next / unreleased.** Delete the exact identity from the default store. Returns void. On Apple, a missing identity is a no-op. Android submits an expiration write without acknowledgment or existence reporting.
+**Added in 1.3.0.** Delete the exact identity from the default store. Returns void. On Apple, a missing identity is a no-op. Android submits an expiration write without acknowledgment or existence reporting.
 
 ## clearCookie
 
@@ -20,7 +20,7 @@ clearCookieSync(url: string, identifier: CookieIdentifier): void
 clearCookie(url: string, identifier: CookieIdentifier, useWebKit?: boolean): Promise<void>
 ```
 
-**Next / unreleased.** Delete the exact identity from the selected store. Android awaits write acceptance and rejects rejected writes. It cannot report whether the cookie existed. Use HTTPS for Secure cookies.
+**Added in 1.3.0.** Delete the exact identity from the selected store. Android awaits write acceptance and rejects rejected writes. It cannot report whether the cookie existed. Use HTTPS for Secure cookies.
 
 ## clearByNameSync
 

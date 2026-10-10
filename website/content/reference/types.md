@@ -40,7 +40,7 @@ Use `Cookie[]` list results when duplicates matter.
 
 ## CookieIdentifier
 
-**Next / unreleased.** Used by `clearCookie` and `clearCookieSync`.
+**Added in 1.3.0.** Used by `clearCookie` and `clearCookieSync`.
 
 ```ts
 interface CookieIdentifier {
@@ -66,5 +66,5 @@ interface CookieError extends Error {
 ```
 
 This is a TypeScript interface, not a runtime class for `instanceof` checks.
-The Next operation wrapper sets `cause` and preserves the original message and stack where available.
+The operation wrapper sets `cause` and preserves the original message and stack where available.
 See [errors](./errors) for the runtime enum and fallback behavior.

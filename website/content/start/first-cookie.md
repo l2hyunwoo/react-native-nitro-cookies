@@ -36,7 +36,7 @@ const matches = cookies.demo_session?.value === "demo-token";
 ```
 
 `get` returns a dictionary keyed by cookie name. No matching cookies produces `{}`.
-For cookies that share a name, use the Next [list APIs](../reference/reading#getlist).
+For cookies that share a name, use the [list APIs](../reference/reading#getlist).
 
 ## 3. Build a request header
 

@@ -12,7 +12,7 @@ HTTP cookie management for React Native, built with [Nitro Modules](https://nitr
 - Synchronous and asynchronous APIs.
 - TypeScript types for cookie operations.
 
-The documentation includes unreleased APIs. Check the [installation guide](https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation) for availability in your installed version.
+The documentation covers 1.3.0, including list queries, scoped deletion, and normalized errors. See the [installation guide](https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation) when upgrading from an earlier version.
 
 ## Installation
 
@@ -40,7 +40,7 @@ Expo apps require a development build containing both packages; Expo Go does not
 
 ## Quick start
 
-These `set` and `get` methods are available in npm 1.2.1:
+Set and read a cookie:
 
 ```typescript
 import NitroCookies from "react-native-nitro-cookies";
@@ -77,9 +77,9 @@ See [platform support](https://l2hyunwoo.github.io/react-native-nitro-cookies/re
 - [Stores and scope](https://l2hyunwoo.github.io/react-native-nitro-cookies/concepts/storage)
 - [WebView integration](https://l2hyunwoo.github.io/react-native-nitro-cookies/guides/webviews)
 - [Request headers](https://l2hyunwoo.github.io/react-native-nitro-cookies/guides/request-headers)
-- [Scoped deletion (unreleased)](https://l2hyunwoo.github.io/react-native-nitro-cookies/guides/scoped-deletion)
+- [Scoped deletion](https://l2hyunwoo.github.io/react-native-nitro-cookies/guides/scoped-deletion)
 - [Migration from @react-native-cookies/cookies](https://l2hyunwoo.github.io/react-native-nitro-cookies/guides/migration)
-- [Normalized errors (unreleased)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/errors)
+- [Normalized errors](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/errors)
 - AI documentation: [llms.txt](https://l2hyunwoo.github.io/react-native-nitro-cookies/llms.txt) · [llms-full.txt](https://l2hyunwoo.github.io/react-native-nitro-cookies/llms-full.txt)
 
 ## Contributing and example app

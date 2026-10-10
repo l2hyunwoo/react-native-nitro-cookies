@@ -35,6 +35,6 @@ Make a native GET request and return parsed cookies keyed by name. The method pr
 getFromResponseList(url: string): Promise<Cookie[]>
 ```
 
-**Next / unreleased.** Use the same native response request as getFromResponse, returning a list instead of collapsing names. Results preserve parsed metadata; redirect handling and automatic cookie side effects belong to the native networking stack.
+**Added in 1.3.0.** Use the same native response request as getFromResponse, returning a list instead of collapsing names. Results preserve parsed metadata; redirect handling and automatic cookie side effects belong to the native networking stack.
 
 [Types](./types) · [Errors](./errors) · [Platform support](./platforms)

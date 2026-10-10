@@ -18,8 +18,8 @@ Metro reload alone does not add a native module. See [installation](../start/ins
 ## An example method is missing
 
 Compare your installed package version with the [release history](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases).
-These source-branch docs include unreleased list APIs, scoped deletion, and normalized errors.
-The manifest's `1.2.1` does not publish those changes. Follow the [source setup](../start/installation#verify-a-next-api-from-source) when testing a Next API.
+These docs cover 1.3.0. List APIs, scoped deletion, and normalized errors are available from 1.3.0.
+For an earlier version, follow the [installation guide](../start/installation) to upgrade and rebuild the native app.
 
 ## Android reports WEBVIEW_UNAVAILABLE
 
@@ -48,12 +48,12 @@ See [writes](../reference/writing) and [stores and scope](../concepts/storage).
 
 ## A dictionary hides a cookie or deletion leaves one behind
 
-`get` keys results by name, so duplicate names collapse. Use the Next list APIs to inspect duplicates.
+`get` keys results by name, so duplicate names collapse. Use the list APIs to inspect duplicates.
 Android URL lists expose name and value but cannot recover the original domain, path, or flags.
 Retain the scope when writing rather than deriving it from Android read metadata.
 
 `clearByName` does not select an exact identity on Android. Its result does not prove every matching scope was removed.
-Use the Next `clearCookie` APIs with the original name, domain, and path, and the same Apple store.
+Use the `clearCookie` APIs with the original name, domain, and path, and the same Apple store.
 See [scoped deletion](./scoped-deletion).
 
 ## A manual request sends unexpected cookies
