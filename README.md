@@ -6,9 +6,7 @@ HTTP cookie management for React Native, built with [Nitro Modules](https://nitr
 
 [Documentation](https://l2hyunwoo.github.io/react-native-nitro-cookies/) · [한국어 문서](https://l2hyunwoo.github.io/react-native-nitro-cookies/ko/) · [API reference](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/) · [Releases](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases)
 
-[![npm version](https://img.shields.io/npm/v/react-native-nitro-cookies.svg?style=flat-square)](https://www.npmjs.com/package/react-native-nitro-cookies)
-[![CI](https://github.com/l2hyunwoo/react-native-nitro-cookies/actions/workflows/ci.yml/badge.svg)](https://github.com/l2hyunwoo/react-native-nitro-cookies/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![npm version](https://img.shields.io/npm/v/react-native-nitro-cookies.svg?style=flat-square)](https://www.npmjs.com/package/react-native-nitro-cookies) [![CI](https://github.com/l2hyunwoo/react-native-nitro-cookies/actions/workflows/ci.yml/badge.svg)](https://github.com/l2hyunwoo/react-native-nitro-cookies/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 - Native cookie storage through Nitro Modules.
 - Synchronous and asynchronous APIs.
@@ -28,9 +26,7 @@ yarn add react-native-nitro-cookies react-native-nitro-modules
 
 Use `react-native-nitro-modules >=0.35.0 <1.0.0` and a React Native version compatible with that runtime.
 
-[![Android: API 24+](https://img.shields.io/badge/Android-API%2024%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
-[![iOS: minimum depends on React Native and Nitro](https://img.shields.io/badge/iOS-RN%20%2B%20Nitro%20minimum-000000?style=flat-square&logo=apple)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
-[![tvOS: minimum depends on React Native and Nitro](https://img.shields.io/badge/tvOS-RN%20%2B%20Nitro%20minimum-000000?style=flat-square&logo=apple)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
+[![Android: API 24+](https://img.shields.io/badge/Android-API%2024%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms) [![iOS: minimum depends on React Native and Nitro](https://img.shields.io/badge/iOS-RN%20%2B%20Nitro%20minimum-000000?style=flat-square&logo=apple)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms) [![tvOS: minimum depends on React Native and Nitro](https://img.shields.io/badge/tvOS-RN%20%2B%20Nitro%20minimum-000000?style=flat-square&logo=apple)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
 
 For iOS, install pods from your app's `ios/` directory:
 
