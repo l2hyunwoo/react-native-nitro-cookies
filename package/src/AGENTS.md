@@ -14,7 +14,7 @@
 
 Keep public wrappers and the native interface consistent. Signature and shared-type changes require `yarn nitrogen` from the root.
 Do not edit generated bridges or declaration output. Public documentation also lives in `website/content/`, with matching English and Korean pages.
-Keep Next / unreleased guidance for list queries, scoped deletion, normalized errors, and the runtime enum export until release status is confirmed.
+List queries, scoped deletion, normalized errors, and the runtime enum export were released in 1.3.0. Keep JSDoc availability guidance aligned with published releases.
 
 The public wrapper defaults `useWebKit` to false with `?? false`; the native interface accepts an optional boolean.
 True selects iOS WebKit. tvOS rejects that selection; Android ignores it.

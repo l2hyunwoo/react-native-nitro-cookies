@@ -33,7 +33,7 @@ Use the example instrumentation, Apple fixtures, or app harness for changes to n
 
 The public wrapper keeps `Cookie[]` list results and converts legacy results to dictionaries keyed by name.
 Later duplicate names replace earlier dictionary entries. Error normalization preserves the cause and adds operation context.
-List queries, scoped deletion, normalized errors, and the runtime enum export remain Next / unreleased.
+List queries, scoped deletion, normalized errors, and the runtime enum export were released in 1.3.0.
 
 `useWebKit` defaults to false. True selects iOS WebKit; tvOS rejects it and Android ignores it.
 Android URL lists expose name/value pairs only; retain the original write scope for exact deletion.

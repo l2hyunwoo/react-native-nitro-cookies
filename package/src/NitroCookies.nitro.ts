@@ -23,13 +23,13 @@ export interface NitroCookies extends HybridObject<{
   getSync(url: string): Cookie[];
 
   /**
-   * Preserve duplicate names. Next / unreleased.
+   * Preserve duplicate names. Added in 1.3.0.
    * Apple preserves stored domains and paths. Android returns name/value pairs only.
    */
   getListSync(url: string): Cookie[];
 
   /**
-   * Delete one identity. Next / unreleased. Retain the original Android write scope.
+   * Delete one identity. Added in 1.3.0. Retain the original Android write scope.
    * Apple missing identities are no-ops. Android sync submits; async awaits write acceptance.
    */
   clearCookieSync(url: string, identifier: CookieIdentifier): void;
@@ -143,13 +143,13 @@ export interface NitroCookies extends HybridObject<{
   get(url: string, useWebKit?: boolean): Promise<Cookie[]>;
 
   /**
-   * Preserve duplicate names. Next / unreleased.
+   * Preserve duplicate names. Added in 1.3.0.
    * Apple preserves stored domains and paths. Android returns name/value pairs only.
    */
   getList(url: string, useWebKit?: boolean): Promise<Cookie[]>;
 
   /**
-   * Delete one identity. Next / unreleased. Retain the original Android write scope.
+   * Delete one identity. Added in 1.3.0. Retain the original Android write scope.
    * Apple missing identities are no-ops. Android sync submits; async awaits write acceptance.
    */
   clearCookie(
@@ -192,7 +192,7 @@ export interface NitroCookies extends HybridObject<{
   getAll(useWebKit?: boolean): Promise<Cookie[]>;
 
   /**
-   * Preserve all stored scopes and duplicate names. Next / unreleased.
+   * Preserve all stored scopes and duplicate names. Added in 1.3.0.
    * Default storage supports iOS and tvOS; WebKit is iOS-only. Android rejects this operation.
    */
   getAllList(useWebKit?: boolean): Promise<Cookie[]>;
