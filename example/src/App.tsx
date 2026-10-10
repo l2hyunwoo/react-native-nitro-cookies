@@ -41,8 +41,8 @@ function AppContent() {
         muted: "#52525b",
         border: "#d4d4d8",
       };
-  const [tab, setTab] = useState<"API" | "WebView">("API");
-  const [group, setGroup] = useState<(typeof groups)[number]>("Read");
+  const [tab, setTab] = useState<(typeof groups)[number] | "WebView">("Read");
+  const group = tab === "WebView" ? "Read" : tab;
   const [selected, setSelected] = useState<OperationName>("getList");
   const [url, setUrl] = useState("https://example.com/account");
   const [name, setName] = useState("nitro_demo");
@@ -96,17 +96,20 @@ function AppContent() {
     onPress: () => void,
     active = false,
     disabled = busy,
+    role: "button" | "tab" = "button",
   ) {
     return (
       <Pressable
         key={label}
-        accessibilityRole="button"
+        testID={role === "tab" ? `tab-${label.toLowerCase()}` : label}
+        accessibilityRole={role}
         accessibilityLabel={label}
         accessibilityState={{ disabled, selected: active }}
         disabled={disabled}
         onPress={onPress}
         style={({ pressed }) => [
           s.button,
+          role === "tab" && s.tabButton,
           {
             borderColor: color.border,
             backgroundColor: active ? color.ink : color.panel,
@@ -114,7 +117,13 @@ function AppContent() {
           },
         ]}
       >
-        <Text style={[s.buttonText, { color: active ? color.bg : color.ink }]}>
+        <Text
+          style={[
+            s.buttonText,
+            role === "tab" && s.tabText,
+            { color: active ? color.bg : color.ink },
+          ]}
+        >
           {label}
         </Text>
       </Pressable>
@@ -144,6 +153,7 @@ function AppContent() {
     checked: boolean,
     change: (v: boolean) => void,
     disabled = busy,
+    role: "button" | "tab" = "button",
   ) {
     return (
       <View style={s.toggle}>
@@ -197,9 +207,6 @@ function AppContent() {
     } finally {
       running.current = false;
       setBusy(false);
-      requestAnimationFrame(() =>
-        scroll.current?.scrollToEnd({ animated: true }),
-      );
     }
   }
 
@@ -242,77 +249,56 @@ function AppContent() {
         style={s.safe}
         behavior={onApple ? "padding" : undefined}
       >
-        <ScrollView
-          ref={scroll}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={s.page}
-        >
-          <View style={s.topline}>
-            <Text style={[s.eyebrow, mutedStyle]}>
-              NITRO COOKIES / PLAYGROUND
-            </Text>
-            <Text style={[s.badge, textStyle, panelStyle]}>
-              {Platform.isTV ? "TV · " : ""}
-              {Platform.OS}
-            </Text>
-          </View>
-          <Text accessibilityRole="header" style={[s.title, textStyle]}>
-            Cookies, inspected.
-          </Text>
-          <Text style={[s.subtitle, mutedStyle]}>
-            Explore native stores. See exactly what each API returns.
-          </Text>
-          <View style={s.row}>
-            {button("API", () => setTab("API"), tab === "API")}
-            {button("WebView", () => setTab("WebView"), tab === "WebView")}
-            {button(
-              "Documentation ↗",
-              () => {
-                void Linking.openURL(docsURL);
-              },
-              false,
-              false,
-            )}
-          </View>
-          <View style={[s.card, panelStyle]}>
-            <Text style={[s.sectionTitle, textStyle]}>01 / Target & store</Text>
-            {field("URL", url, setUrl)}
-            {toggle(
-              "iOS WebKit store · async only",
-              useWebKit,
-              setUseWebKit,
-              busy || !webKitAvailable,
-            )}
-            <Text style={[s.caption, mutedStyle]}>
-              {webKitAvailable
-                ? "Shared and WebKit stores are separate. Sync APIs always use shared storage; no automatic copying."
-                : onApple
-                  ? "tvOS supports shared storage. WebKit selection rejects with WEBKIT_UNAVAILABLE."
-                  : "Android uses CookieManager and requires a usable WebView provider. WebKit selection has no effect."}
-            </Text>
-          </View>
-          {tab === "API" ? (
-            <>
-              <View style={[s.card, panelStyle]}>
-                <Text style={[s.sectionTitle, textStyle]}>
-                  02 / Choose an operation
+        <View style={s.shell}>
+          <View style={s.header}>
+            <View style={s.topline}>
+              <View>
+                <Text accessibilityRole="header" style={[s.title, textStyle]}>
+                  Nitro Cookies
                 </Text>
-                <View style={s.row}>
-                  {groups.map((item) =>
-                    button(
-                      item,
-                      () => {
-                        setGroup(item);
-                        setSelected(
-                          (Object.keys(operations) as OperationName[]).find(
-                            (key) => operations[key].group === item,
-                          )!,
-                        );
-                      },
-                      group === item,
-                    ),
-                  )}
-                </View>
+                <Text style={[s.caption, mutedStyle]}>
+                  Native cookie playground · local source
+                </Text>
+              </View>
+              {button(
+                "Docs ↗",
+                () => {
+                  void Linking.openURL(docsURL);
+                },
+                false,
+                false,
+              )}
+            </View>
+            <View style={[s.tabs, panelStyle]}>
+              {[...groups, "WebView" as const].map((item) =>
+                button(
+                  item,
+                  () => {
+                    setTab(item);
+                    if (item !== "WebView" && item !== tab)
+                      setSelected(
+                        (Object.keys(operations) as OperationName[]).find(
+                          (key) => operations[key].group === item,
+                        )!,
+                      );
+                    scroll.current?.scrollTo({ y: 0, animated: false });
+                  },
+                  tab === item,
+                  busy,
+                  "tab",
+                ),
+              )}
+            </View>
+          </View>
+          <ScrollView
+            ref={scroll}
+            testID="playground-inputs"
+            style={s.form}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={s.page}
+          >
+            {tab !== "WebView" && (
+              <>
                 <View style={s.row}>
                   {(Object.keys(operations) as OperationName[])
                     .filter((key) => operations[key].group === group)
@@ -321,14 +307,38 @@ function AppContent() {
                     )}
                 </View>
                 <Text style={[s.body, mutedStyle]}>{operation.note}</Text>
-                {group === "Read" && (
-                  <Text style={[s.caption, mutedStyle]}>
-                    Apple URL lists match domains, not full request eligibility.
-                    Use getCookieHeader for outgoing requests.
-                  </Text>
-                )}
+              </>
+            )}
+            <View style={[s.card, panelStyle]}>
+              <View style={s.topline}>
+                <Text style={[s.sectionTitle, textStyle]}>Target & store</Text>
+                <Text style={[s.caption, mutedStyle]}>
+                  {Platform.isTV ? "TV · " : ""}
+                  {Platform.OS}
+                </Text>
+              </View>
+              {field("URL", url, setUrl)}
+              {toggle(
+                "iOS WebKit store · async only",
+                useWebKit,
+                setUseWebKit,
+                busy || !webKitAvailable,
+              )}
+              <Text style={[s.caption, mutedStyle]}>
+                {webKitAvailable
+                  ? "Shared and WebKit are separate. Sync APIs always use shared storage."
+                  : onApple
+                    ? "tvOS supports shared storage; WebKit selection rejects with WEBKIT_UNAVAILABLE."
+                    : "Android requires a usable WebView provider. Query metadata is unknown; retain the original write scope."}
+              </Text>
+            </View>
+            {tab !== "WebView" ? (
+              <>
                 {(group === "Write" || group === "Delete") && (
-                  <>
+                  <View style={[s.card, panelStyle]}>
+                    <Text style={[s.sectionTitle, textStyle]}>
+                      Cookie input
+                    </Text>
                     {field("Cookie name", name, setName)}
                     {group === "Write" &&
                       field("Cookie value", value, setValue)}
@@ -358,118 +368,119 @@ function AppContent() {
                         </Text>
                       </>
                     )}
-                  </>
+                  </View>
+                )}
+                {group === "Read" && (
+                  <Text style={[s.caption, mutedStyle]}>
+                    List queries preserve duplicate names; dictionaries collapse
+                    them. Apple lists select domains. Use getCookieHeader for
+                    request eligibility.
+                  </Text>
+                )}
+                {group === "Write" && (
+                  <Text style={[s.caption, mutedStyle]}>
+                    Walkthrough: setMany writes root/account values at / and
+                    /account. In Read, compare getList with get. In Delete,
+                    clearCookie at /account; the root cookie remains. Android
+                    reads may lag submitted writes.
+                  </Text>
                 )}
                 {group === "Errors" && (
                   <Text selectable style={[s.code, textStyle]}>
                     Runtime codes: {Object.values(CookieErrorCode).join(", ")}
                   </Text>
                 )}
-                {button(busy ? "Running…" : `Run ${selected}`, run, true)}
-              </View>
-              <View style={[s.card, panelStyle]}>
-                <Text style={[s.sectionTitle, textStyle]}>
-                  Try the scoped-cookie walkthrough
-                </Text>
+              </>
+            ) : (
+              <>
                 <Text style={[s.body, mutedStyle]}>
-                  Use the default example.com URL and cookie name. Run setMany
-                  to create / and /account cookies. Compare getList with get,
-                  then clearCookie at /account. Read again: the root cookie
-                  remains.
+                  Load a page, then inspect its current URL. On iOS, select
+                  WebKit for the browser store. sharedCookiesEnabled does not
+                  guarantee native store synchronization.
                 </Text>
-                <Text style={[s.caption, mutedStyle]}>
-                  On Android, read again after writes settle. A successful write
-                  result does not guarantee an immediate read. Retain the form
-                  domain/path for deletion.
-                </Text>
-              </View>
-            </>
-          ) : (
-            <View style={[s.card, panelStyle]}>
-              <Text style={[s.sectionTitle, textStyle]}>
-                02 / WebView inspector
-              </Text>
-              <Text style={[s.body, mutedStyle]}>
-                Load an HTTP(S) page, then inspect its current URL. On iOS,
-                select WebKit to read the browser store. sharedCookiesEnabled is
-                a WebView setting, not a guarantee that native stores
-                synchronize.
-              </Text>
-              {Platform.isTV ? (
-                <Text style={[s.body, mutedStyle]}>
-                  Embedded WebView is disabled in the TV playground. Use the API
-                  tab for native store operations.
-                </Text>
-              ) : (
-                <>
-                  <View style={s.row}>
-                    {button("Load / reload page", loadBrowser)}
-                    {button("Inspect current URL", () => {
-                      void execute("WebView getList", () =>
-                        NitroCookies.getList(
-                          currentBrowserURL ?? url,
-                          useWebKit,
-                        ),
-                      );
-                    })}
-                  </View>
-                  {browserURL ? (
-                    <WebView
-                      ref={webView}
-                      style={s.browser}
-                      source={{ uri: browserURL }}
-                      sharedCookiesEnabled
-                      thirdPartyCookiesEnabled
-                      onNavigationStateChange={(state) =>
-                        setCurrentBrowserURL(state.url)
-                      }
-                      onError={(event) => {
-                        const message = event.nativeEvent.description;
-                        void execute("WebView load", () => {
-                          throw new Error(message);
-                        });
-                      }}
-                    />
-                  ) : (
-                    <View
-                      style={[s.browserEmpty, { borderColor: color.border }]}
-                    >
-                      <Text style={[s.body, mutedStyle]}>
-                        No page loaded. Network requests start when you press
-                        Load.
-                      </Text>
-                    </View>
-                  )}
-                  <Text selectable style={[s.caption, mutedStyle]}>
-                    {currentBrowserURL ?? "Waiting for a URL"}
+                {Platform.isTV ? (
+                  <Text style={[s.body, mutedStyle]}>
+                    Embedded WebView is disabled on TV. Choose a native API tab.
                   </Text>
-                </>
-              )}
-            </View>
-          )}
-          <View style={[s.card, panelStyle]}>
+                ) : (
+                  <>
+                    {button("Load / reload page", loadBrowser)}
+                    {browserURL ? (
+                      <WebView
+                        ref={webView}
+                        style={s.browser}
+                        source={{ uri: browserURL }}
+                        sharedCookiesEnabled
+                        thirdPartyCookiesEnabled
+                        onNavigationStateChange={(state) =>
+                          setCurrentBrowserURL(state.url)
+                        }
+                        onError={(event) => {
+                          const message = event.nativeEvent.description;
+                          void execute("WebView load", () => {
+                            throw new Error(message);
+                          });
+                        }}
+                      />
+                    ) : (
+                      <View
+                        style={[s.browserEmpty, { borderColor: color.border }]}
+                      >
+                        <Text style={[s.body, mutedStyle]}>
+                          No page loaded. Press Load to start a network request.
+                        </Text>
+                      </View>
+                    )}
+                    <Text selectable style={[s.caption, mutedStyle]}>
+                      {currentBrowserURL ?? "Waiting for a URL"}
+                    </Text>
+                  </>
+                )}
+              </>
+            )}
+          </ScrollView>
+          <View
+            style={[
+              s.results,
+              { backgroundColor: color.panel, borderColor: color.border },
+            ]}
+          >
+            {tab !== "WebView"
+              ? button(busy ? "Running…" : `Run ${selected}`, run, true)
+              : !Platform.isTV &&
+                button(
+                  "Inspect current URL",
+                  () => {
+                    void execute("WebView getList", () =>
+                      NitroCookies.getList(currentBrowserURL ?? url, useWebKit),
+                    );
+                  },
+                  true,
+                )}
             <View style={s.topline}>
               <Text
-                accessibilityRole="header"
+                testID="native-result-title"
+                accessibilityLiveRegion="polite"
                 style={[s.sectionTitle, textStyle]}
               >
-                03 / Native result
+                {resultTitle}
               </Text>
               <Text style={[s.caption, mutedStyle]}>
                 {failed ? "ERROR" : busy ? "RUNNING" : "OUTPUT"}
               </Text>
             </View>
-            <Text accessibilityLiveRegion="polite" style={[s.body, textStyle]}>
-              {resultTitle}
-            </Text>
-            <ScrollView style={s.resultScroll} nestedScrollEnabled>
+            <ScrollView
+              key={resultTitle}
+              style={[s.resultScroll, { backgroundColor: color.bg }]}
+              testID="native-result"
+              accessibilityLabel="Native result"
+            >
               <Text
                 selectable
                 style={[
                   s.output,
                   {
                     color: failed ? (dark ? "#fda4af" : "#9f1239") : color.ink,
-                    backgroundColor: color.bg,
                   },
                 ]}
               >
@@ -477,15 +488,10 @@ function AppContent() {
               </Text>
             </ScrollView>
             <Text style={[s.caption, mutedStyle]}>
-              Results stay on this screen; cookie values are not sent to console
-              logs. This playground uses the local source, including unreleased
-              APIs.
+              Local source APIs · Cookie values are not logged to console.
             </Text>
           </View>
-          <Text style={[s.footer, mutedStyle]}>
-            React Native + Nitro Modules · Native stores, visible behavior.
-          </Text>
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -501,39 +507,30 @@ export default function App() {
 
 const s = StyleSheet.create({
   safe: { flex: 1 },
-  page: {
-    padding: 20,
-    gap: 20,
-    maxWidth: 820,
-    width: "100%",
-    alignSelf: "center",
-    paddingBottom: 48,
-  },
+  shell: { flex: 1, maxWidth: 820, width: "100%", alignSelf: "center" },
+  header: { padding: 16, gap: 16 },
+  form: { flex: 1 },
+  page: { padding: 16, paddingTop: 0, gap: 16, paddingBottom: 24 },
+  results: { borderTopWidth: 1, padding: 16, gap: 10 },
   topline: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
   },
-  eyebrow: {
-    fontSize: 10,
-    letterSpacing: 1.5,
-    fontWeight: "600",
-    flexShrink: 1,
-  },
-  badge: {
+  title: { fontSize: 24, fontWeight: "700", letterSpacing: -0.8 },
+  tabs: {
+    flexDirection: "row",
+    padding: 3,
+    gap: 3,
     borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 11,
-    fontFamily: mono,
+    borderRadius: 9,
   },
-  title: { fontSize: 34, fontWeight: "700", letterSpacing: -1.2 },
-  subtitle: { fontSize: 15, lineHeight: 23, marginTop: -12 },
+  tabButton: { flex: 1, paddingHorizontal: 2, borderWidth: 0, borderRadius: 6 },
+  tabText: { fontSize: 11 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  card: { borderWidth: 1, borderRadius: 12, padding: 16, gap: 16 },
-  sectionTitle: { fontSize: 13, fontWeight: "600", flexShrink: 1 },
+  card: { borderWidth: 1, borderRadius: 10, padding: 14, gap: 12 },
+  sectionTitle: { fontSize: 12, fontWeight: "600", flexShrink: 1 },
   button: {
     minHeight: 44,
     paddingHorizontal: 12,
@@ -562,24 +559,17 @@ const s = StyleSheet.create({
     gap: 12,
   },
   body: { fontSize: 13, lineHeight: 21, flexShrink: 1 },
-  caption: { fontSize: 11, lineHeight: 18 },
+  caption: { fontSize: 11, lineHeight: 17 },
   code: { fontSize: 11, lineHeight: 19, fontFamily: mono },
-  resultScroll: { maxHeight: 280 },
-  output: {
-    padding: 12,
-    borderRadius: 7,
-    fontSize: 12,
-    lineHeight: 19,
-    fontFamily: mono,
-  },
-  browser: { height: 360, backgroundColor: "#ffffff" },
+  resultScroll: { height: 148, flexGrow: 0, borderRadius: 7 },
+  output: { padding: 12, fontSize: 12, lineHeight: 19, fontFamily: mono },
+  browser: { height: 280, backgroundColor: "#ffffff" },
   browserEmpty: {
-    minHeight: 160,
+    minHeight: 120,
     borderWidth: 1,
     borderStyle: "dashed",
     borderRadius: 7,
-    padding: 24,
+    padding: 16,
     justifyContent: "center",
   },
-  footer: { fontSize: 10, textAlign: "center", lineHeight: 18 },
 });

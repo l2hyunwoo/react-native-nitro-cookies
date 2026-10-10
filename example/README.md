@@ -5,7 +5,8 @@ This app uses the local library in `../package/`.
 `react-native.config.js` points native autolinking at the same package.
 JavaScript changes use Fast Refresh. Native changes require an app rebuild.
 
-The playground in `src/App.tsx` has an API lab and an optional WebView inspector.
+The playground in `src/App.tsx` has top tabs for Read, Write, Delete, Lifecycle, Errors, and WebView.
+Each tab has its own content. Inputs scroll independently; the run button and native result remain visible.
 It uses the local source, including unreleased APIs. It does not prove that Apple stores synchronize automatically.
 
 ## Explore the API
@@ -45,7 +46,7 @@ WebView-provider, network, and storage failures depend on the runtime; the playg
 
 ## Inspect a WebView
 
-Switch to WebView and press **Load / reload page**. No page is loaded until you request it.
+Select the WebView tab and press **Load / reload page**. No page is loaded until you request it.
 After navigation, press **Inspect current URL** to call `getList` for the browser's current URL and selected store.
 On iOS, select WebKit to inspect the browser store.
 The WebView's `sharedCookiesEnabled` setting does not guarantee that native stores synchronize.
