@@ -26,7 +26,7 @@ yarn add react-native-nitro-cookies react-native-nitro-modules
 
 Use `react-native-nitro-modules >=0.35.0 <1.0.0` and a React Native version compatible with that runtime.
 
-[![Android: API 24+](https://img.shields.io/badge/Android-API%2024%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms) [![iOS: minimum depends on React Native and Nitro](https://img.shields.io/badge/iOS-RN%20%2B%20Nitro%20minimum-000000?style=flat-square&logo=apple)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms) [![tvOS: minimum depends on React Native and Nitro](https://img.shields.io/badge/tvOS-RN%20%2B%20Nitro%20minimum-000000?style=flat-square&logo=apple)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
+[![Android: API 24+](https://img.shields.io/badge/Android-API%2024%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
 
 For iOS, install pods from your app's `ios/` directory:
 
@@ -64,10 +64,12 @@ Confirm that the write is visible before using it for authentication.
 ## Before you use cookies
 
 - **HttpOnly:** This flag restricts browser `document.cookie` access. It does not hide cookie values returned by this native API from React Native JavaScript.
-- **Apple stores:** The default shared store and iOS WebKit store are separate. Select the same store when reading and writing; cookies do not copy automatically.
-- **tvOS:** The shared store is available. WebKit operations are unavailable.
+- **iOS:** Sync methods use shared storage. Async methods that accept `useWebKit` can select the default WebKit store; custom or ephemeral WebView stores cannot be selected. Read and write from the same store; cookies do not copy automatically.
+- **tvOS:** Cookie store operations use shared storage. Selecting WebKit with `useWebKit: true` fails with `WEBKIT_UNAVAILABLE`.
 - **Android:** Cookie storage requires an installed, enabled WebView provider, even without a visible WebView. This also applies to Android TV.
 - **Global deletion:** `clearAll()` clears the entire selected store, including other domains. Review its scope before using it for logout or cleanup.
+
+See [platform support](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms) for the full API availability table and deployment requirements.
 
 ## Guides and reference
 
