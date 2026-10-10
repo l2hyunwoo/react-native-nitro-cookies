@@ -9,6 +9,11 @@ const groups = [
     "시작하기",
     [
       ["Installation", "설치", "start/installation"],
+      [
+        "Expo development build",
+        "Expo development build",
+        "start/expo-development-build",
+      ],
       ["Your first cookie", "첫 쿠키 저장하기", "start/first-cookie"],
     ],
   ],

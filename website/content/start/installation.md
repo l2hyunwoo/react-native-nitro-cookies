@@ -49,7 +49,7 @@ Android uses autolinking; rebuild and launch the Android app after installation.
 
 ## Expo projects
 
-Use a [development build](https://docs.expo.dev/workflow/customizing/) that includes both native packages.
+Use a development build that includes both native packages. Follow [Expo development build](./expo-development-build) for installation, local builds, and rebuilds.
 Expo Go does not include this module. Rebuild the development client when native dependencies change.
 
 ## Verify a Next API from source
