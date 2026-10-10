@@ -16,11 +16,14 @@ function cookiesToDictionary(cookies: Cookie[]): Cookies {
 }
 
 /**
- * Main NitroCookies export object with all cookie management methods.
+ * HTTP cookie operations through the native platform stores.
  *
  * Supports both synchronous and asynchronous APIs:
- * - Synchronous methods (getSync, setSync, etc.): Direct return values, no Promise overhead
- * - Asynchronous methods (get, set, etc.): Return Promises for WebKit and network operations
+ * - Synchronous methods return values from the default store.
+ * - Asynchronous methods return Promises; supported methods can select iOS WebKit.
+ *
+ * List queries, scoped deletion, and normalized errors are Next / unreleased.
+ * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
  *
  * @example
  * ```typescript
@@ -31,11 +34,24 @@ function cookiesToDictionary(cookies: Cookie[]): Cookies {
  * NitroCookies.setSync('https://example.com', { name: 'session', value: 'abc123' });
  *
  * // Asynchronous API (for WebKit/network operations)
- * const cookies = await NitroCookies.get('https://example.com', true); // useWebKit
+ * const webKitCookies = await NitroCookies.get('https://example.com', true);
  * ```
  */
 export const NitroCookies = {
-  /** Return a list that preserves duplicate names and available scope metadata. */
+  /**
+   * Read a list from the default store. Next / unreleased.
+   *
+   * Preserves duplicate names and native order. Apple results preserve stored domains and paths.
+   * Android provides name/value pairs only; domain, path, flags, and expiry are unknown.
+   * Apple selection matches domains, not request eligibility. Use `getCookieHeaderSync` for requests.
+   * Synchronous methods cannot access the WebKit store.
+   *
+   * @param url - Absolute HTTP(S) URL with a host.
+   * @returns Cookie list, or an empty list when no cookies match.
+   * @throws {CookieError} INVALID_URL or a native storage error.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/reading#getlistsync
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
+   */
   getListSync(url: string): Cookie[] {
     try {
       return NitroCookiesHybridObject.getListSync(url);
@@ -44,7 +60,20 @@ export const NitroCookies = {
     }
   },
 
-  /** Return a list that preserves duplicate names and available scope metadata. */
+  /**
+   * Read a list from the selected store. Next / unreleased.
+   *
+   * Preserves duplicate names and native order. Apple results preserve stored domains and paths.
+   * Android provides name/value pairs only; retain the original write scope for deletion.
+   * Apple selection matches domains, not request eligibility. Use `getCookieHeader` for requests.
+   *
+   * @param url - Absolute HTTP(S) URL with a host.
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
+   * @returns Cookie list, or an empty list when no cookies match.
+   * @throws {CookieError} INVALID_URL, WEBKIT_UNAVAILABLE, or a native storage error.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/reading#getlist
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
+   */
   async getList(url: string, useWebKit?: boolean): Promise<Cookie[]> {
     try {
       return await NitroCookiesHybridObject.getList(url, useWebKit ?? false);
@@ -53,7 +82,18 @@ export const NitroCookies = {
     }
   },
 
-  /** Return all cookies with stored scope metadata. Apple platforms only. */
+  /**
+   * Read every cookie from the selected Apple store. Next / unreleased.
+   *
+   * Preserves duplicate names and stored scope. The default store supports iOS and tvOS.
+   * Android rejects with PLATFORM_UNSUPPORTED.
+   *
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
+   * @returns All stored cookies in native order, or an empty list.
+   * @throws {CookieError} PLATFORM_UNSUPPORTED, WEBKIT_UNAVAILABLE, or a native storage error.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/reading#getalllist
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
+   */
   async getAllList(useWebKit?: boolean): Promise<Cookie[]> {
     try {
       return await NitroCookiesHybridObject.getAllList(useWebKit ?? false);
@@ -62,7 +102,18 @@ export const NitroCookies = {
     }
   },
 
-  /** Return every response cookie, including cookies with duplicate names. */
+  /**
+   * Make an HTTP GET request and parse response cookies. Next / unreleased.
+   *
+   * Preserves duplicate names. Parsing and available metadata follow the native platform.
+   * This method has no WebKit selector.
+   *
+   * @param url - Absolute HTTP(S) URL to request.
+   * @returns Every parsed response cookie, or an empty list.
+   * @throws {CookieError} INVALID_URL or NETWORK_ERROR.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/requests#getfromresponselist
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
+   */
   async getFromResponseList(url: string): Promise<Cookie[]> {
     try {
       return await NitroCookiesHybridObject.getFromResponse(url);
@@ -71,7 +122,20 @@ export const NitroCookies = {
     }
   },
 
-  /** Submit deletion for one exact scope. Android cannot acknowledge sync writes. */
+  /**
+   * Delete one exact identity from the default store. Next / unreleased.
+   *
+   * Apple treats a missing identity as a no-op. Android submits an expiration write without acknowledgment.
+   * Retain the original Android write scope; URL queries cannot recover it.
+   * Use HTTPS for Secure cookies. Synchronous methods cannot access WebKit.
+   *
+   * @param url - Absolute HTTP(S) URL with a host compatible with the identifier domain.
+   * @param identifier - Cookie name, absolute path, and stored domain. Omit domain for host-only deletion.
+   * @returns No value; does not report whether a cookie existed.
+   * @throws {CookieError} INVALID_URL, PARSE_ERROR, DOMAIN_MISMATCH, or a native storage error.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/deletion#clearcookiesync
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
+   */
   clearCookieSync(url: string, identifier: CookieIdentifier): void {
     try {
       return NitroCookiesHybridObject.clearCookieSync(url, identifier);
@@ -80,7 +144,20 @@ export const NitroCookies = {
     }
   },
 
-  /** Delete one exact scope. Retain the original scope for Android cookies. */
+  /**
+   * Delete one exact identity from the selected store. Next / unreleased.
+   *
+   * Apple treats a missing identity as a no-op. Android awaits expiration-write acceptance and rejects rejected writes.
+   * Retain the original Android write scope; URL queries cannot recover it. Use HTTPS for Secure cookies.
+   *
+   * @param url - Absolute HTTP(S) URL with a host compatible with the identifier domain.
+   * @param identifier - Cookie name, absolute path, and stored domain. Omit domain for host-only deletion.
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
+   * @returns Resolves without a value; does not report whether a cookie existed.
+   * @throws {CookieError} INVALID_URL, PARSE_ERROR, DOMAIN_MISMATCH, WEBKIT_UNAVAILABLE, or a native storage error.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/deletion#clearcookie
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation#choose-the-documentation-version
+   */
   async clearCookie(
     url: string,
     identifier: CookieIdentifier,
@@ -96,18 +173,15 @@ export const NitroCookies = {
       throw normalizeCookieError(error, { url, cookieName: identifier?.name });
     }
   },
-  // ========================================
-  // SYNCHRONOUS METHODS
-  // ========================================
 
   /**
    * Get cookies synchronously for a URL.
    *
-   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Uses HTTPCookieStorage.shared (iOS and tvOS) or CookieManager (Android).
    * Does NOT support WebKit cookie store (use async `get` with `useWebKit: true`).
    *
    * @param url - The URL to match cookies against (must include protocol)
-   * @returns Dictionary of cookies keyed by name
+   * @returns Dictionary keyed by name; later entries replace earlier duplicate names.
    * @throws {Error} INVALID_URL - URL is malformed or missing protocol
    *
    * @example
@@ -128,12 +202,14 @@ export const NitroCookies = {
   /**
    * Set a cookie synchronously.
    *
-   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Uses HTTPCookieStorage.shared (iOS and tvOS) or CookieManager (Android).
    * Does NOT support WebKit cookie store (use async `set` with `useWebKit: true`).
+   *
+   * On Android, this call submits writes without an acceptance callback. Immediate reads may miss them.
    *
    * @param url - The URL for which to set the cookie (must include protocol)
    * @param cookie - The cookie object to store
-   * @returns true on success
+   * @returns true after native submission; Android does not await write acceptance.
    * @throws {Error} INVALID_URL - URL is malformed or missing protocol
    * @throws {Error} DOMAIN_MISMATCH - Cookie domain doesn't match URL host
    *
@@ -159,9 +235,11 @@ export const NitroCookies = {
   /**
    * Parse and set cookies from Set-Cookie header synchronously.
    *
+   * On Android, this call submits writes without an acceptance callback. Immediate reads may miss them.
+   *
    * @param url - The URL associated with the Set-Cookie header
    * @param value - The raw Set-Cookie header value
-   * @returns true on success
+   * @returns true after native submission; Android does not await write acceptance.
    * @throws {Error} INVALID_URL - URL is malformed
    *
    * @example
@@ -181,18 +259,17 @@ export const NitroCookies = {
   },
 
   /**
-   * Clear a specific cookie by name synchronously.
+   * Remove the first Apple cookie matching the name and URL domain.
    *
-   * @param url - The URL to match the cookie domain
-   * @param name - The name of the cookie to remove
-   * @returns true if cookie was found and removed, false if not found
-   * @throws {Error} INVALID_URL - URL is malformed
+   * Android checks name visibility, then submits expiration at Path=/ with the URL host Domain attribute.
+   * A true result does not prove deletion of the original scope or every cookie with that name.
+   * For exact deletion, retain the identity and use `clearCookieSync` (Next / unreleased).
    *
-   * @example
-   * ```typescript
-   * const removed = NitroCookies.clearByNameSync('https://example.com', 'session');
-   * console.log(removed ? 'Cookie removed' : 'Cookie not found');
-   * ```
+   * @param url - Absolute HTTP(S) URL used for domain selection.
+   * @param name - Cookie name to remove.
+   * @returns Whether a name match was found; Android does not await expiration-write acceptance.
+   * @throws {CookieError} INVALID_URL or a native storage error.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/deletion#clearbynamesync
    */
   clearByNameSync(url: string, name: string): boolean {
     try {
@@ -210,14 +287,15 @@ export const NitroCookies = {
    * matches the URL. Handy for attaching cookies to a manual `fetch` or
    * `XMLHttpRequest`. Returns an empty string when no cookies match.
    *
-   * @param url - The URL to match cookies against (must include protocol)
+   * @param url - The full request URL; path and HTTPS affect which cookies are eligible.
    * @returns The Cookie header string, or "" when no cookies match
    * @throws {Error} INVALID_URL - URL is malformed or missing protocol
    *
    * @example
    * ```typescript
-   * const header = NitroCookies.getCookieHeaderSync('https://example.com');
-   * await fetch('https://example.com/api', { headers: { Cookie: header } });
+   * const url = 'https://example.com/api';
+   * const header = NitroCookies.getCookieHeaderSync(url);
+   * await fetch(url, { headers: { Cookie: header } });
    * ```
    */
   getCookieHeaderSync(url: string): string {
@@ -233,11 +311,13 @@ export const NitroCookies = {
    *
    * Applies the same domain validation as `setSync` to every cookie. If any
    * cookie's domain doesn't match the URL host, the whole call throws and no
-   * cookies are written.
+   * cookies are written. Storage failures do not provide transactional rollback.
+   *
+   * On Android, this call submits writes without an acceptance callback. Immediate reads may miss them.
    *
    * @param url - The URL for which to set the cookies (must include protocol)
    * @param cookies - The cookie objects to store
-   * @returns true on success
+   * @returns true after native submission; Android does not await write acceptance.
    * @throws {Error} INVALID_URL - URL is malformed or missing protocol
    * @throws {Error} DOMAIN_MISMATCH - A cookie's domain doesn't match URL host
    *
@@ -257,29 +337,29 @@ export const NitroCookies = {
     }
   },
 
-  // ========================================
-  // ASYNCHRONOUS METHODS
-  // ========================================
   /**
    * Set a single cookie for a specific URL.
+   *
+   * On Android, this call submits writes without an acceptance callback. Immediate reads may miss them.
+   * iOS WebKit writes await the store completion callback. This does not promise disk persistence.
    *
    * @param url - The URL for which to set the cookie. Must include protocol (http:// or https://).
    * @param cookie - Cookie object containing name, value, and optional attributes.
    * @param cookie.name - Cookie name (required)
    * @param cookie.value - Cookie value (required)
    * @param cookie.path - URL path for cookie. Defaults to "/"
-   * @param cookie.domain - Cookie domain. Defaults to URL host. Supports wildcard (.example.com)
+   * @param cookie.domain - Defaults to the URL host. A leading dot denotes domain scope, not a glob wildcard.
    * @param cookie.expires - Expiration date in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ). Omit for session cookie.
    * @param cookie.secure - If true, cookie only sent over HTTPS
-   * @param cookie.httpOnly - If true, cookie not accessible via JavaScript (prevents XSS)
-   * @param cookie.version - Cookie version (rarely used, for RFC 2109 compatibility)
-   * @param useWebKit - (iOS only) If true, use WKHTTPCookieStore instead of NSHTTPCookieStorage. Requires iOS 11+.
+   * @param cookie.httpOnly - Restricts browser document.cookie access. Native reads still expose the value to React Native JavaScript.
+   * @param cookie.version - Legacy field; do not rely on a portable native effect.
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
    *
-   * @returns Promise that resolves to true on success
+   * @returns Resolves to true after native completion; Android confirms submission only.
    *
    * @throws {Error} INVALID_URL - URL is malformed or missing protocol
    * @throws {Error} DOMAIN_MISMATCH - Cookie domain doesn't match URL host
-   * @throws {Error} WEBKIT_UNAVAILABLE - useWebKit=true on iOS < 11
+   * @throws {Error} WEBKIT_UNAVAILABLE - WebKit is unavailable, including on tvOS
    *
    * @example
    * ```typescript
@@ -315,17 +395,20 @@ export const NitroCookies = {
    *
    * Applies the same domain validation as `set` to every cookie. If any
    * cookie's domain doesn't match the URL host, the whole call rejects and no
-   * cookies are written.
+   * cookies are written. Storage failures do not provide transactional rollback.
+   *
+   * On Android, this call submits writes without an acceptance callback. Immediate reads may miss them.
+   * iOS WebKit writes await the store completion callback. This does not promise disk persistence.
    *
    * @param url - The URL for which to set the cookies. Must include protocol.
    * @param cookies - The cookie objects to store
-   * @param useWebKit - (iOS only) If true, use WKHTTPCookieStore instead of NSHTTPCookieStorage. Requires iOS 11+.
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
    *
-   * @returns Promise that resolves to true on success
+   * @returns Resolves to true after native completion; Android confirms submission only.
    *
    * @throws {Error} INVALID_URL - URL is malformed or missing protocol
    * @throws {Error} DOMAIN_MISMATCH - A cookie's domain doesn't match URL host
-   * @throws {Error} WEBKIT_UNAVAILABLE - useWebKit=true on iOS < 11
+   * @throws {Error} WEBKIT_UNAVAILABLE - WebKit is unavailable, including on tvOS
    *
    * @example
    * ```typescript
@@ -358,8 +441,8 @@ export const NitroCookies = {
    * (e.g. `"name1=value1; name2=value2"`), built from every cookie that
    * matches the URL. Returns an empty string when no cookies match.
    *
-   * @param url - The URL to match cookies against. Must include protocol.
-   * @param useWebKit - (iOS only) If true, read from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   * @param url - The full request URL; path and HTTPS affect which cookies are eligible.
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
    *
    * @returns Promise that resolves to the Cookie header string, or "" when no cookies match
    *
@@ -367,8 +450,9 @@ export const NitroCookies = {
    *
    * @example
    * ```typescript
-   * const header = await NitroCookies.getCookieHeader('https://example.com');
-   * await fetch('https://example.com/api', { headers: { Cookie: header } });
+   * const url = 'https://example.com/api';
+   * const header = await NitroCookies.getCookieHeader(url);
+   * await fetch(url, { headers: { Cookie: header } });
    * ```
    */
   async getCookieHeader(url: string, useWebKit?: boolean): Promise<string> {
@@ -385,11 +469,12 @@ export const NitroCookies = {
   /**
    * Get all cookies matching a specific URL's domain.
    *
-   * Returns cookies as a dictionary keyed by cookie name for backwards
-   * compatibility with @react-native-cookies/cookies.
+   * Returns a dictionary keyed by name; later entries replace earlier duplicate names.
+   * Apple queries select domains, not request eligibility. Android metadata uses the URL host and root path.
+   * Use `getCookieHeader` to select cookies for an actual request.
    *
    * @param url - The URL to match cookies against. Must include protocol.
-   * @param useWebKit - (iOS only) If true, retrieve from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
    *
    * @returns Promise that resolves to dictionary of cookies keyed by name
    *
@@ -399,7 +484,7 @@ export const NitroCookies = {
    * ```typescript
    * const cookies = await NitroCookies.get('https://api.example.com');
    * // Returns: { auth_token: { name: 'auth_token', value: 'xyz789', ... } }
-   * console.log(cookies.auth_token.value); // 'xyz789'
+   * console.log(cookies.auth_token?.value); // 'xyz789' when present
    * ```
    */
   async get(url: string, useWebKit?: boolean): Promise<Cookies> {
@@ -415,11 +500,11 @@ export const NitroCookies = {
   },
 
   /**
-   * Clear all cookies from storage.
+   * Clear the entire selected store, including unrelated domains.
    *
-   * @param useWebKit - (iOS only) If true, clear from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
    *
-   * @returns Promise that resolves to true on success
+   * @returns true after Apple completion; Android returns whether any cookies were removed.
    *
    * @example
    * ```typescript
@@ -438,16 +523,17 @@ export const NitroCookies = {
   /**
    * Parse and store cookies from a raw HTTP Set-Cookie header string.
    *
-   * Automatically parses cookie attributes (path, domain, expires, secure, httpOnly)
-   * from the header value.
+   * Parsing follows the native platform. Invalid header input may be ignored.
+   * This method writes the default store and has no WebKit selector.
+   *
+   * On Android, this call submits writes without an acceptance callback. Immediate reads may miss them.
    *
    * @param url - The URL associated with the Set-Cookie header
    * @param value - The raw Set-Cookie header value (e.g., "session=abc; path=/; secure")
    *
-   * @returns Promise that resolves to true on success
+   * @returns Resolves to true after native completion; Android confirms submission only.
    *
    * @throws {Error} INVALID_URL - URL is malformed
-   * @throws {Error} PARSE_ERROR - Set-Cookie header is malformed
    *
    * @example
    * ```typescript
@@ -496,14 +582,15 @@ export const NitroCookies = {
   /**
    * Get ALL cookies from storage regardless of domain.
    *
-   * **iOS only** - Returns all cookies from all domains. Useful for debugging
-   * and auditing. Returns cookies as a dictionary keyed by name.
+   * The default store supports iOS and tvOS. Android rejects this operation.
+   * Duplicate names collapse into a dictionary; later entries replace earlier entries.
    *
-   * @param useWebKit - If true, retrieve from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
    *
    * @returns Promise that resolves to dictionary of all cookies
    *
-   * @throws {Error} PLATFORM_UNSUPPORTED - Called on Android (not supported)
+   * @throws {Error} PLATFORM_UNSUPPORTED - Called on Android
+   * @throws {Error} WEBKIT_UNAVAILABLE - WebKit is unavailable, including on tvOS
    *
    * @example
    * ```typescript
@@ -526,26 +613,18 @@ export const NitroCookies = {
   },
 
   /**
-   * Clear a specific cookie by name and domain.
+   * Remove the first Apple cookie matching the name and URL domain.
    *
-   * **iOS preferred** - On iOS, removes the cookie immediately. On Android,
-   * sets an expired cookie (may not remove immediately due to platform limitations).
+   * Android checks name visibility, then submits expiration at Path=/ with the URL host Domain attribute.
+   * A true result does not prove deletion of the original scope or every cookie with that name.
+   * For exact deletion, retain the identity and use `clearCookie` (Next / unreleased).
    *
-   * @param url - The URL to match the cookie domain
-   * @param name - The name of the cookie to remove
-   * @param useWebKit - (iOS only) If true, remove from WKHTTPCookieStore instead of NSHTTPCookieStorage
-   *
-   * @returns Promise that resolves to true if cookie was found and removed, false otherwise
-   *
-   * @throws {Error} INVALID_URL - URL is malformed
-   *
-   * @example
-   * ```typescript
-   * const removed = await NitroCookies.clearByName('https://example.com', 'session_token');
-   * if (removed) {
-   *   console.log('Cookie removed');
-   * }
-   * ```
+   * @param url - Absolute HTTP(S) URL used for domain selection.
+   * @param name - Cookie name to remove.
+   * @param useWebKit - Defaults to false. Selects iOS WebKit when true; tvOS rejects it and Android ignores it.
+   * @returns Whether a name match was found; Android does not await expiration-write acceptance.
+   * @throws {CookieError} INVALID_URL, WEBKIT_UNAVAILABLE, or a native storage error.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/deletion#clearbyname
    */
   async clearByName(
     url: string,
@@ -564,25 +643,13 @@ export const NitroCookies = {
   },
 
   /**
-   * Flush in-memory cookies to persistent storage.
+   * Persist the current Android CookieManager cookies to disk.
    *
-   * **Android only** - Forces cookies to be written to disk immediately.
-   * Required on Android to ensure cookies persist across app restarts.
-   * Automatically called on API 21+ but explicit call ensures immediate persistence.
+   * On iOS and tvOS, resolves without work. This method does not flush the WebKit store.
    *
-   * @returns Promise that resolves when flush is complete
-   *
-   * @throws {Error} PLATFORM_UNSUPPORTED - Called on iOS (not needed)
-   *
-   * @example
-   * ```typescript
-   * import { Platform } from 'react-native';
-   *
-   * if (Platform.OS === 'android') {
-   *   await NitroCookies.flush();
-   *   console.log('Cookies persisted to disk');
-   * }
-   * ```
+   * @returns Resolves without a value after the native operation.
+   * @throws {CookieError} A native storage error on Android.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/lifecycle#flush
    */
   async flush(): Promise<void> {
     try {
@@ -593,26 +660,14 @@ export const NitroCookies = {
   },
 
   /**
-   * Remove all session cookies (cookies without an expiration date).
+   * Remove Android cookies without a persistent expiration.
    *
-   * **Android only** - Session cookies are automatically removed when the app
-   * closes on iOS. On Android, this method explicitly removes them.
+   * On iOS and tvOS, performs no removal and resolves false.
+   * Session lifetime follows the platform store lifecycle; app termination does not guarantee removal.
    *
-   * @returns Promise that resolves to true if any session cookies were removed
-   *
-   * @throws {Error} PLATFORM_UNSUPPORTED - Called on iOS (not needed)
-   *
-   * @example
-   * ```typescript
-   * import { Platform } from 'react-native';
-   *
-   * if (Platform.OS === 'android') {
-   *   const removed = await NitroCookies.removeSessionCookies();
-   *   if (removed) {
-   *     console.log('Session cookies removed');
-   *   }
-   * }
-   * ```
+   * @returns The Android removal flag, or false on Apple platforms.
+   * @throws {CookieError} A native storage error on Android.
+   * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/lifecycle#removesessioncookies
    */
   async removeSessionCookies(): Promise<boolean> {
     try {
@@ -623,9 +678,7 @@ export const NitroCookies = {
   },
 };
 
-// Export types
 export { CookieErrorCode };
 export type { Cookie, CookieIdentifier, Cookies, CookieError };
 
-// Default export for convenience
 export default NitroCookies;

@@ -5,10 +5,9 @@ import WebKit
 import NitroModules
 
 /**
- * HybridNitroCookies - iOS implementation of cookie management
+ * HybridNitroCookies - Apple implementation of cookie management
  *
- * Provides high-performance cookie operations using NSHTTPCookieStorage
- * and WKHTTPCookieStore with Nitro Modules JSI architecture.
+ * Uses shared HTTPCookieStorage on iOS and tvOS, with optional iOS WKHTTPCookieStore access.
  */
 public class HybridNitroCookies: HybridNitroCookiesSpec {
 
@@ -119,8 +118,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             Self.iso8601Formatter.string(from: $0)
         }
 
-        // Strip leading dot from domain — NSHTTPCookieStorage and Set-Cookie
-        // parsing add a dot prefix per RFC 6265, but callers expect the bare domain.
+        // Legacy results use bare domains; list results retain the prefix needed for exact scope.
         var domain = httpCookie.domain
         if !preserveDomain && domain.hasPrefix(".") {
             domain = String(domain.dropFirst())
@@ -147,7 +145,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
             return true
         }
 
-        // Wildcard match (.example.com matches api.example.com)
+        // A leading dot denotes domain scope, not glob matching.
         if cookieDomain.hasPrefix(".") {
             let domain = String(cookieDomain.dropFirst())
             return urlHost.hasSuffix("." + domain) || urlHost == domain
@@ -445,7 +443,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     public func setManySync(url urlString: String, cookies: [Cookie]) throws -> Bool {
         let url = try validateURL(urlString)
 
-        // Validate every cookie up front so a bad cookie doesn't leave a partial write
+        // Validate all domains before writing so a mismatch does not leave a partial write.
         for cookie in cookies {
             try validateDomain(cookie: cookie, url: url)
         }
@@ -501,7 +499,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
         return Promise.async {
             let url = try self.validateURL(urlString)
 
-            // Validate every cookie up front so a bad cookie doesn't leave a partial write
+            // Validate all domains before writing so a mismatch does not leave a partial write.
             for cookie in cookies {
                 try self.validateDomain(cookie: cookie, url: url)
             }
@@ -681,7 +679,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     }
 
     /**
-     * Get all cookies regardless of domain (iOS only)
+     * Get all cookies from the selected Apple store; tvOS supports the default store only.
      */
     public func getAll(useWebKit: Bool?) throws -> Promise<[Cookie]> {
         return Promise.async {
@@ -708,7 +706,7 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     }
 
     /**
-     * Clear specific cookie by name (iOS only)
+     * Remove the first cookie matching the name and URL domain from the selected Apple store.
      */
     public func clearByName(url urlString: String, name: String, useWebKit: Bool?) throws -> Promise<Bool> {
         return Promise.async {
@@ -762,16 +760,16 @@ public class HybridNitroCookies: HybridNitroCookiesSpec {
     }
 
     /**
-     * Flush cookies (Android only - no-op on iOS)
+     * Resolve without work on iOS and tvOS; this does not flush WebKit storage.
      */
     public func flush() throws -> Promise<Void> {
         return Promise.async {
-            // No-op on iOS - cookies are automatically persisted
+            // Apple compatibility no-op; this method does not control store persistence.
         }
     }
 
     /**
-     * Remove session cookies (Android only - no-op on iOS)
+     * Perform no session-cookie removal on Apple platforms and resolve false.
      */
     public func removeSessionCookies() throws -> Promise<Bool> {
         return Promise.async {

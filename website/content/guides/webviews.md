@@ -21,7 +21,7 @@ await NitroCookies.set(
 const cookies = await NitroCookies.get(url, true);
 ```
 
-The third argument selects WebKit for both operations. Leaving it out selects Apple shared storage.
+The `useWebKit` argument selects WebKit: it is the third argument to `set` and the second argument to `get`. Leaving it out selects Apple shared storage.
 Use the same store when reading, writing, and deleting a login cookie.
 
 ## Integration boundaries

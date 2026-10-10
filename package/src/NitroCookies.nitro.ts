@@ -1,39 +1,19 @@
-/**
- * Nitro Cookies HybridObject Interface
- *
- * This file defines the TypeScript interface for the NitroCookies HybridObject.
- * Nitrogen code generator will use this to create platform-specific implementations.
- */
-
 import type { HybridObject } from 'react-native-nitro-modules';
 import type { Cookie, CookieIdentifier } from './types';
 
-// Cookies dictionary will be returned as an array of cookies
-// JavaScript layer will convert to dictionary format for backwards compatibility
-
 /**
- * NitroCookies HybridObject
- *
- * Provides high-performance HTTP cookie management for React Native applications.
- * Uses Nitro Modules JSI architecture to achieve 5x+ faster operations compared
- * to traditional React Native bridge-based implementations.
- *
- * API Design:
- * - Synchronous methods (xxxSync): Direct return values, no Promise wrapping
- * - Asynchronous methods: Return Promise for operations requiring callbacks/network
+ * Native contract used by Nitrogen to generate C++, Swift, and Kotlin bridges.
+ * The public wrapper preserves list results and converts legacy arrays to name-keyed dictionaries.
+ * @see https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/
  */
 export interface NitroCookies extends HybridObject<{
   ios: 'swift';
   android: 'kotlin';
 }> {
-  // ========================================
-  // SYNCHRONOUS METHODS
-  // ========================================
-
   /**
    * Get cookies synchronously for a URL
    *
-   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Uses HTTPCookieStorage.shared (iOS and tvOS) or CookieManager (Android).
    * Does NOT support WebKit cookie store (use async `get` with `useWebKit: true`).
    *
    * @param url - The URL to match cookies against (must include protocol)
@@ -42,21 +22,27 @@ export interface NitroCookies extends HybridObject<{
    */
   getSync(url: string): Cookie[];
 
-  /** Return every cookie without losing stored domain scope or duplicate names. */
+  /**
+   * Preserve duplicate names. Next / unreleased.
+   * Apple preserves stored domains and paths. Android returns name/value pairs only.
+   */
   getListSync(url: string): Cookie[];
 
-  /** Delete exactly the specified cookie scope. Missing cookies are a no-op. */
+  /**
+   * Delete one identity. Next / unreleased. Retain the original Android write scope.
+   * Apple missing identities are no-ops. Android sync submits; async awaits write acceptance.
+   */
   clearCookieSync(url: string, identifier: CookieIdentifier): void;
 
   /**
    * Set a cookie synchronously
    *
-   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Uses HTTPCookieStorage.shared (iOS and tvOS) or CookieManager (Android).
    * Does NOT support WebKit cookie store (use async `set` with `useWebKit: true`).
    *
    * @param url - The URL for which to set the cookie (must include protocol)
    * @param cookie - The cookie object to store
-   * @returns true on success
+   * @returns true after submission; Android does not await an acceptance callback.
    * @throws Error if URL is invalid or domain mismatch
    */
   setSync(url: string, cookie: Cookie): boolean;
@@ -66,7 +52,7 @@ export interface NitroCookies extends HybridObject<{
    *
    * @param url - The URL associated with the Set-Cookie header
    * @param value - The raw Set-Cookie header value
-   * @returns true on success
+   * @returns true after submission; Android does not await an acceptance callback.
    * @throws Error if URL is invalid
    */
   setFromResponseSync(url: string, value: string): boolean;
@@ -76,7 +62,7 @@ export interface NitroCookies extends HybridObject<{
    *
    * @param url - The URL to match the cookie domain
    * @param name - The name of the cookie to remove
-   * @returns true if cookie was found and removed, false if not found
+   * @returns Whether a name match was found; Android only submits expiration at the URL host and root path.
    * @throws Error if URL is invalid
    */
   clearByNameSync(url: string, name: string): boolean;
@@ -87,7 +73,7 @@ export interface NitroCookies extends HybridObject<{
    * Returns the value you would put in an HTTP `Cookie` request header
    * (e.g. "name1=value1; name2=value2"), built from every cookie that
    * matches the URL. Use this to attach cookies to a manual `fetch`/
-   * `XMLHttpRequest`. Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * `XMLHttpRequest`. Uses HTTPCookieStorage.shared (iOS and tvOS) or CookieManager (Android).
    *
    * @param url - The URL to match cookies against (must include protocol)
    * @returns The Cookie header string, or "" when no cookies match
@@ -99,26 +85,22 @@ export interface NitroCookies extends HybridObject<{
    * Set multiple cookies for a URL synchronously
    *
    * Applies the same domain validation as `setSync` to every cookie.
-   * Uses NSHTTPCookieStorage (iOS) or CookieManager (Android).
+   * Uses HTTPCookieStorage.shared (iOS and tvOS) or CookieManager (Android).
    *
    * @param url - The URL for which to set the cookies (must include protocol)
    * @param cookies - The cookie objects to store
-   * @returns true on success
+   * @returns true after submission; Android does not await an acceptance callback.
    * @throws Error if URL is invalid or any cookie's domain mismatches
    */
   setManySync(url: string, cookies: Cookie[]): boolean;
-
-  // ========================================
-  // ASYNCHRONOUS METHODS
-  // ========================================
 
   /**
    * Set a single cookie for a specific URL
    *
    * @param url - The URL for which to set the cookie (must include protocol: http:// or https://)
    * @param cookie - The cookie object to store
-   * @param useWebKit - (iOS only) If true, use WKHTTPCookieStore instead of NSHTTPCookieStorage (requires iOS 11+)
-   * @returns Promise that resolves to true on success
+   * @param useWebKit - Public default is false. True selects iOS WebKit; tvOS rejects it and Android ignores it.
+   * @returns true after native completion; Android writes confirm submission only.
    */
   set(url: string, cookie: Cookie, useWebKit?: boolean): Promise<boolean>;
 
@@ -129,8 +111,8 @@ export interface NitroCookies extends HybridObject<{
    *
    * @param url - The URL for which to set the cookies (must include protocol)
    * @param cookies - The cookie objects to store
-   * @param useWebKit - (iOS only) If true, use WKHTTPCookieStore instead of NSHTTPCookieStorage (requires iOS 11+)
-   * @returns Promise that resolves to true on success
+   * @param useWebKit - Public default is false. True selects iOS WebKit; tvOS rejects it and Android ignores it.
+   * @returns true after native completion; Android writes confirm submission only.
    */
   setMany(
     url: string,
@@ -146,7 +128,7 @@ export interface NitroCookies extends HybridObject<{
    * matches the URL.
    *
    * @param url - The URL to match cookies against (must include protocol)
-   * @param useWebKit - (iOS only) If true, read from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   * @param useWebKit - Public default is false. True selects iOS WebKit; tvOS rejects it and Android ignores it.
    * @returns Promise that resolves to the Cookie header string, or "" when no cookies match
    */
   getCookieHeader(url: string, useWebKit?: boolean): Promise<string>;
@@ -155,15 +137,21 @@ export interface NitroCookies extends HybridObject<{
    * Get all cookies matching a specific URL's domain
    *
    * @param url - The URL to match cookies against (must include protocol)
-   * @param useWebKit - (iOS only) If true, retrieve from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   * @param useWebKit - Public default is false. True selects iOS WebKit; tvOS rejects it and Android ignores it.
    * @returns Promise that resolves to array of cookies
    */
   get(url: string, useWebKit?: boolean): Promise<Cookie[]>;
 
-  /** Return every cookie without losing stored domain scope or duplicate names. */
+  /**
+   * Preserve duplicate names. Next / unreleased.
+   * Apple preserves stored domains and paths. Android returns name/value pairs only.
+   */
   getList(url: string, useWebKit?: boolean): Promise<Cookie[]>;
 
-  /** Delete exactly the specified cookie scope. Missing cookies are a no-op. */
+  /**
+   * Delete one identity. Next / unreleased. Retain the original Android write scope.
+   * Apple missing identities are no-ops. Android sync submits; async awaits write acceptance.
+   */
   clearCookie(
     url: string,
     identifier: CookieIdentifier,
@@ -171,10 +159,10 @@ export interface NitroCookies extends HybridObject<{
   ): Promise<void>;
 
   /**
-   * Clear all cookies from storage
+   * Clear the entire selected store, including unrelated domains.
    *
-   * @param useWebKit - (iOS only) If true, clear from WKHTTPCookieStore instead of NSHTTPCookieStorage
-   * @returns Promise that resolves to true on success
+   * @param useWebKit - Public default is false. True selects iOS WebKit; tvOS rejects it and Android ignores it.
+   * @returns true after Apple completion; Android returns whether any cookies were removed.
    */
   clearAll(useWebKit?: boolean): Promise<boolean>;
 
@@ -183,7 +171,7 @@ export interface NitroCookies extends HybridObject<{
    *
    * @param url - The URL associated with the Set-Cookie header
    * @param value - The raw Set-Cookie header value
-   * @returns Promise that resolves to true on success
+   * @returns true after native completion; Android writes confirm submission only.
    */
   setFromResponse(url: string, value: string): Promise<boolean>;
 
@@ -196,37 +184,40 @@ export interface NitroCookies extends HybridObject<{
   getFromResponse(url: string): Promise<Cookie[]>;
 
   /**
-   * Get ALL cookies from storage regardless of domain (iOS only)
+   * Get all cookies from the selected Apple store, including default storage on tvOS. Android rejects this operation.
    *
-   * @param useWebKit - If true, retrieve from WKHTTPCookieStore instead of NSHTTPCookieStorage
+   * @param useWebKit - Public default is false. True selects iOS WebKit; tvOS rejects it and Android ignores it.
    * @returns Promise that resolves to array of all cookies
    */
   getAll(useWebKit?: boolean): Promise<Cookie[]>;
 
-  /** Return all stored cookies with their original domain scope (Apple only). */
+  /**
+   * Preserve all stored scopes and duplicate names. Next / unreleased.
+   * Default storage supports iOS and tvOS; WebKit is iOS-only. Android rejects this operation.
+   */
   getAllList(useWebKit?: boolean): Promise<Cookie[]>;
 
   /**
-   * Clear a specific cookie by name and domain (iOS only)
+   * Legacy name-only deletion; the result does not prove exact-scope or all-scope removal.
    *
    * @param url - The URL to match the cookie domain
    * @param name - The name of the cookie to remove
-   * @param useWebKit - If true, remove from WKHTTPCookieStore instead of NSHTTPCookieStorage
-   * @returns Promise that resolves to true if cookie was found and removed
+   * @param useWebKit - Public default is false. True selects iOS WebKit; tvOS rejects it and Android ignores it.
+   * @returns Whether a name match was found; Android only submits expiration at the URL host and root path.
    */
   clearByName(url: string, name: string, useWebKit?: boolean): Promise<boolean>;
 
   /**
-   * Flush in-memory cookies to persistent storage (Android only)
+   * Flush Android cookies to disk. On iOS and tvOS, resolve without work.
    *
    * @returns Promise that resolves when flush is complete
    */
   flush(): Promise<void>;
 
   /**
-   * Remove all session cookies (cookies without expires) (Android only)
+   * Remove Android session cookies. On iOS and tvOS, perform no removal and resolve false.
    *
-   * @returns Promise that resolves to true if any session cookies were removed
+   * @returns The Android removal flag, or false on Apple platforms.
    */
   removeSessionCookies(): Promise<boolean>;
 }

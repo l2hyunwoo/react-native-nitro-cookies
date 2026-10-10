@@ -1,49 +1,47 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-02-13 | Updated: 2026-02-13 -->
 
 # ios
 
-## Purpose
-iOS native implementation of the NitroCookies HybridObject in Swift. Provides cookie management using `NSHTTPCookieStorage` (synchronous/default) and `WKHTTPCookieStore` (async WebKit operations). Conforms to the Nitrogen-generated `HybridNitroCookiesSpec`.
+`NitroCookies.swift` implements the generated `HybridNitroCookiesSpec` for iOS and tvOS.
+The podspec at `../NitroCookies.podspec` defines deployment targets. iOS follows React Native; the podspec declares tvOS 13.4.
+Test fixture deployment targets do not establish the library's minimum supported OS.
 
-## Key Files
+## Storage and threading
 
-| File | Description |
-|------|-------------|
-| `NitroCookies.swift` | Full iOS implementation: `HybridNitroCookies` class extending `HybridNitroCookiesSpec` with sync + async cookie CRUD, URL validation, domain matching, WebKit support |
+`HTTPCookieStorage.shared` handles synchronous methods and async methods with `useWebKit` false or omitted.
+The default store supports iOS and tvOS, including `getAll` and `getAllList`.
+iOS async methods can select `WKWebsiteDataStore.default().httpCookieStore` with `useWebKit: true`.
+tvOS rejects WebKit selection with `WEBKIT_UNAVAILABLE`. The iOS WebKit availability guard requires iOS 11 or later.
+The library does not copy cookies between these stores or target ephemeral WebKit stores.
 
-## For AI Agents
+WebKit helpers use `DispatchQueue.main.async` and `withCheckedContinuation` to access the store and await callbacks.
+Preserve this main-thread access when changing WebKit methods. Other async work uses Nitro `Promise.async`.
 
-### Working In This Directory
-- The class `HybridNitroCookies` extends the generated `HybridNitroCookiesSpec` (from `nitrogen/generated/ios/`)
-- Two cookie storage backends:
-  - **NSHTTPCookieStorage** (shared): used for all sync methods and async methods when `useWebKit == false`
-  - **WKHTTPCookieStore**: used for async methods when `useWebKit == true` (iOS 11+ required)
-- WebKit operations require `MainActor.run` to access `WKWebsiteDataStore.default().httpCookieStore` safely across iOS versions
-- Date conversion uses `ISO8601DateFormatter` with fractional seconds for cookie `expires` fields
-- Platform-only methods (`flush`, `removeSessionCookies`) throw `PLATFORM_UNSUPPORTED` errors on iOS
-- Domain matching logic: exact match, wildcard (`.example.com`), and subdomain matching
+## Cookie contracts
 
-### Testing Requirements
-- No unit tests in this directory -- test via the `example/` iOS app
-- Test both NSHTTPCookieStorage and WKHTTPCookieStore paths
-- Verify iOS 11+ availability checks for WebKit operations
+Apple URL queries select by domain. Request-header methods additionally select cookies eligible for the full request URL.
+List methods preserve duplicate names and stored domain prefixes. Legacy results strip leading domain dots before dictionary conversion.
+Scoped deletion matches name, path, and stored domain. An omitted identifier domain selects the URL host; missing identities are no-ops.
+A leading domain dot denotes domain scope, not glob matching.
 
-### Common Patterns
-- `Promise.async { ... }` wraps async work into Nitro Promises
-- `withCheckedContinuation` bridges callback-based WebKit APIs to Swift concurrency
-- `validateURL()` and `validateDomain()` are called at the start of every operation
-- Cookie struct conversion: `makeHTTPCookie(from:url:)` and `createCookieData(from:)`
+Preserve header-injection defenses and HttpOnly reparsing: `HTTPCookie(properties:)` does not set HttpOnly through a property key.
+HttpOnly restricts browser script access, but native reads can expose cookie values to React Native JavaScript.
+`flush()` resolves without work. `removeSessionCookies()` performs no removal and resolves false.
+Session lifetime follows the platform store lifecycle; app termination does not guarantee removal.
 
-## Dependencies
+## Validation
 
-### Internal
-- `nitrogen/generated/ios/` -- `HybridNitroCookiesSpec`, `Cookie` type bridges
-- `nitrogen/generated/shared/c++/` -- C++ spec and Cookie struct
+Do not edit `../nitrogen/generated/`. Regenerate bridges from the root when the native interface changes.
+Apple native fixtures live in `../../.github/fixtures/apple/`, with platform additions in `../../.github/fixtures/ios/` and `../../.github/fixtures/tvos/`.
+`CookieHeaderTests.swift` covers request eligibility where WebKit is available. `CookieScopeTests.swift` covers list and deletion contracts on both platforms.
+The tvOS fixture also checks shared storage and WebKit rejection.
 
-### External
-- `Foundation` -- `HTTPCookieStorage`, `HTTPCookie`, `URLSession`
-- `WebKit` -- `WKWebsiteDataStore`, `WKHTTPCookieStore`
-- `NitroModules` -- `HybridObject` base, `Promise`
+After root dependencies, Nitrogen, and example Bundler setup, run from the repository root:
 
-<!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
+```sh
+BUNDLE_GEMFILE="$PWD/example/Gemfile" bundle exec bash .github/scripts/test-apple.sh ios
+BUNDLE_GEMFILE="$PWD/example/Gemfile" bundle exec bash .github/scripts/test-tvos.sh
+```
+
+The scripts select an available simulator for the requested platform and create a host fixture under `build/`.
+For the example app harness, use `yarn example harness:ios` and check its configured simulator first.
