@@ -4,6 +4,10 @@
   "description": "Monorepo for react-native-nitro-cookies",
   "private": true,
   "scripts": {
+    "docs:dev": "cd website && yarn dev",
+    "docs:build": "cd website && yarn build",
+    "docs:preview": "cd website && yarn preview",
+    "docs:deploy": "cd website && yarn deploy",
     "example": "yarn workspace react-native-nitro-cookies-example",
     "package": "yarn workspace react-native-nitro-cookies",
     "lint": "eslint \"**/*.{js,ts,tsx}\"",
