@@ -181,6 +181,73 @@ class NitroCookies : HybridNitroCookiesSpec() {
       throw Exception("WEBVIEW_UNAVAILABLE: ${e.message}", e)
     }
 
+  private fun validateListURL(url: String): URL {
+    val parsed = validateURL(url)
+    if (parsed.host.isNullOrEmpty()) throw Exception("INVALID_URL: URL has no host")
+    return parsed
+  }
+
+  private fun expirationHeader(identifier: CookieIdentifier, url: URL): String {
+    val validName = identifier.name.isNotEmpty() && identifier.name.all {
+      it.code in 33..126 && it !in "()<>@,;:\"/[]?={}\\"
+    }
+    val validPath = identifier.path.startsWith("/") && identifier.path.all {
+      it.code in 32..126 && it != ';'
+    }
+    val domain = identifier.domain?.lowercase(Locale.ROOT)
+    val bareDomain = domain?.removePrefix(".")
+    val validDomain = bareDomain == null || (bareDomain.isNotEmpty() &&
+      !bareDomain.startsWith(".") && !bareDomain.endsWith(".") &&
+      bareDomain.all { it in 'a'..'z' || it in '0'..'9' || it == '.' || it == '-' })
+    if (!validName || !validPath || !validDomain) {
+      throw Exception("PARSE_ERROR: Invalid cookie identifier")
+    }
+    if (bareDomain != null && !isMatchingDomain(bareDomain, url.host.lowercase(Locale.ROOT))) {
+      throw Exception("DOMAIN_MISMATCH: Cookie domain does not match URL host")
+    }
+    val parts = mutableListOf("${identifier.name}=", "Path=${identifier.path}")
+    // Omitting Domain preserves host-only scope in Chromium's cookie store.
+    domain?.let { parts.add("Domain=$it") }
+    parts.add("Max-Age=0")
+    parts.add("Expires=Thu, 01 Jan 1970 00:00:00 GMT")
+    if (url.protocol == "https") parts.add("Secure")
+    return parts.joinToString("; ")
+  }
+
+  override fun getListSync(url: String): Array<Cookie> {
+    validateListURL(url)
+    // CookieManager exposes name/value pairs, not the original scope metadata.
+    return getSync(url).map { it.copy(path = null, domain = null) }.toTypedArray()
+  }
+
+  override fun getList(url: String, useWebKit: Boolean?): Promise<Array<Cookie>> =
+    Promise.async { getListSync(url) }
+
+  override fun getAllList(useWebKit: Boolean?): Promise<Array<Cookie>> = getAll(useWebKit)
+
+  override fun clearCookieSync(url: String, identifier: CookieIdentifier) {
+    val parsed = validateListURL(url)
+    val header = expirationHeader(identifier, parsed)
+    cookieManagerOrThrow().setCookie(url, header)
+  }
+
+  override fun clearCookie(url: String, identifier: CookieIdentifier, useWebKit: Boolean?): Promise<Unit> {
+    val promise = Promise<Unit>()
+    Handler(Looper.getMainLooper()).post {
+      try {
+        val parsed = validateListURL(url)
+        val header = expirationHeader(identifier, parsed)
+        cookieManagerOrThrow().setCookie(url, header) { accepted ->
+          if (accepted) promise.resolve(Unit)
+          else promise.reject(Exception("STORAGE_ERROR: Cookie deletion was rejected"))
+        }
+      } catch (error: Exception) {
+        promise.reject(error)
+      }
+    }
+    return promise
+  }
+
   // MARK: - Synchronous Cookie Operations
 
   /** Get cookies synchronously for a URL */

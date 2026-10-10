@@ -6,7 +6,7 @@
  */
 
 import type { HybridObject } from 'react-native-nitro-modules';
-import type { Cookie } from './types';
+import type { Cookie, CookieIdentifier } from './types';
 
 // Cookies dictionary will be returned as an array of cookies
 // JavaScript layer will convert to dictionary format for backwards compatibility
@@ -41,6 +41,12 @@ export interface NitroCookies extends HybridObject<{
    * @throws Error if URL is invalid
    */
   getSync(url: string): Cookie[];
+
+  /** Return every cookie without losing stored domain scope or duplicate names. */
+  getListSync(url: string): Cookie[];
+
+  /** Delete exactly the specified cookie scope. Missing cookies are a no-op. */
+  clearCookieSync(url: string, identifier: CookieIdentifier): void;
 
   /**
    * Set a cookie synchronously
@@ -154,6 +160,16 @@ export interface NitroCookies extends HybridObject<{
    */
   get(url: string, useWebKit?: boolean): Promise<Cookie[]>;
 
+  /** Return every cookie without losing stored domain scope or duplicate names. */
+  getList(url: string, useWebKit?: boolean): Promise<Cookie[]>;
+
+  /** Delete exactly the specified cookie scope. Missing cookies are a no-op. */
+  clearCookie(
+    url: string,
+    identifier: CookieIdentifier,
+    useWebKit?: boolean
+  ): Promise<void>;
+
   /**
    * Clear all cookies from storage
    *
@@ -186,6 +202,9 @@ export interface NitroCookies extends HybridObject<{
    * @returns Promise that resolves to array of all cookies
    */
   getAll(useWebKit?: boolean): Promise<Cookie[]>;
+
+  /** Return all stored cookies with their original domain scope (Apple only). */
+  getAllList(useWebKit?: boolean): Promise<Cookie[]>;
 
   /**
    * Clear a specific cookie by name and domain (iOS only)
