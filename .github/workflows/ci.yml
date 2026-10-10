@@ -35,6 +35,9 @@ jobs:
       - name: Typecheck files
         run: yarn typecheck
 
+      - name: Typecheck playground
+        run: yarn example typecheck
+
   test:
     runs-on: ubuntu-latest
 
@@ -47,6 +50,9 @@ jobs:
 
       - name: Run unit tests
         run: yarn test --maxWorkers=2 --coverage
+
+      - name: Test playground operations
+        run: yarn example test --runInBand
 
   build-library:
     runs-on: ubuntu-latest

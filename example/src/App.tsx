@@ -1,384 +1,521 @@
-/**
- * Simplified Example App for React Native Nitro Cookies
- * WebView with Cookie Inspector Bottom Sheet
- */
-
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useRef, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  StatusBar,
+  Alert,
+  KeyboardAvoidingView,
+  Linking,
   Platform,
+  Pressable,
   ScrollView,
-  Animated,
-  Dimensions,
-  PanResponder,
-} from 'react-native';
-import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
-import NitroCookies from 'react-native-nitro-cookies';
-import type { Cookie } from 'react-native-nitro-cookies';
+  StatusBar,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+  useColorScheme,
+} from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { WebView } from "react-native-webview";
+import NitroCookies, { CookieErrorCode } from "react-native-nitro-cookies";
+import type { CookieError } from "react-native-nitro-cookies";
+import { groups, operations } from "./operations";
+import type { Inputs, OperationName } from "./operations";
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const BOTTOM_SHEET_MIN_HEIGHT = 160;
-const BOTTOM_SHEET_MAX_HEIGHT = SCREEN_HEIGHT * 0.6;
+const docsURL = "https://l2hyunwoo.github.io/react-native-nitro-cookies";
+const demoURL = "https://example.com/account";
+const demoHTML = `<!doctype html>
+<html lang="en"><head><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font:16px system-ui;margin:24px;line-height:1.5;color:#18181b;background:#fafafa}h1{font-size:24px}code{overflow-wrap:anywhere}</style>
+</head><body><h1>Cookie playground</h1>
+<p>This English demo page is bundled with the app. It makes no network requests.</p>
+<p>Cookie query URL: <code>https://example.com/account</code></p>
+<p>Use Write to set a cookie, then return here and inspect the native store. On iOS, select WebKit for the browser store.</p>
+</body></html>`;
+const mono = Platform.OS === "ios" ? "Menlo" : "monospace";
 
 function AppContent() {
-  const insets = useSafeAreaInsets();
-  const [url, setUrl] = useState('https://naver.com');
-  const [currentUrl, setCurrentUrl] = useState('https://naver.com');
-  const [cookies, setCookies] = useState<Cookie[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // Bottom sheet animation
-  const bottomSheetHeight = useRef(
-    new Animated.Value(BOTTOM_SHEET_MIN_HEIGHT)
-  ).current;
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  // WebView ref for reload
-  const webViewRef = useRef<WebView>(null);
-
-  const toggleBottomSheet = useCallback(() => {
-    const toValue = isExpanded
-      ? BOTTOM_SHEET_MIN_HEIGHT
-      : BOTTOM_SHEET_MAX_HEIGHT;
-
-    Animated.spring(bottomSheetHeight, {
-      toValue,
-      useNativeDriver: false,
-      tension: 50,
-      friction: 8,
-    }).start();
-
-    setIsExpanded(!isExpanded);
-  }, [isExpanded, bottomSheetHeight]);
-
-  // Pan responder for dragging bottom sheet
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Only respond to vertical drags
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const newHeight = isExpanded
-          ? BOTTOM_SHEET_MAX_HEIGHT - gestureState.dy
-          : BOTTOM_SHEET_MIN_HEIGHT - gestureState.dy;
-
-        if (
-          newHeight >= BOTTOM_SHEET_MIN_HEIGHT &&
-          newHeight <= BOTTOM_SHEET_MAX_HEIGHT
-        ) {
-          bottomSheetHeight.setValue(newHeight);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const threshold = (BOTTOM_SHEET_MAX_HEIGHT + BOTTOM_SHEET_MIN_HEIGHT) / 2;
-        const currentHeight = isExpanded
-          ? BOTTOM_SHEET_MAX_HEIGHT - gestureState.dy
-          : BOTTOM_SHEET_MIN_HEIGHT - gestureState.dy;
-
-        if (currentHeight > threshold) {
-          // Expand
-          Animated.spring(bottomSheetHeight, {
-            toValue: BOTTOM_SHEET_MAX_HEIGHT,
-            useNativeDriver: false,
-            tension: 50,
-            friction: 8,
-          }).start();
-          setIsExpanded(true);
-        } else {
-          // Collapse
-          Animated.spring(bottomSheetHeight, {
-            toValue: BOTTOM_SHEET_MIN_HEIGHT,
-            useNativeDriver: false,
-            tension: 50,
-            friction: 8,
-          }).start();
-          setIsExpanded(false);
-        }
-      },
-    })
-  ).current;
-
-  // Synchronous API demo - uses getSync() for immediate cookie access
-  const loadCookiesSync = useCallback(() => {
-    setLoading(true);
-    try {
-      // Use synchronous getSync() - no await needed! Returns Cookies dictionary
-      const cookiesDict = NitroCookies.getSync(currentUrl);
-      const cookieArray = Object.values(cookiesDict) as Cookie[];
-      console.log('[SYNC] Cookies:', JSON.stringify(cookieArray, null, 2));
-
-      if (Platform.OS === 'ios') {
-        // On iOS, filter by domain
-        const domain = new URL(currentUrl).hostname;
-        const filtered = cookieArray.filter(
-          (cookie: Cookie) =>
-            cookie.domain === domain || cookie.domain === `.${domain}`
-        );
-        setCookies(filtered);
-      } else {
-        setCookies(cookieArray || []);
+  const dark = useColorScheme() === "dark";
+  const color = dark
+    ? {
+        bg: "#09090b",
+        panel: "#18181b",
+        ink: "#fafafa",
+        muted: "#a1a1aa",
+        border: "#3f3f46",
       }
-    } catch (error) {
-      console.error('[SYNC] Failed to load cookies:', error);
-      setCookies([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUrl]);
-
-  // Asynchronous API - uses get() with Promise, supports WebKit on iOS
-  const loadCookies = useCallback(async () => {
-    setLoading(true);
-    try {
-      if (Platform.OS === 'ios') {
-        // iOS: get all cookies from all domains, convert dictionary to array for display
-        const allCookiesDict = await NitroCookies.getAll();
-        const allCookies = Object.values(allCookiesDict) as Cookie[];
-        console.log('[ASYNC] iOS All cookies:', JSON.stringify(allCookies, null, 2));
-
-        // Filter cookies for current domain
-        const domain = new URL(currentUrl).hostname;
-        const filtered = allCookies.filter(
-          (cookie: Cookie) =>
-            cookie.domain === domain || cookie.domain === `.${domain}`
-        );
-        console.log('[ASYNC] iOS Filtered cookies:', JSON.stringify(filtered, null, 2));
-        setCookies(filtered);
-      } else {
-        // Android: get cookies for specific URL, convert dictionary to array for display
-        const cookiesDict = await NitroCookies.get(currentUrl);
-        const cookieArray = Object.values(cookiesDict) as Cookie[];
-        console.log('[ASYNC] Android Cookies:', JSON.stringify(cookieArray, null, 2));
-
-        setCookies(cookieArray);
-      }
-    } catch (error) {
-      console.error('[ASYNC] Failed to load cookies:', error);
-      setCookies([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUrl]);
-
-  // Demo: Test synchronous write operations
-  const testSyncWrite = useCallback(() => {
-    try {
-      const testCookie = {
-        name: 'nitro_sync_test',
-        value: `sync_${Date.now()}`,
-        path: '/',
-        secure: false,
-        httpOnly: false,
+    : {
+        bg: "#fafafa",
+        panel: "#ffffff",
+        ink: "#18181b",
+        muted: "#52525b",
+        border: "#d4d4d8",
       };
-
-      // Synchronous set - no await needed!
-      const success = NitroCookies.setSync(currentUrl, testCookie);
-      console.log('[SYNC] setSync result:', success);
-
-      // Immediately read back with synchronous get
-      const cookies = NitroCookies.getSync(currentUrl);
-      console.log('[SYNC] getSync after setSync:', JSON.stringify(cookies, null, 2));
-
-      // Update UI
-      loadCookiesSync();
-    } catch (error) {
-      console.error('[SYNC] Write test failed:', error);
-    }
-  }, [currentUrl, loadCookiesSync]);
-
-  const handleLoadEnd = useCallback(() => {
-    loadCookies();
-  }, [loadCookies]);
-
-  const handleNavigate = useCallback(() => {
-    setCurrentUrl(url);
-    webViewRef.current?.reload();
-  }, [url]);
-
-  const handleRefresh = useCallback(() => {
-    webViewRef.current?.reload();
-    loadCookies();
-  }, [loadCookies]);
-
-  const formatCookieValue = (value: any) => {
-    // Safely convert to string
-    let stringValue: string;
-    if (typeof value === 'string') {
-      stringValue = value;
-    } else if (typeof value === 'object' && value !== null) {
-      stringValue = JSON.stringify(value, null, 2);
-    } else {
-      stringValue = String(value);
-    }
-
-    if (stringValue.length > 100) {
-      return stringValue.substring(0, 97) + '...';
-    }
-    return stringValue;
+  const [tab, setTab] = useState<(typeof groups)[number] | "WebView">("Read");
+  const group = tab === "WebView" ? "Read" : tab;
+  const [selected, setSelected] = useState<OperationName>("getList");
+  const [url, setUrl] = useState(demoURL);
+  const [name, setName] = useState("nitro_demo");
+  const [value, setValue] = useState("hello");
+  const [path, setPath] = useState("/account");
+  const [domain, setDomain] = useState("example.com");
+  const [expires, setExpires] = useState("");
+  const [secure, setSecure] = useState(true);
+  const [httpOnly, setHttpOnly] = useState(false);
+  const [useWebKit, setUseWebKit] = useState(false);
+  const [header, setHeader] = useState(
+    "nitro_header=hello; Path=/; Secure; HttpOnly",
+  );
+  const [result, setResult] = useState(
+    "Run an operation to inspect its native result.",
+  );
+  const [resultTitle, setResultTitle] = useState("No operation yet");
+  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const running = useRef(false);
+  const [demo, setDemo] = useState(false);
+  const [browserURL, setBrowserURL] = useState<string>();
+  const [currentBrowserURL, setCurrentBrowserURL] = useState<string>();
+  const webView = useRef<WebView>(null);
+  const scroll = useRef<ScrollView>(null);
+  const operation = operations[selected];
+  const inputs: Inputs = {
+    url,
+    cookie: {
+      name,
+      value,
+      path,
+      ...(domain ? { domain } : {}),
+      ...(expires ? { expires } : {}),
+      secure,
+      httpOnly,
+    },
+    header,
+    useWebKit,
+  };
+  const onApple = Platform.OS === "ios";
+  const webKitAvailable = onApple && !Platform.isTV;
+  const textStyle = { color: color.ink };
+  const mutedStyle = { color: color.muted };
+  const panelStyle = {
+    backgroundColor: color.panel,
+    borderColor: color.border,
   };
 
-  const safeString = (value: any) => {
-    if (value === null || value === undefined) {
-      return 'N/A';
-    }
-    if (typeof value === 'string') {
-      return value;
-    }
-    if (typeof value === 'object') {
-      return JSON.stringify(value, null, 2);
-    }
-    return String(value);
-  };
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="transparent"
-        translucent
-      />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Nitro Cookies</Text>
-        <Text style={styles.headerSubtitle}>WebView Cookie Inspector</Text>
-      </View>
-
-        {/* URL Input */}
-        <View style={styles.urlBar}>
-          <TextInput
-            style={styles.urlInput}
-            value={url}
-            onChangeText={setUrl}
-            placeholder="Enter URL..."
-            placeholderTextColor="#999"
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            returnKeyType="go"
-            onSubmitEditing={handleNavigate}
-          />
-          <TouchableOpacity style={styles.goButton} onPress={handleNavigate}>
-            <Text style={styles.goButtonText}>Go</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
-            <Text style={styles.refreshButtonText}>↻</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Sync API Demo Buttons */}
-        <View style={styles.syncApiBar}>
-          <TouchableOpacity style={styles.syncButton} onPress={loadCookiesSync}>
-            <Text style={styles.syncButtonText}>getSync()</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.syncButton} onPress={testSyncWrite}>
-            <Text style={styles.syncButtonText}>setSync() Test</Text>
-          </TouchableOpacity>
-          <Text style={styles.syncApiLabel}>Sync API Demo</Text>
-        </View>
-
-        {/* WebView */}
-        <View style={styles.webViewContainer}>
-          <WebView
-            ref={webViewRef}
-            style={styles.webView}
-            source={{ uri: currentUrl }}
-            onLoadEnd={handleLoadEnd}
-            onError={(syntheticEvent) => {
-              console.error('[WebView] Error:', syntheticEvent.nativeEvent);
-            }}
-            sharedCookiesEnabled={true}
-            thirdPartyCookiesEnabled={true}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-          />
-        </View>
-
-        {/* Bottom Sheet */}
-        <Animated.View
+  function button(
+    label: string,
+    onPress: () => void,
+    active = false,
+    disabled = busy,
+    role: "button" | "tab" = "button",
+  ) {
+    return (
+      <Pressable
+        key={label}
+        testID={role === "tab" ? `tab-${label.toLowerCase()}` : label}
+        accessibilityRole={role}
+        accessibilityLabel={label}
+        accessibilityState={{ disabled, selected: active }}
+        disabled={disabled}
+        onPress={onPress}
+        style={({ pressed }) => [
+          s.button,
+          role === "tab" && s.tabButton,
+          {
+            borderColor: color.border,
+            backgroundColor: active ? color.ink : color.panel,
+            opacity: disabled ? 0.45 : pressed ? 0.7 : 1,
+          },
+        ]}
+      >
+        <Text
           style={[
-            styles.bottomSheet,
-            {
-              height: bottomSheetHeight,
-              paddingBottom: insets.bottom,
-            }
+            s.buttonText,
+            role === "tab" && s.tabText,
+            { color: active ? color.bg : color.ink },
           ]}
         >
-          {/* Drag Handle */}
-          <View style={styles.dragHandleContainer} {...panResponder.panHandlers}>
-            <View style={styles.dragHandle} />
-          </View>
+          {label}
+        </Text>
+      </Pressable>
+    );
+  }
 
-          {/* Header */}
-          <TouchableOpacity
-            style={styles.bottomSheetHeader}
-            onPress={toggleBottomSheet}
-          >
-            <Text style={styles.bottomSheetTitle}>
-              Cookies ({cookies.length})
-            </Text>
-            <Text style={styles.expandIcon}>{isExpanded ? '▼' : '▲'}</Text>
-          </TouchableOpacity>
+  function field(label: string, content: string, change: (v: string) => void) {
+    return (
+      <View style={s.field}>
+        <Text style={[s.label, mutedStyle]}>{label}</Text>
+        <TextInput
+          accessibilityLabel={label}
+          editable={!busy}
+          value={content}
+          onChangeText={change}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholderTextColor={color.muted}
+          style={[s.input, textStyle, panelStyle]}
+        />
+      </View>
+    );
+  }
 
-          {/* Cookie List */}
-          {isExpanded && (
-            <ScrollView
-              style={styles.cookieList}
-              contentContainerStyle={styles.cookieListContent}
-            >
-              {loading ? (
-                <Text style={styles.emptyText}>Loading cookies...</Text>
-              ) : cookies.length === 0 ? (
-                <Text style={styles.emptyText}>No cookies for this domain</Text>
-              ) : (
-                cookies.map((cookie, index) => (
-                  <View key={`${safeString(cookie.name)}-${index}`} style={styles.cookieItem}>
-                    <View style={styles.cookieHeader}>
-                      <Text style={styles.cookieName}>{safeString(cookie.name)}</Text>
-                      {cookie.secure && (
-                        <View style={styles.badge}>
-                          <Text style={styles.badgeText}>Secure</Text>
-                        </View>
-                      )}
-                      {cookie.httpOnly && (
-                        <View style={styles.badge}>
-                          <Text style={styles.badgeText}>HttpOnly</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={styles.cookieValue}>
-                      {formatCookieValue(cookie.value)}
-                    </Text>
-                    <View style={styles.cookieMetadata}>
-                      <Text style={styles.metadataText}>
-                        Domain: {safeString(cookie.domain)}
-                      </Text>
-                      <Text style={styles.metadataText}>
-                        Path: {safeString(cookie.path)}
-                      </Text>
-                      {cookie.expires && (
-                        <Text style={styles.metadataText}>
-                          Expires: {typeof cookie.expires === 'string'
-                            ? new Date(cookie.expires).toLocaleString()
-                            : safeString(cookie.expires)}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                ))
+  function toggle(
+    label: string,
+    checked: boolean,
+    change: (v: boolean) => void,
+    disabled = busy,
+    role: "button" | "tab" = "button",
+  ) {
+    return (
+      <View style={s.toggle}>
+        <Text style={[s.body, textStyle]}>{label}</Text>
+        <Switch
+          accessibilityLabel={label}
+          disabled={disabled}
+          value={checked}
+          onValueChange={change}
+          trackColor={{ false: color.border, true: "#52525b" }}
+        />
+      </View>
+    );
+  }
+
+  async function execute(label: string, call: () => unknown) {
+    if (running.current) return;
+    running.current = true;
+    setBusy(true);
+    setFailed(false);
+    setResultTitle(`${label} · running`);
+    setResult("Waiting for the native store…");
+    try {
+      const output = await call();
+      setResult(
+        output === undefined
+          ? "void (completed without a return value)"
+          : JSON.stringify(output, null, 2),
+      );
+      setResultTitle(`${label} · returned`);
+    } catch (error) {
+      const failure = error as Partial<CookieError>;
+      setFailed(true);
+      setResultTitle(`${label} · rejected`);
+      setResult(
+        JSON.stringify(
+          {
+            code: failure.code,
+            message: failure.message ?? String(error),
+            url: failure.url,
+            cookieName: failure.cookieName,
+            cause:
+              failure.cause instanceof Error
+                ? failure.cause.message
+                : String(failure.cause ?? ""),
+          },
+          null,
+          2,
+        ),
+      );
+    } finally {
+      running.current = false;
+      setBusy(false);
+    }
+  }
+
+  function run() {
+    if ("confirm" in operation && operation.confirm) {
+      Alert.alert("Delete cookies across domains?", operation.note, [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            void execute(selected, () => operation.run(inputs));
+          },
+        },
+      ]);
+    } else {
+      void execute(selected, () => operation.run(inputs));
+    }
+  }
+
+  function loadBrowser() {
+    try {
+      const parsed = new URL(url);
+      if (!["http:", "https:"].includes(parsed.protocol) || !parsed.hostname)
+        throw new Error("Enter an absolute HTTP(S) URL.");
+      if (!demo && browserURL === url) webView.current?.reload();
+      setDemo(false);
+      setBrowserURL(url);
+      setCurrentBrowserURL(url);
+    } catch {
+      void execute("WebView URL", () => {
+        throw new Error("Enter an absolute HTTP(S) URL.");
+      });
+    }
+  }
+
+  return (
+    <SafeAreaView style={[s.safe, { backgroundColor: color.bg }]}>
+      <StatusBar barStyle={dark ? "light-content" : "dark-content"} />
+      <KeyboardAvoidingView
+        style={s.safe}
+        behavior={onApple ? "padding" : undefined}
+      >
+        <View style={s.shell}>
+          <View style={s.header}>
+            <View style={s.topline}>
+              <View>
+                <Text accessibilityRole="header" style={[s.title, textStyle]}>
+                  Nitro Cookies
+                </Text>
+                <Text style={[s.caption, mutedStyle]}>
+                  Native cookie playground · local source
+                </Text>
+              </View>
+              {button(
+                "Docs ↗",
+                () => {
+                  void Linking.openURL(docsURL);
+                },
+                false,
+                false,
               )}
+            </View>
+            <View style={[s.tabs, panelStyle]}>
+              {[...groups, "WebView" as const].map((item) =>
+                button(
+                  item,
+                  () => {
+                    setTab(item);
+                    if (item !== "WebView" && item !== tab)
+                      setSelected(
+                        (Object.keys(operations) as OperationName[]).find(
+                          (key) => operations[key].group === item,
+                        )!,
+                      );
+                    scroll.current?.scrollTo({ y: 0, animated: false });
+                  },
+                  tab === item,
+                  busy,
+                  "tab",
+                ),
+              )}
+            </View>
+          </View>
+          <ScrollView
+            ref={scroll}
+            testID="playground-inputs"
+            style={s.form}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={s.page}
+          >
+            {tab !== "WebView" && (
+              <>
+                <View style={s.row}>
+                  {(Object.keys(operations) as OperationName[])
+                    .filter((key) => operations[key].group === group)
+                    .map((key) =>
+                      button(key, () => setSelected(key), selected === key),
+                    )}
+                </View>
+                <Text style={[s.body, mutedStyle]}>{operation.note}</Text>
+              </>
+            )}
+            <View style={[s.card, panelStyle]}>
+              <View style={s.topline}>
+                <Text style={[s.sectionTitle, textStyle]}>Target & store</Text>
+                <Text style={[s.caption, mutedStyle]}>
+                  {Platform.isTV ? "TV · " : ""}
+                  {Platform.OS}
+                </Text>
+              </View>
+              {field("URL", url, setUrl)}
+              {toggle(
+                "iOS WebKit store · async only",
+                useWebKit,
+                setUseWebKit,
+                busy || !webKitAvailable,
+              )}
+              <Text style={[s.caption, mutedStyle]}>
+                {webKitAvailable
+                  ? "Shared and WebKit are separate. Sync APIs always use shared storage."
+                  : onApple
+                    ? "tvOS supports shared storage; WebKit selection rejects with WEBKIT_UNAVAILABLE."
+                    : "Android requires a usable WebView provider. Query metadata is unknown; retain the original write scope."}
+              </Text>
+            </View>
+            {tab !== "WebView" ? (
+              <>
+                {(group === "Write" || group === "Delete") && (
+                  <View style={[s.card, panelStyle]}>
+                    <Text style={[s.sectionTitle, textStyle]}>
+                      Cookie input
+                    </Text>
+                    {field("Cookie name", name, setName)}
+                    {group === "Write" &&
+                      field("Cookie value", value, setValue)}
+                    {field("Path", path, setPath)}
+                    {field(
+                      "Domain · empty omits the attribute",
+                      domain,
+                      setDomain,
+                    )}
+                    {group === "Write" && (
+                      <>
+                        {field(
+                          "Expires · ISO 8601, empty for session",
+                          expires,
+                          setExpires,
+                        )}
+                        {toggle("Secure", secure, setSecure)}
+                        {toggle("HttpOnly", httpOnly, setHttpOnly)}
+                        {field(
+                          "Set-Cookie · used by setFromResponse APIs",
+                          header,
+                          setHeader,
+                        )}
+                        <Text style={[s.caption, mutedStyle]}>
+                          HttpOnly blocks document.cookie access. Native reads
+                          still expose the value.
+                        </Text>
+                      </>
+                    )}
+                  </View>
+                )}
+                {group === "Read" && (
+                  <Text style={[s.caption, mutedStyle]}>
+                    List queries preserve duplicate names; dictionaries collapse
+                    them. Apple lists select domains. Use getCookieHeader for
+                    request eligibility.
+                  </Text>
+                )}
+                {group === "Write" && (
+                  <Text style={[s.caption, mutedStyle]}>
+                    Walkthrough: setMany writes root/account values at / and
+                    /account. In Read, compare getList with get. In Delete,
+                    clearCookie at /account; the root cookie remains. Android
+                    reads may lag submitted writes.
+                  </Text>
+                )}
+                {group === "Errors" && (
+                  <Text selectable style={[s.code, textStyle]}>
+                    Runtime codes: {Object.values(CookieErrorCode).join(", ")}
+                  </Text>
+                )}
+              </>
+            ) : (
+              <>
+                <Text style={[s.body, mutedStyle]}>
+                  Load a page, then inspect its current URL. On iOS, select
+                  WebKit for the browser store. sharedCookiesEnabled does not
+                  guarantee native store synchronization.
+                </Text>
+                {Platform.isTV ? (
+                  <Text style={[s.body, mutedStyle]}>
+                    Embedded WebView is disabled on TV. Choose a native API tab.
+                  </Text>
+                ) : (
+                  <>
+                    {button("Load demo page", () => {
+                      if (demo) webView.current?.reload();
+                      setDemo(true);
+                      setBrowserURL(demoURL);
+                      setCurrentBrowserURL(demoURL);
+                    })}
+                    {button("Open external URL", loadBrowser)}
+                    {browserURL ? (
+                      <WebView
+                        ref={webView}
+                        style={s.browser}
+                        source={
+                          demo
+                            ? { html: demoHTML, baseUrl: demoURL }
+                            : { uri: browserURL }
+                        }
+                        sharedCookiesEnabled
+                        thirdPartyCookiesEnabled
+                        onNavigationStateChange={(state) =>
+                          setCurrentBrowserURL(demo ? demoURL : state.url)
+                        }
+                        onError={(event) => {
+                          const message = event.nativeEvent.description;
+                          void execute("WebView load", () => {
+                            throw new Error(message);
+                          });
+                        }}
+                      />
+                    ) : (
+                      <View
+                        style={[s.browserEmpty, { borderColor: color.border }]}
+                      >
+                        <Text style={[s.body, mutedStyle]}>
+                          No page loaded. Load the bundled English demo or open
+                          the external URL above.
+                        </Text>
+                      </View>
+                    )}
+                    <Text selectable style={[s.caption, mutedStyle]}>
+                      {currentBrowserURL ?? "Waiting for a URL"}
+                    </Text>
+                  </>
+                )}
+              </>
+            )}
+          </ScrollView>
+          <View
+            style={[
+              s.results,
+              { backgroundColor: color.panel, borderColor: color.border },
+            ]}
+          >
+            {tab !== "WebView"
+              ? button(busy ? "Running…" : `Run ${selected}`, run, true)
+              : !Platform.isTV &&
+                button(
+                  "Inspect current URL",
+                  () => {
+                    void execute("WebView getList", () =>
+                      NitroCookies.getList(currentBrowserURL ?? url, useWebKit),
+                    );
+                  },
+                  true,
+                )}
+            <View style={s.topline}>
+              <Text
+                testID="native-result-title"
+                accessibilityLiveRegion="polite"
+                style={[s.sectionTitle, textStyle]}
+              >
+                {resultTitle}
+              </Text>
+              <Text style={[s.caption, mutedStyle]}>
+                {failed ? "ERROR" : busy ? "RUNNING" : "OUTPUT"}
+              </Text>
+            </View>
+            <ScrollView
+              key={resultTitle}
+              style={[s.resultScroll, { backgroundColor: color.bg }]}
+              testID="native-result"
+              accessibilityLabel="Native result"
+            >
+              <Text
+                selectable
+                style={[
+                  s.output,
+                  {
+                    color: failed ? (dark ? "#fda4af" : "#9f1239") : color.ink,
+                  },
+                ]}
+              >
+                {result}
+              </Text>
             </ScrollView>
-          )}
-        </Animated.View>
-      </SafeAreaView>
+            <Text style={[s.caption, mutedStyle]}>
+              Local source APIs · Cookie values are not logged to console.
+            </Text>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -390,217 +527,71 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+const s = StyleSheet.create({
+  safe: { flex: 1 },
+  shell: { flex: 1, maxWidth: 820, width: "100%", alignSelf: "center" },
+  header: { padding: 16, gap: 16 },
+  form: { flex: 1 },
+  page: { padding: 16, paddingTop: 0, gap: 16, paddingBottom: 24 },
+  results: { borderTopWidth: 1, padding: 16, gap: 10 },
+  topline: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
   },
-  header: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#E3F2FD',
-  },
-  urlBar: {
-    flexDirection: 'row',
-    padding: 12,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    gap: 8,
-  },
-  urlInput: {
-    flex: 1,
-    height: 40,
+  title: { fontSize: 24, fontWeight: "700", letterSpacing: -0.8 },
+  tabs: {
+    flexDirection: "row",
+    padding: 3,
+    gap: 3,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 9,
+  },
+  tabButton: { flex: 1, paddingHorizontal: 2, borderWidth: 0, borderRadius: 6 },
+  tabText: { fontSize: 11 },
+  row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  card: { borderWidth: 1, borderRadius: 10, padding: 14, gap: 12 },
+  sectionTitle: { fontSize: 12, fontWeight: "600", flexShrink: 1 },
+  button: {
+    minHeight: 44,
     paddingHorizontal: 12,
-    fontSize: 14,
-    backgroundColor: '#f9f9f9',
-  },
-  goButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 20,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  goButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  refreshButton: {
-    backgroundColor: '#34C759',
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  refreshButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  syncApiBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#FFF3E0',
-    borderBottomWidth: 1,
-    borderBottomColor: '#FFE0B2',
-    gap: 8,
-  },
-  syncButton: {
-    backgroundColor: '#FF9800',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  syncButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
-  syncApiLabel: {
-    marginLeft: 'auto',
-    fontSize: 12,
-    color: '#E65100',
-    fontWeight: '500',
-  },
-  webViewContainer: {
-    flex: 1,
-    marginBottom: BOTTOM_SHEET_MIN_HEIGHT,
-  },
-  webView: {
-    flex: 1,
-  },
-  bottomSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.1,
-        shadowRadius: 5,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
-  },
-  dragHandleContainer: {
-    alignItems: 'center',
     paddingVertical: 12,
-  },
-  dragHandle: {
-    width: 50,
-    height: 5,
-    backgroundColor: '#ccc',
-    borderRadius: 3,
-  },
-  bottomSheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  bottomSheetTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  expandIcon: {
-    fontSize: 16,
-    color: '#007AFF',
-  },
-  cookieList: {
-    flex: 1,
-  },
-  cookieListContent: {
-    padding: 16,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 14,
-    paddingVertical: 20,
-  },
-  cookieItem: {
-    backgroundColor: '#f9f9f9',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderRadius: 7,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  cookieHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-    flexWrap: 'wrap',
-    gap: 6,
+  buttonText: { fontSize: 12, fontWeight: "600" },
+  field: { gap: 8 },
+  label: { fontSize: 12, fontWeight: "500" },
+  input: {
+    minHeight: 44,
+    borderWidth: 1,
+    borderRadius: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    fontFamily: mono,
   },
-  cookieName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+  toggle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
   },
-  badge: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  cookieValue: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
-  cookieMetadata: {
-    gap: 4,
-  },
-  metadataText: {
-    fontSize: 12,
-    color: '#999',
+  body: { fontSize: 13, lineHeight: 21, flexShrink: 1 },
+  caption: { fontSize: 11, lineHeight: 17 },
+  code: { fontSize: 11, lineHeight: 19, fontFamily: mono },
+  resultScroll: { height: 148, flexGrow: 0, borderRadius: 7 },
+  output: { padding: 12, fontSize: 12, lineHeight: 19, fontFamily: mono },
+  browser: { height: 280, backgroundColor: "#ffffff" },
+  browserEmpty: {
+    minHeight: 120,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderRadius: 7,
+    padding: 16,
+    justifyContent: "center",
   },
 });

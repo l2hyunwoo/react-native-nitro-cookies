@@ -213,6 +213,9 @@ Release checklist:
 
 - [ ] Review the diff since the previous release and run the checks for the changed code.
 - [ ] Verify the documented dependency and platform matrix against manifests, fixture results, and source API behavior.
+- [ ] Exercise the playground's list/dictionary comparison, scoped deletion, headers, normalized errors, and store selection on iOS and Android.
+- [ ] Record the tested app, OS, device, and source revision. Distinguish mocked checks, native fixtures, and manual playground results.
+- [ ] Confirm the packed package exposes list queries, scoped deletion, normalized errors, and the runtime `CookieErrorCode` when preparing 1.3.0.
 - [ ] Rehearse the intended version with `dry_run: true` and inspect build and package output.
 - [ ] Run publication and verify the npm version, tarball contents, tag, and GitHub Release.
 - [ ] Only after publication is confirmed, update release guidance in the README and matching English/Korean installation and API pages.

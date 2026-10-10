@@ -5,8 +5,55 @@ This app uses the local library in `../package/`.
 `react-native.config.js` points native autolinking at the same package.
 JavaScript changes use Fast Refresh. Native changes require an app rebuild.
 
-The demo in `src/App.tsx` has one WebView screen with a cookie inspector and sync/async controls.
-It is a manual inspection tool. It does not prove that Apple cookie stores synchronize automatically.
+The playground in `src/App.tsx` has top tabs for Read, Write, Delete, Lifecycle, Errors, and WebView.
+Each tab has its own content. Inputs scroll independently; the run button and native result remain visible.
+It uses the local source, including unreleased APIs. It does not prove that Apple stores synchronize automatically.
+
+## Explore the API
+
+The API lab exposes all 23 public methods through Read, Write, Delete, and Lifecycle groups.
+The Errors group deliberately sends invalid inputs. Results show the return value or the normalized error code, message, context, and cause.
+Cookie values stay on screen and are not written to console logs by the playground.
+Use test cookies and domains; all-domain reads can show unrelated stored cookies.
+
+Choose an HTTP(S) URL and a store before running an operation.
+On iOS, the WebKit switch affects supported async methods. Sync, response parsing, network, and lifecycle methods have no WebKit selector.
+Shared and WebKit stores are separate. Android uses CookieManager and requires a usable WebView provider.
+The TV playground disables its embedded WebView; tvOS API operations use shared storage.
+
+To compare list queries with dictionaries and scoped deletion:
+
+1. Keep the default URL `https://example.com/account` and cookie name `nitro_demo`.
+2. In Write, run `setMany`. It writes the same name at `/` and `/account`, with values `root` and `account`.
+3. In Read, run `getList`, then `get`. The list preserves both names; the dictionary keeps one entry per name.
+4. In Delete, run `clearCookie` with the form domain and `/account` path.
+5. Run `getList` again. The root cookie remains. Delete it separately with path `/` when finished.
+
+On Android, submitted writes may not appear immediately. Read again after they settle.
+Android lists expose only name/value pairs; retain the original write domain/path for deletion.
+Apple URL lists match domains, while `getCookieHeader` applies request selection such as path and Secure.
+The form also supports Secure, HttpOnly, and ISO 8601 expiry; HttpOnly does not hide values from native reads.
+`version` is a legacy attribute without a portable effect and has no form control.
+
+`setFromResponse` methods parse the separate Set-Cookie input locally; they do not make a request.
+`getFromResponse` methods make a real HTTP GET to the URL. Use an endpoint that returns Set-Cookie headers to inspect response cookies.
+`flush` and `removeSessionCookies` have Android behavior; Apple resolves without those effects.
+Cross-domain deletion operations require confirmation before they run.
+
+In Errors, `invalidURL`, `domainMismatch`, and `invalidScope` demonstrate `INVALID_URL`, `DOMAIN_MISMATCH`, and `PARSE_ERROR`.
+On Android, `getAll` and `getAllList` demonstrate `PLATFORM_UNSUPPORTED`.
+WebView-provider, network, and storage failures depend on the runtime; the playground does not disable providers or simulate native failures.
+
+## Inspect a WebView
+
+Select the WebView tab and press **Load demo page** for the bundled English page. It makes no network requests and uses `https://example.com/account` as its base URL and native cookie query URL.
+Choose **Open external URL** to navigate to the form URL instead. External page content and language are controlled by that site. No page is loaded until you request it.
+After navigation, press **Inspect current URL** to call `getList` for the browser's current URL and selected store.
+On iOS, select WebKit to inspect the browser store.
+The WebView's `sharedCookiesEnabled` setting does not guarantee that native stores synchronize.
+Only HTTP(S) entry URLs are accepted. WebView load failures appear in the result panel.
+
+The interface follows the system light/dark appearance, supports selectable output, and uses labeled controls with 44-point minimum button targets.
 
 ## Setup and run
 
@@ -49,6 +96,19 @@ For build-only checks, run `yarn example build:ios` or `yarn example build:andro
 The Android build script targets `arm64-v8a`; use the instrumentation commands below for the CI emulator's `x86_64` architecture.
 Open `ios/NitroCookiesExample.xcworkspace` in Xcode after Pod installation, or open `android/` in Android Studio.
 These paths are relative to `example/`.
+
+## Playground checks
+
+From the repository root, run:
+
+```sh
+yarn example typecheck
+yarn example test --runInBand
+```
+
+CI runs these checks alongside the library checks.
+Playground tests use mocked library methods. They check batch scope, deletion identity, store forwarding, error propagation, and destructive-action metadata.
+They do not replace simulator/emulator execution or the native fixtures below.
 
 ## JavaScript wrapper tests
 

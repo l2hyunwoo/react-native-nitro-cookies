@@ -1,0 +1,9 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "paths": {
+      "react-native-nitro-cookies": ["../package/src/index.tsx"]
+    }
+  },
+  "include": ["src/App.tsx", "src/operations.ts"]
+}
