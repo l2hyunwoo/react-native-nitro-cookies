@@ -1,97 +1,129 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Nitro Cookies example and test app
 
-# Getting Started
+This app uses the local library in `../package/`.
+`metro.config.js` resolves `react-native-nitro-cookies` to `package/src/index.tsx`.
+`react-native.config.js` points native autolinking at the same package.
+JavaScript changes use Fast Refresh. Native changes require an app rebuild.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+The demo in `src/App.tsx` has one WebView screen with a cookie inspector and sync/async controls.
+It is a manual inspection tool. It does not prove that Apple cookie stores synchronize automatically.
 
-## Step 1: Start Metro
+## Setup and run
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
+Complete the [React Native environment setup](https://reactnative.dev/docs/set-up-your-environment).
+Use the Node version in `../.nvmrc` and the repository's Yarn release.
+Install workspace dependencies and generate bridges from the repository root:
 
 ```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+yarn install --immutable
+yarn nitrogen
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
+For iOS, run these commands from the root:
 
 ```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
+cd example
 bundle install
+bundle exec pod install --project-directory=ios
 ```
 
-Then, and every time you update your native dependencies, run:
+Start Metro in one terminal from the repository root:
 
 ```sh
-bundle exec pod install
+yarn example start
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+Build and run in another terminal from the root. Choose an available device interactively:
 
 ```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
+yarn example ios --list-devices
+# Or, for Android:
+yarn example android --list-devices
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+For a specific iOS simulator, use `yarn example ios --simulator "SIMULATOR_NAME"` or `--udid UDID`.
+Use `yarn example android --device DEVICE_NAME` for a specific Android target.
+Run `yarn example ios --help` or `yarn example android --help` for the installed CLI's options.
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+For build-only checks, run `yarn example build:ios` or `yarn example build:android` from the root.
+The Android build script targets `arm64-v8a`; use the instrumentation commands below for the CI emulator's `x86_64` architecture.
+Open `ios/NitroCookiesExample.xcworkspace` in Xcode after Pod installation, or open `android/` in Android Studio.
+These paths are relative to `example/`.
 
-## Step 3: Modify your app
+## JavaScript wrapper tests
 
-Now that you have successfully run the app, let's make changes!
+From the repository root, run:
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+```sh
+yarn test --runInBand
+```
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+These Jest tests mock the native HybridObject. They check wrapper arguments, defaults, return values, and error normalization.
+They do not exercise native cookie storage. See [the Jest mock example](../CONTRIBUTING.md#testing-an-app-with-jest) for app tests.
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## On-device harness
 
-## Congratulations! :tada:
+The harness runs `src/__tests__/**/*.harness.ts` inside the app.
+Choose devices in `example/rn-harness.config.mjs` before running it.
+The checked-in Android runner selects a Samsung `SM-S926N` physical device.
+The Apple runner selects an `iPhone 17 Pro` simulator with runtime `26.2`.
+Replace these selectors with devices available on your machine.
 
-You've successfully run and modified your React Native App. :partying_face:
+From the repository root, run:
 
-### Now what?
+```sh
+yarn example harness:android
+# Or:
+yarn example harness:ios
+```
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+The harness covers sync/async calls, advanced operations, lifecycle behavior, and normalized errors.
+`cookies-tv-unavailable.evidence.ts` is outside the harness test pattern and does not run through these commands.
+Use the native fixtures below for tvOS coverage.
 
-# Troubleshooting
+## Android instrumentation
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+After root dependency installation and Nitrogen generation, start an emulator or connect a device.
+Run these commands from `example/android/`:
 
-# Learn More
+```sh
+./gradlew :app:connectedDebugAndroidTest \
+  -PreactNativeArchitectures=x86_64 \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.margelo.nitro.nitrocookies.WebViewUnavailableTest \
+  --no-daemon --console=plain
+./gradlew :app:connectedDebugAndroidTest \
+  -PreactNativeArchitectures=x86_64 \
+  -Pandroid.testInstrumentationRunnerArguments.class=com.margelo.nitro.nitrocookies.CookieScopeTest \
+  --no-daemon --console=plain
+```
 
-To learn more about React Native, take a look at the following resources:
+Use the target device's architecture instead of `x86_64` when needed.
+`WebViewUnavailableTest` requires API 28 or later and disables WebView only inside its test process.
+`CookieScopeTest` uses an available provider to check duplicate names and scoped deletion in a separate instrumentation invocation.
+The test sources are under `android/app/src/androidTest/java/com/margelo/nitro/nitrocookies/`.
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+CI runs these tests on an API 35 `google_apis` phone emulator.
+This checks WebView-unavailable behavior and cookie scope; it is not a test on an Android TV system image.
+Record the actual TV device or image and its WebView provider when testing Android TV behavior.
+
+## Apple native fixtures
+
+Install the example's Bundler dependencies first. From the repository root, run:
+
+```sh
+BUNDLE_GEMFILE="$PWD/example/Gemfile" bundle exec bash .github/scripts/test-apple.sh ios
+BUNDLE_GEMFILE="$PWD/example/Gemfile" bundle exec bash .github/scripts/test-tvos.sh
+```
+
+`test-tvos.sh` calls `test-apple.sh tvos`.
+The shared script selects the first available simulator for the requested platform and fails if no runtime is available.
+It creates an isolated Yarn and CocoaPods host under `build/ios/` or `build/tvos/`, then builds and runs XCTest.
+Results are saved in that fixture's `TestResults.xcresult`.
+These fixtures do not replace the example's React Native dependency.
+
+Shared tests live in `.github/fixtures/apple/`; tvOS-specific tests live in `.github/fixtures/tvos/`.
+The iOS fixture pins React Native `0.85.3`; the tvOS fixture pins `react-native-tvos` `0.85.3-3`.
+Both pin Nitro Modules `0.35.9`.
+These are fixture configurations, not proof that every version in an upstream support range works.
+
+For validation requirements and release procedures, see [CONTRIBUTING.md](../CONTRIBUTING.md).

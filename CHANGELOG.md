@@ -1,6 +1,8 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+[GitHub Releases](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases) is the canonical release history, including upgrade notes.
+The Publish workflow creates Release notes; it does not update this file.
+The historical entries below are preserved as originally written.
 
 ## [1.0.0] - 2025-11-30
 

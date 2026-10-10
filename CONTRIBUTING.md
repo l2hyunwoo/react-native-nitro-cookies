@@ -1,372 +1,129 @@
-# Contributing to react-native-nitro-cookies
+# Contributing to Nitro Cookies
 
-Thank you for your interest in contributing to react-native-nitro-cookies! This document provides guidelines and instructions for contributing to the project.
+Keep contributions focused on one change. Follow the [Code of Conduct](./CODE_OF_CONDUCT.md) in project discussions.
 
-Contributions are always welcome, no matter how large or small! We want this community to be friendly and respectful to each other. Please follow the [code of conduct](./CODE_OF_CONDUCT.md) in all your interactions with the project.
+## Setup
 
-## Table of Contents
+Use the Node.js version in [`.nvmrc`](./.nvmrc) and the repository's Yarn 3.6.1 release.
+Root Yarn workspaces contain `package/` and `example/`. The documentation site in `website/` is a separate Yarn project.
+Use Yarn for repository dependencies. The Publish workflow uses npm for version changes and registry publication.
 
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
-- [Project Structure](#project-structure)
-- [Making Changes](#making-changes)
-- [Testing](#testing)
-- [Submitting a Pull Request](#submitting-a-pull-request)
+For native work, install the [React Native development tools](https://reactnative.dev/docs/set-up-your-environment).
+Android requires the Android SDK and JDK 17. Apple development requires macOS, Xcode, and Ruby with Bundler.
+Install the simulator runtimes needed for iOS or tvOS tests.
 
-## Getting Started
+Clone your fork, then run these commands from the repository root:
 
-### Prerequisites
-
-- Node.js >= 20 (see `.nvmrc` for exact version)
-- Yarn (npm is not supported due to workspace requirements)
-- Xcode (for iOS development)
-- Android Studio (for Android development)
-- CocoaPods (for iOS dependencies)
-
-### Initial Setup
-
-1. Fork the repository on GitHub
-2. Clone your fork locally:
-
-```bash
-git clone https://github.com/YOUR_USERNAME/react-native-nitro-cookies.git
-cd react-native-nitro-cookies
-```
-
-3. Install dependencies:
-
-```bash
-yarn install
-```
-
-4. Run Nitrogen to generate native bridging code:
-
-```bash
+```sh
+yarn install --immutable
 yarn nitrogen
 ```
 
-This step is required when:
-- Running the project for the first time
-- After making changes to any `*.nitro.ts` files
+For the iOS example, install the gems and Pods from `example/`:
 
-5. Install iOS dependencies:
-
-```bash
-cd ios && pod install && cd ..
+```sh
+cd example
+bundle install
+bundle exec pod install --project-directory=ios
 ```
 
-## Development Workflow
+The Gemfile is `example/Gemfile`. The example Podfile is `example/ios/Podfile`.
+Run Nitrogen after changing a `*.nitro.ts` specification. Run Pod installation again after changing native dependencies or generated bridge files.
 
-This project is a monorepo managed using Yarn workspaces. It contains:
+The Lefthook dependency installs Git hooks during its install script outside CI.
+If install scripts were disabled or hooks are missing, run `yarn lefthook install` from the root.
+The hooks lint staged JavaScript and TypeScript files and check commit messages.
 
-- The library package in the root directory
-- An example app in the `example/` directory
+## Repository layout
 
-### Understanding Nitro Modules
+| Path | Purpose |
+| --- | --- |
+| `package/src/` | Public TypeScript wrapper, types, Nitro specification, and Jest tests |
+| `package/ios/NitroCookies.swift` | Apple native implementation |
+| `package/android/src/main/java/com/margelo/nitro/nitrocookies/NitroCookies.kt` | Android native implementation |
+| `package/android/src/main/cpp/cpp-adapter.cpp` | Android native adapter |
+| `package/nitro.json` | Nitrogen configuration |
+| `package/nitrogen/generated/` | Generated bridges; regenerate instead of editing |
+| `package/lib/` | Builder Bob output; do not edit |
+| `example/src/App.tsx` | WebView demo with a cookie inspector |
+| `example/src/__tests__/` | Tests that run inside the example through React Native Harness |
+| `example/android/app/src/androidTest/` | Android instrumentation tests |
+| `.github/fixtures/` | Isolated Apple native test hosts |
+| `.github/scripts/` | Apple fixture test scripts |
+| `website/` | English and Korean documentation, site configuration, and documentation checks |
 
-This project uses [Nitro Modules](https://nitro.margelo.com/). If you're not familiar with Nitro, check the [Nitro Modules Documentation](https://nitro.margelo.com/) before contributing.
+Planning specifications are maintained in nunu-os, outside this repository.
 
-### Building the Library
+## Development and validation
 
-The library uses React Native Builder Bob for building:
+Run these commands from the repository root:
 
-```bash
+```sh
+yarn test --runInBand
+yarn typecheck
+yarn lint
 yarn prepare
 ```
 
-This command:
-1. Runs Nitrogen to generate native bridging code
-2. Compiles TypeScript to JavaScript (ESM)
-3. Generates TypeScript type definitions
+`yarn test` runs the library's Jest wrapper tests. `yarn typecheck` checks the library TypeScript project.
+`yarn prepare` runs Builder Bob, which generates Nitro bridges, JavaScript modules, and TypeScript declarations.
+It does not build the native example app.
 
-### Running the Example App
+Choose checks that cover the change:
 
-The example app demonstrates all library features and is configured to use the local version of the library.
+| Change | Minimum validation |
+| --- | --- |
+| Contributor docs, examples in prose, or site content | Check paths and commands; run site typecheck and build |
+| TypeScript wrapper or public types | Jest, library typecheck, lint, and package build; update public JSDoc and documentation |
+| Nitro specification or native code | Regenerate bridges; run the checks above and the affected native build, fixture tests, or device harness |
+| Example app behavior | Build and run the affected platform; run the relevant harness tests |
+| Build, fixture, or CI configuration | Run the affected command or job; record any unavailable tools or devices |
 
-#### iOS
+Documentation-only changes do not require every native build or device test.
+Jest mocks cannot verify native cookie stores, WebView providers, or platform threading.
+See the [example guide](./example/README.md) for native builds, device selection, instrumentation, Apple fixtures, and harness commands.
 
-```bash
-cd example
-yarn install
-yarn ios
+Follow the existing TypeScript, Swift, and Kotlin patterns. Keep public parameters, return values, errors, and platform limits in JSDoc.
+For API changes, update the matching English and Korean site pages and example coverage.
+Check unsupported-platform behavior against the native implementation and existing tests.
+Record the versions and devices you actually tested. Broad peer dependency ranges do not prove compatibility with every React Native version.
+
+## Testing an app with Jest
+
+The library creates its Nitro HybridObject when the module is imported.
+Mock `react-native-nitro-modules` before importing the library in tests without a native runtime.
+Create the mock object inside the factory to avoid Jest hoisting errors.
+This example follows [`package/src/__tests__/index.test.tsx`](./package/src/__tests__/index.test.tsx):
+
+```ts
+jest.mock('react-native-nitro-modules', () => {
+  const hybrid = { get: jest.fn() };
+  return {
+    NitroModules: { createHybridObject: jest.fn(() => hybrid) },
+    __mockHybrid: hybrid,
+  };
+});
+
+import NitroCookies from 'react-native-nitro-cookies';
+
+const { __mockHybrid: mockHybrid } = require('react-native-nitro-modules');
+
+test('reads cookies from the default store', async () => {
+  const url = 'https://example.com/account';
+  mockHybrid.get.mockResolvedValue([]);
+  await expect(NitroCookies.get(url)).resolves.toEqual({});
+  expect(mockHybrid.get).toHaveBeenCalledWith(url, false);
+});
 ```
 
-To edit native iOS code, open `example/ios/NitroCookiesExample.xcworkspace` in Xcode. Find the source files at `Pods > Development Pods > react-native-nitro-cookies`.
-
-#### Android
-
-```bash
-cd example
-yarn install
-yarn android
-```
-
-To edit native Android code, open `example/android` in Android Studio. Find the source files under `react-native-nitro-cookies` in the Android view.
-
-### Hot Reloading
-
-- **JavaScript changes**: Reflected immediately in the example app
-- **Native code changes**: Require rebuilding the example app
-
-## Project Structure
-
-```
-react-native-nitro-cookies/
-├── src/                          # TypeScript source code
-│   ├── types.ts                  # Type definitions
-│   ├── NitroCookies.nitro.ts    # Nitro HybridObject spec
-│   └── index.tsx                 # Public API with JSDoc
-├── ios/                          # iOS native implementation
-│   └── NitroCookies.swift       # Swift implementation
-├── android/                      # Android native implementation
-│   └── src/main/.../NitroCookies.kt  # Kotlin implementation
-├── nitrogen/                     # Nitrogen configuration
-│   ├── generated/               # Auto-generated code (DO NOT EDIT)
-│   └── nitro.json               # Nitrogen config
-├── example/                      # Example React Native app
-│   ├── src/
-│   │   ├── screens/            # Demo screens (4 screens)
-│   │   ├── components/         # CookieViewer component
-│   │   └── utils/              # formatCookie utility
-│   └── ...
-└── specs/                        # Design documentation
-    └── 001-nitro-cookies/
-        ├── spec.md              # Feature specification
-        ├── plan.md              # Implementation plan
-        └── tasks.md             # Task breakdown
-```
-
-## Making Changes
-
-### Code Style
-
-- **TypeScript**: Follow existing code style, use Prettier for formatting
-- **Swift**: Follow [Swift API Design Guidelines](https://swift.org/documentation/api-design-guidelines/)
-- **Kotlin**: Follow [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
-
-Run linting:
-
-```bash
-yarn lint
-```
-
-Run TypeScript type checking:
-
-```bash
-yarn typecheck
-```
-
-### Type Safety
-
-- All public APIs must have proper TypeScript types
-- Use strict TypeScript compiler options (enabled in `tsconfig.json`)
-- Document all parameters with comprehensive JSDoc comments
-- Include `@example` blocks in JSDoc for complex methods
-
-### Platform-Specific Code
-
-When adding platform-specific features:
-
-1. **Document** which platforms support the feature
-2. **Throw** `PLATFORM_UNSUPPORTED` error on unsupported platforms
-3. **Update** README.md with platform compatibility table
-4. **Add** example usage in the appropriate demo screen
-
-Example:
-
-```typescript
-/**
- * Get all cookies regardless of domain
- *
- * @platform ios
- * @throws {Error} PLATFORM_UNSUPPORTED on Android
- *
- * @example
- * ```typescript
- * if (Platform.OS === 'ios') {
- *   const allCookies = await NitroCookies.getAll();
- * }
- * ```
- */
-async getAll(useWebKit?: boolean): Promise<Cookies> {
-  // Implementation
-}
-```
-
-### Native Code Changes
-
-#### iOS (Swift)
-
-- **File**: `ios/NitroCookies.swift`
-- **Pattern**: Helper functions + public methods
-- **Async**: Use `Promise.async { resolve, reject in ... }`
-- **Errors**: Throw `NSError` with descriptive domain and message
-
-Example:
-
-```swift
-public func myMethod() throws -> Promise<Bool> {
-    return Promise.async { resolve, reject in
-        do {
-            // Implementation
-            resolve(true)
-        } catch {
-            reject(error)
-        }
-    }
-}
-```
-
-#### Android (Kotlin)
-
-- **File**: `android/src/main/java/com/margelo/nitro/nitrocookies/NitroCookies.kt`
-- **Async**: Use `Promise.async { resolve, reject -> ... }`
-- **Errors**: Throw `Exception` with descriptive message
-
-Example:
-
-```kotlin
-override fun myMethod(): Promise<Boolean> {
-    return Promise.async { resolve, reject ->
-        try {
-            // Implementation
-            resolve(true)
-        } catch (e: Exception) {
-            reject(e)
-        }
-    }
-}
-```
-
-### Documentation
-
-- Update **README.md** for API changes
-- Add **JSDoc comments** to all public methods (see `src/index.tsx`)
-- Include **code examples** in documentation
-- Update **CHANGELOG.md** (if it exists)
-
-## Testing
-
-### Manual Testing with Example App
-
-The example app has 4 demo screens:
-
-1. **BasicOperationsScreen**: Test `set()`, `get()`, `clearAll()`
-2. **HTTPParsingScreen**: Test `setFromResponse()`, `getFromResponse()`
-3. **WebViewSyncScreen**: Test WebView integration and cookie viewer
-4. **PlatformSpecificScreen**: Test platform-specific methods
-
-### Testing Checklist
-
-Before submitting a PR:
-
-- [ ] Code compiles without errors on iOS
-- [ ] Code compiles without errors on Android
-- [ ] TypeScript types are correct (`yarn typecheck`)
-- [ ] All public APIs have comprehensive JSDoc comments
-- [ ] Example app demonstrates new features
-- [ ] README.md is updated
-- [ ] No console warnings or errors
-- [ ] Linting passes (`yarn lint`)
-- [ ] Tested on iOS simulator/device
-- [ ] Tested on Android emulator/device
-
-## Submitting a Pull Request
-
-### Creating a Branch
-
-Create a new branch for your changes:
-
-```bash
-git checkout -b feature/my-new-feature
-# or
-git checkout -b fix/bug-description
-```
-
-### Commit Messages
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/) format:
-
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `docs:` - Documentation changes
-- `refactor:` - Code refactoring
-- `test:` - Test changes
-- `chore:` - Build/tooling changes
-- `perf:` - Performance improvements
-
-Examples:
-
-```bash
-git commit -m "feat: add cookie expiration validation"
-git commit -m "fix: handle null domain in Android implementation"
-git commit -m "docs: update API reference for clearByName method"
-```
-
-### Push and Create PR
-
-```bash
-git push origin feature/my-new-feature
-```
-
-Then create a Pull Request on GitHub.
-
-### PR Guidelines
-
-**Title**: Use a clear, descriptive title following Conventional Commits
-
-**Description**: Include:
-- What changes you made and why
-- How you tested the changes
-- Screenshots/videos for UI changes
-- Breaking changes (if any)
-- Related issues (if any)
-
-**PR Template**:
-
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
-
-## How Has This Been Tested?
-Describe how you tested your changes:
-- [ ] iOS simulator
-- [ ] iOS device
-- [ ] Android emulator
-- [ ] Android device
-
-## Screenshots (if applicable)
-Add screenshots or videos
-
-## Checklist
-- [ ] My code follows the code style of this project
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have tested my changes on both iOS and Android
-```
-
-### Code Review
-
-- Maintainers will review your PR
-- Address any feedback promptly
-- Keep the PR focused on a single feature/fix
-- Rebase if needed to keep history clean
+Add mock methods for the calls your test makes. Use this pattern with the React Native Jest preset and Babel transformation.
+It checks JavaScript behavior, not native storage.
+HybridObject creation failures happen during import, outside the wrapper methods' error normalization.
+An error handler around a later cookie call cannot catch an earlier import failure.
 
 ## Documentation site
 
-The public site lives in `website/`, a separate Yarn project. Planning specifications are maintained in nunu-os.
-English is the default language. Add the matching Korean page under `website/content/ko/` when creating or changing a topic.
-Keep code identifiers and the API contracts consistent between languages.
-Write natural Korean sentences and retain familiar technical terms in English, such as cookie store, scope, host-only, and WebView provider.
-Keep terminology consistent across page titles, navigation, and body text.
+Install and run the site from its own project:
 
 ```sh
 cd website
@@ -374,57 +131,103 @@ yarn install --immutable
 yarn dev
 ```
 
-Run `yarn typecheck` and `yarn build` before submitting documentation changes.
-The build checks internal links, language coverage, and reference coverage for every public operation.
-Run `yarn preview` to inspect the production site under `/react-native-nitro-cookies/`.
+Before submitting documentation changes, run these commands from `website/`:
 
-Each build also generates `llms.txt`, `llms-full.txt`, and individual Markdown pages under the site's project path.
-The root exports are English; `ko/` contains the Korean exports. Each full-text file includes all 16 documentation pages in sidebar order.
-The visual landing pages are excluded; the exports start with a project summary and release guidance.
-Edit `website/content/` and the sidebar in `website/.vitepress/config.mts`, not the generated files in `.vitepress/dist/`.
-The build fails if a documentation page is missing from the sidebar or an exported link is broken.
+```sh
+yarn typecheck
+yarn build
+yarn preview
+```
 
-The `.github/workflows/documentation.yml` workflow builds and deploys the site automatically:
+The build checks internal links, matching language paths, sidebar coverage, and references for public operations.
+It also checks the English and Korean AI indexes, full text, Markdown exports, and exported links.
+The full-text exports include all sidebar documentation pages.
+These checks do not verify every behavioral claim.
+Preview the production site under `/react-native-nitro-cookies/`.
 
-- Pull requests targeting any branch build both languages and check the documentation contracts.
-- Matching pushes to `main` build the site, check the GitHub Pages configuration, and deploy the artifact.
-- A manual **Run workflow** on `main` rebuilds and redeploys the site without a new commit.
+Edit `website/content/` and `website/.vitepress/config.mts`, not generated files in `website/.vitepress/dist/`.
+Update the matching page under `website/content/ko/` when changing a topic.
+Keep identifiers and API contracts consistent between languages.
+Use consistent terms such as cookie store, scope, host-only, and WebView provider.
 
-Automatic runs watch `website/`, `package/src/`, the root package manifest, the workflow file, `.nvmrc`, and the shared Yarn configuration, releases, and plugins.
-Before the first deployment, set the repository's **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
-The `configure-pages` step checks that setup; it does not enable Pages on the repository.
-Deployment runs only from `main`, and the `github-pages` environment shows the deployed site URL.
+The [Documentation workflow](./.github/workflows/documentation.yml) builds both languages for matching pull requests.
+Matching pushes to `main` also deploy the site. A manual run on `main` rebuilds and deploys the committed branch.
+Its path filters cover the site, public source, root manifest, Node and Yarn configuration, and the workflow itself.
+Root contributor Markdown changes alone do not trigger it, so run the checks locally.
 
-After installing the repository dependencies and merging the workflow into `main`, you can request a manual deployment from the repository root:
+For deployment, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**.
+The workflow checks this setting; it does not enable Pages.
+After the workflow is on `main`, maintainers can dispatch it from the root:
 
 ```sh
 yarn docs:deploy
 ```
 
-This requires an authenticated GitHub CLI with permission to run workflows. It builds and deploys the committed `main` branch.
+This requires an authenticated GitHub CLI with workflow permission.
+It deploys committed `main`, not local edits.
 
-## Sending a Pull Request
+## Pull requests
 
-> **Working on your first pull request?** You can learn how from this free series: [How to Contribute to an Open Source Project on GitHub](https://app.egghead.io/playlists/how-to-contribute-to-an-open-source-project-on-github).
+Use a focused branch and a [Conventional Commit](https://www.conventionalcommits.org/) title, such as `docs: correct native test setup`.
+Review your diff before requesting review. Include the problem, changed behavior, validation results, and any breaking changes.
+Add screenshots or videos when the UI changes.
 
-When you're sending a pull request:
+Use this checklist in the pull request description:
 
-- Prefer small pull requests focused on one change
-- Verify that TypeScript, linting and tests are passing
-- Review your own code before requesting a review
-- Preview the documentation to ensure it looks correct
-- Follow the pull request template when opening a pull request
+- [ ] The change has one clear purpose.
+- [ ] Relevant checks pass, or the description identifies what could not run and why.
+- [ ] Public contracts, JSDoc, and both documentation languages agree where affected.
+- [ ] Generated files were regenerated rather than edited by hand.
+- [ ] Native or device changes include the tested versions, platform, and device.
+- [ ] Related issues and breaking changes are identified where applicable.
 
-## Questions?
+## Releases
 
-- 🐛 **Bug reports**: Open an [issue](https://github.com/l2hyunwoo/react-native-nitro-cookies/issues)
-- 💡 **Feature requests**: Start a [discussion](https://github.com/l2hyunwoo/react-native-nitro-cookies/discussions)
-- 💬 **Questions**: Ask in [discussions](https://github.com/l2hyunwoo/react-native-nitro-cookies/discussions)
+[GitHub Releases](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases) is the canonical release history.
+`CHANGELOG.md` preserves older entries and links there. The Publish workflow does not update it.
 
-## License
+Maintainers publish through the [Publish workflow](./.github/workflows/publish.yml), triggered with `workflow_dispatch`.
+Supply `version` in `X.Y.Z` format without a `v` prefix. Set `dry_run` to `true` for a rehearsal.
+Choose the intended source branch in the workflow UI.
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+| Step | Normal run | Dry run |
+| --- | --- | --- |
+| Version | Update `package/package.json`, create a version commit, and push it to the selected branch | Update and commit inside the runner; do not push |
+| Tag | Create and push `vX.Y.Z` | Report the tag that would be created |
+| Package | Install workspace dependencies, build the library, and verify build output | Run the same build and verification with the requested version |
+| npm | Run `npm publish --provenance --access public` from `package/` | Run `npm publish --dry-run --access public` from `package/` |
+| Release | Create a GitHub Release after publication | Generate and display the proposed body without creating a Release |
 
----
+A dry run changes temporary runner files and runs dependency lifecycle scripts and the package build.
+It does not push a commit or tag, publish to npm, or create a GitHub Release.
+The workflow rejects invalid version formats and existing tags.
 
-Thank you for contributing to react-native-nitro-cookies! 🎉
+The generated Release body lists up to 50 merged pull requests after the previous tag's commit date.
+It adds installation commands, a README link, and a comparison link.
+Maintainers must review and edit the Release notes for API availability, breaking changes, and upgrade instructions.
+The workflow does not write curated release notes or a changelog entry automatically.
+
+The root `yarn release` command is a legacy release-it entry point, separate from this workflow.
+Its `--only-version` flag limits prompting to the version choice; it does not limit execution to a version edit.
+Do not use it as a substitute for the Publish workflow.
+
+Release checklist:
+
+- [ ] Review the diff since the previous release and run the checks for the changed code.
+- [ ] Verify the documented dependency and platform matrix against manifests, fixture results, and source API behavior.
+- [ ] Rehearse the intended version with `dry_run: true` and inspect build and package output.
+- [ ] Run publication and verify the npm version, tarball contents, tag, and GitHub Release.
+- [ ] Only after publication is confirmed, update release guidance in the README and matching English/Korean installation and API pages.
+- [ ] Update English/Korean LLM notices in `website/scripts/llms.mjs` and the release-text assertions in `website/scripts/check.mjs` together.
+- [ ] Rebuild and check the site so rendered pages and AI exports describe the same release state.
+- [ ] Review the generated Release body and add the release-specific upgrade instructions.
+
+Keep the current unreleased-API notices until a published package contains those APIs.
+
+## Issues and questions
+
+Use [Issues](https://github.com/l2hyunwoo/react-native-nitro-cookies/issues) for bugs, feature requests, and questions.
+Use the bug form for reproducible failures. For other topics, open a blank issue with a clear title.
+Include library, React Native, and Nitro versions, the OS, and the relevant store or WebView provider when reporting native behavior.
+
+By contributing, you agree to license your contributions under the MIT License.

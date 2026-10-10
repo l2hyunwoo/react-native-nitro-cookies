@@ -7,18 +7,17 @@ body:
       value: |
         # Bug report
 
-        👋 Hi!
-
-        **Please fill the following carefully before opening a new issue ❗**
-        *(Your issue may be closed if it doesn't provide the required pieces of information)*
+        Include the versions and platform needed to reproduce the failure.
+        Upstream React Native support and this library's tested configurations are different scopes.
+        Peer dependency ranges do not mean every React Native version has been tested.
   - type: checkboxes
     attributes:
       label: Before submitting a new issue
       description: Please perform simple checks first.
       options:
-        - label: I tested using the latest version of the library, as the bug might be already fixed.
+        - label: I checked the library's release notes for an existing fix.
           required: true
-        - label: I tested using a [supported version](https://github.com/reactwg/react-native-releases/blob/main/docs/support.md) of react native.
+        - label: I included the actual library, React Native, Nitro Modules, and OS versions below.
           required: true
         - label: I checked for possible duplicate issues, with possible answers.
           required: true
@@ -35,15 +34,18 @@ body:
     id: library-version
     attributes:
       label: Library version
-      description: What version of the library are you using?
-      placeholder: "x.x.x"
+      description: Include the npm version, or the source commit if testing a checkout.
+      placeholder: "1.2.1 (npm), or source commit SHA"
     validations:
       required: true
   - type: textarea
     id: react-native-info
     attributes:
       label: Environment info
-      description: Run `react-native info` in your terminal and paste the results here.
+      description: |
+        Paste `react-native info`, then add the Nitro Modules version and exact OS version.
+        For Android, include the device or emulator image and WebView provider package/version, or state that none is available.
+        For Apple, state whether the call uses the default cookie store or WebKit (`useWebKit: true`), and whether this is iOS or tvOS.
       render: shell
     validations:
       required: true
