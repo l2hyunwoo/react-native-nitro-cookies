@@ -14,9 +14,7 @@ HTTP cookie management for React Native, built with [Nitro Modules](https://nitr
 - Synchronous and asynchronous APIs.
 - TypeScript types for cookie operations.
 
-The documentation follows the source branch and includes **unreleased APIs**.
-The latest npm release, **1.2.1**, does not include list queries, scoped deletion, normalized errors, or a runtime `CookieErrorCode` export.
-Check the [installation and release guidance](https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation) before using those APIs.
+The documentation includes unreleased APIs. Check the [installation guide](https://l2hyunwoo.github.io/react-native-nitro-cookies/start/installation) for availability in your installed version.
 
 ## Installation
 
@@ -29,9 +27,10 @@ yarn add react-native-nitro-cookies react-native-nitro-modules
 ```
 
 Use `react-native-nitro-modules >=0.35.0 <1.0.0` and a React Native version compatible with that runtime.
-The source branch defaults to Android API 24. Apple deployment targets also depend on React Native and Nitro.
-The podspec follows React Native's iOS minimum and declares tvOS 13.4; your app can require a newer target.
-See [platform support](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms) for store availability and compatibility limits.
+
+[![Android: API 24+](https://img.shields.io/badge/Android-API%2024%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
+[![iOS: minimum depends on React Native and Nitro](https://img.shields.io/badge/iOS-RN%20%2B%20Nitro%20minimum-000000?style=flat-square&logo=apple)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
+[![tvOS: minimum depends on React Native and Nitro](https://img.shields.io/badge/tvOS-RN%20%2B%20Nitro%20minimum-000000?style=flat-square&logo=apple)](https://l2hyunwoo.github.io/react-native-nitro-cookies/reference/platforms)
 
 For iOS, install pods from your app's `ios/` directory:
 
