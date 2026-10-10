@@ -46,7 +46,8 @@ WebView-provider, network, and storage failures depend on the runtime; the playg
 
 ## Inspect a WebView
 
-Select the WebView tab and press **Load / reload page**. No page is loaded until you request it.
+Select the WebView tab and press **Load demo page** for the bundled English page. It makes no network requests and uses `https://example.com/account` as its base URL and native cookie query URL.
+Choose **Open external URL** to navigate to the form URL instead. External page content and language are controlled by that site. No page is loaded until you request it.
 After navigation, press **Inspect current URL** to call `getList` for the browser's current URL and selected store.
 On iOS, select WebKit to inspect the browser store.
 The WebView's `sharedCookiesEnabled` setting does not guarantee that native stores synchronize.

@@ -22,6 +22,15 @@ import { groups, operations } from "./operations";
 import type { Inputs, OperationName } from "./operations";
 
 const docsURL = "https://l2hyunwoo.github.io/react-native-nitro-cookies";
+const demoURL = "https://example.com/account";
+const demoHTML = `<!doctype html>
+<html lang="en"><head><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font:16px system-ui;margin:24px;line-height:1.5;color:#18181b;background:#fafafa}h1{font-size:24px}code{overflow-wrap:anywhere}</style>
+</head><body><h1>Cookie playground</h1>
+<p>This English demo page is bundled with the app. It makes no network requests.</p>
+<p>Cookie query URL: <code>https://example.com/account</code></p>
+<p>Use Write to set a cookie, then return here and inspect the native store. On iOS, select WebKit for the browser store.</p>
+</body></html>`;
 const mono = Platform.OS === "ios" ? "Menlo" : "monospace";
 
 function AppContent() {
@@ -44,7 +53,7 @@ function AppContent() {
   const [tab, setTab] = useState<(typeof groups)[number] | "WebView">("Read");
   const group = tab === "WebView" ? "Read" : tab;
   const [selected, setSelected] = useState<OperationName>("getList");
-  const [url, setUrl] = useState("https://example.com/account");
+  const [url, setUrl] = useState(demoURL);
   const [name, setName] = useState("nitro_demo");
   const [value, setValue] = useState("hello");
   const [path, setPath] = useState("/account");
@@ -63,6 +72,7 @@ function AppContent() {
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const running = useRef(false);
+  const [demo, setDemo] = useState(false);
   const [browserURL, setBrowserURL] = useState<string>();
   const [currentBrowserURL, setCurrentBrowserURL] = useState<string>();
   const webView = useRef<WebView>(null);
@@ -232,7 +242,8 @@ function AppContent() {
       const parsed = new URL(url);
       if (!["http:", "https:"].includes(parsed.protocol) || !parsed.hostname)
         throw new Error("Enter an absolute HTTP(S) URL.");
-      if (browserURL === url) webView.current?.reload();
+      if (!demo && browserURL === url) webView.current?.reload();
+      setDemo(false);
       setBrowserURL(url);
       setCurrentBrowserURL(url);
     } catch {
@@ -404,16 +415,26 @@ function AppContent() {
                   </Text>
                 ) : (
                   <>
-                    {button("Load / reload page", loadBrowser)}
+                    {button("Load demo page", () => {
+                      if (demo) webView.current?.reload();
+                      setDemo(true);
+                      setBrowserURL(demoURL);
+                      setCurrentBrowserURL(demoURL);
+                    })}
+                    {button("Open external URL", loadBrowser)}
                     {browserURL ? (
                       <WebView
                         ref={webView}
                         style={s.browser}
-                        source={{ uri: browserURL }}
+                        source={
+                          demo
+                            ? { html: demoHTML, baseUrl: demoURL }
+                            : { uri: browserURL }
+                        }
                         sharedCookiesEnabled
                         thirdPartyCookiesEnabled
                         onNavigationStateChange={(state) =>
-                          setCurrentBrowserURL(state.url)
+                          setCurrentBrowserURL(demo ? demoURL : state.url)
                         }
                         onError={(event) => {
                           const message = event.nativeEvent.description;
@@ -427,7 +448,8 @@ function AppContent() {
                         style={[s.browserEmpty, { borderColor: color.border }]}
                       >
                         <Text style={[s.body, mutedStyle]}>
-                          No page loaded. Press Load to start a network request.
+                          No page loaded. Load the bundled English demo or open
+                          the external URL above.
                         </Text>
                       </View>
                     )}
