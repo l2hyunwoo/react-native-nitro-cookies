@@ -22,6 +22,7 @@
     "nitro.json",
     "*.podspec",
     "react-native.config.js",
+    "scripts/prepare-package-docs.mjs",
     "!ios/build",
     "!android/build",
     "!android/gradle",
@@ -38,6 +39,8 @@
     "typecheck": "tsc",
     "clean": "del-cli android/build lib",
     "prepare": "bob build",
+    "prepack": "node scripts/prepare-package-docs.mjs",
+    "test:package-docs": "node --test scripts/prepare-package-docs.test.mjs",
     "nitrogen": "nitrogen"
   },
   "keywords": [
@@ -67,7 +70,7 @@
   "bugs": {
     "url": "https://github.com/l2hyunwoo/react-native-nitro-cookies/issues"
   },
-  "homepage": "https://github.com/l2hyunwoo/react-native-nitro-cookies#readme",
+  "homepage": "https://l2hyunwoo.github.io/react-native-nitro-cookies/",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
