@@ -1,50 +1,33 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-02-13 | Updated: 2026-02-13 -->
 
 # src
 
-## Purpose
-TypeScript source code for the `react-native-nitro-cookies` npm package. Contains the public API, Nitro HybridObject interface contract, type definitions, and tests. This is the entry point consumers import from.
+| File | Purpose |
+| --- | --- |
+| `index.tsx` | Public sync/async wrapper, list queries, dictionaries, and error context |
+| `NitroCookies.nitro.ts` | Native HybridObject interface used by Nitrogen |
+| `types.ts` | Cookie field subset, scoped deletion identity, Cookies alias, and error types/enum |
+| `errors.ts` | Converts native failures to CookieError with code, cause, and optional context |
+| `__tests__/index.test.tsx` | Wrapper forwarding, defaults, duplicate names, scope, and normalized error tests |
 
-## Key Files
+## Changes
 
-| File | Description |
-|------|-------------|
-| `index.tsx` | Public API -- exports `NitroCookies` object wrapping the HybridObject with sync/async methods; converts Cookie arrays to Record dictionaries |
-| `NitroCookies.nitro.ts` | Nitro HybridObject interface -- the **contract** that drives Nitrogen code generation for C++/Swift/Kotlin bridges |
-| `types.ts` | Type definitions: `Cookie` interface (RFC 6265), `Cookies` type alias, `CookieErrorCode` enum, `CookieError` interface |
+Keep public wrappers and the native interface consistent. Signature and shared-type changes require `yarn nitrogen` from the root.
+Do not edit generated bridges or declaration output. Public documentation also lives in `website/content/`, with matching English and Korean pages.
+Keep Next / unreleased guidance for list queries, scoped deletion, normalized errors, and the runtime enum export until release status is confirmed.
 
-## Subdirectories
+The public wrapper defaults `useWebKit` to false with `?? false`; the native interface accepts an optional boolean.
+True selects iOS WebKit. tvOS rejects that selection; Android ignores it.
+Legacy dictionaries use `cookiesToDictionary()` and keep the last native entry for each name. List methods preserve duplicates.
+Apple lists preserve stored scope; Android URL lists expose name/value pairs without scope metadata.
+Android legacy dictionaries synthesize the URL host and root path; those fields do not recover stored identity.
 
-| Directory | Purpose |
-|-----------|---------|
-| `__tests__/` | Jest test suite (currently placeholder) |
+Error normalization wraps method failures; HybridObject creation at import time is outside that wrapper.
+The wrapper adds URL and cookie name context without a value field. Messages, URLs, and causes can still contain sensitive data.
+HttpOnly restricts browser `document.cookie`, while native reads can expose the value to React Native JavaScript.
 
-## For AI Agents
+## Validation
 
-### Working In This Directory
-- `NitroCookies.nitro.ts` is the **single source of truth** for the native interface. Changing it requires running `yarn nitrogen` to regenerate all C++/Swift/Kotlin bridge code
-- `index.tsx` is the **public API layer** that wraps the raw HybridObject. It converts `Cookie[]` arrays from native into `Cookies` (Record) dictionaries for backward compatibility with `@react-native-cookies/cookies`
-- `types.ts` defines types used both by the public API and the Nitro interface
-- The `useWebKit` parameter defaults to `false` in the public API (via `?? false`); the Nitro interface uses `optional<bool>`
-
-### Testing Requirements
-- Run `yarn test` to execute Jest tests
-- The test suite is currently a placeholder -- add real unit tests when modifying the TypeScript API
-- Platform-specific behavior must be tested in the `example/` app on real devices/simulators
-
-### Common Patterns
-- Sync methods: direct JSI calls returning values immediately (no Promise)
-- Async methods: return `Promise` from the HybridObject, public API wraps with `async`
-- Cookie conversion: `cookiesToDictionary()` helper converts `Cookie[]` to `Record<string, Cookie>`
-- Default exports: both named (`NitroCookies`) and default export for consumer flexibility
-
-## Dependencies
-
-### Internal
-- `react-native-nitro-modules` -- `NitroModules.createHybridObject`, `HybridObject` types
-
-### External
-- `react-native-nitro-modules` ^0.31.4
-
-<!-- MANUAL: Any manually added notes below this line are preserved on regeneration -->
+Run `yarn test --maxWorkers=2`, `yarn typecheck`, and `yarn lint` from the root for wrapper changes.
+The existing Jest suite mocks `createHybridObject` before import. Reuse that pattern when adding wrapper coverage.
+Jest validates wrapper contracts; use native fixtures or the example app for store behavior.

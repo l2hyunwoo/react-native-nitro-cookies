@@ -19,13 +19,10 @@ class NitroCookies : HybridNitroCookiesSpec() {
   private fun toRFC6265String(cookie: Cookie): String {
     val parts = mutableListOf<String>()
 
-    // Name=Value (required)
     parts.add("${cookie.name}=${cookie.value}")
 
-    // Path attribute
     cookie.path?.let { parts.add("Path=$it") }
 
-    // Domain attribute
     cookie.domain?.let { parts.add("Domain=$it") }
 
     // Expires attribute (convert ISO 8601 to RFC 1123)
@@ -46,12 +43,10 @@ class NitroCookies : HybridNitroCookiesSpec() {
       }
     }
 
-    // Secure flag
     if (cookie.secure == true) {
       parts.add("Secure")
     }
 
-    // HttpOnly flag
     if (cookie.httpOnly == true) {
       parts.add("HttpOnly")
     }
@@ -64,7 +59,6 @@ class NitroCookies : HybridNitroCookiesSpec() {
     val parts = setCookieHeader.split(";").map { it.trim() }
     if (parts.isEmpty()) return null
 
-    // First part is name=value
     val nameValue = parts[0].split("=", limit = 2)
     if (nameValue.size != 2) return null
 
@@ -77,7 +71,6 @@ class NitroCookies : HybridNitroCookiesSpec() {
     var secure: Boolean? = null
     var httpOnly: Boolean? = null
 
-    // Parse attributes
     for (i in 1 until parts.size) {
       val part = parts[i]
       when {
@@ -109,7 +102,6 @@ class NitroCookies : HybridNitroCookiesSpec() {
       }
     }
 
-    // Apply defaults
     if (path == null) path = "/"
     if (domain == null) domain = url.host
 
@@ -127,18 +119,16 @@ class NitroCookies : HybridNitroCookiesSpec() {
 
   /** Check if cookie domain matches or is subdomain of URL host Similar to iOS isMatchingDomain */
   private fun isMatchingDomain(cookieDomain: String, urlHost: String): Boolean {
-    // Exact match
     if (cookieDomain == urlHost) {
       return true
     }
 
-    // Wildcard match (.example.com matches api.example.com)
+    // A leading dot denotes domain scope, not glob matching.
     if (cookieDomain.startsWith(".")) {
       val domain = cookieDomain.substring(1)
       return urlHost.endsWith(".$domain") || urlHost == domain
     }
 
-    // Subdomain match (example.com matches api.example.com)
     return urlHost.endsWith(".$cookieDomain")
   }
 
@@ -260,7 +250,6 @@ class NitroCookies : HybridNitroCookiesSpec() {
       return emptyArray()
     }
 
-    // Parse cookie string (format: "name1=value1; name2=value2")
     val cookies = mutableListOf<Cookie>()
     val cookiePairs = cookieString.split(";").map { it.trim() }
 
@@ -290,7 +279,6 @@ class NitroCookies : HybridNitroCookiesSpec() {
     val urlObj = validateURL(url)
     validateDomain(cookie, urlObj)
 
-    // Apply defaults
     val cookieWithDefaults =
       cookie.copy(path = cookie.path ?: "/", domain = cookie.domain ?: urlObj.host)
 
@@ -305,7 +293,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
 
   /** Parse and set cookies from Set-Cookie header synchronously */
   override fun setFromResponseSync(url: String, value: String): Boolean {
-    validateURL(url) // Validate URL format
+    validateURL(url)
     val cookieManager = cookieManagerOrThrow()
     cookieManager.setAcceptCookie(true)
 
@@ -325,14 +313,12 @@ class NitroCookies : HybridNitroCookiesSpec() {
     val urlObj = validateURL(url)
     val cookieManager = cookieManagerOrThrow()
 
-    // Check if the cookie exists for the given URL
     val cookieString = cookieManager.getCookie(url)
     val cookies = cookieString?.split(";")?.map { it.trim() } ?: emptyList()
     val found = cookies.any { it.startsWith("$name=") }
 
     if (found) {
-      // Android CookieManager doesn't support removing specific cookies by name
-      // We can only expire them by setting a past expiration date
+      // Original scope is unknown here; this expires only the URL host Domain and root path.
       val expiredCookie =
         "$name=; Path=/; Domain=${urlObj.host}; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
       cookieManager.setCookie(url, expiredCookie)
@@ -358,7 +344,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
   override fun setManySync(url: String, cookies: Array<Cookie>): Boolean {
     val urlObj = validateURL(url)
 
-    // Validate every cookie up front so a bad cookie doesn't leave a partial write
+    // Validate all domains before writing so a mismatch does not leave a partial write.
     for (cookie in cookies) {
       validateDomain(cookie, urlObj)
     }
@@ -383,7 +369,6 @@ class NitroCookies : HybridNitroCookiesSpec() {
       val urlObj = validateURL(url)
       validateDomain(cookie, urlObj)
 
-      // Apply defaults
       val cookieWithDefaults =
         cookie.copy(path = cookie.path ?: "/", domain = cookie.domain ?: urlObj.host)
 
@@ -402,7 +387,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     return Promise.async {
       val urlObj = validateURL(url)
 
-      // Validate every cookie up front so a bad cookie doesn't leave a partial write
+      // Validate all domains before writing so a mismatch does not leave a partial write.
       for (cookie in cookies) {
         validateDomain(cookie, urlObj)
       }
@@ -444,7 +429,6 @@ class NitroCookies : HybridNitroCookiesSpec() {
         return@async emptyArray()
       }
 
-      // Parse cookie string (format: "name1=value1; name2=value2")
       val cookies = mutableListOf<Cookie>()
       val cookiePairs = cookieString.split(";").map { it.trim() }
 
@@ -529,7 +513,7 @@ class NitroCookies : HybridNitroCookiesSpec() {
     }
   }
 
-  /** Get all cookies regardless of domain (iOS only - not supported on Android) */
+  /** All-store queries are available on Apple platforms; Android rejects them. */
   override fun getAll(useWebKit: Boolean?): Promise<Array<Cookie>> {
     return Promise.async {
       throw Exception("PLATFORM_UNSUPPORTED: getAll() is only available on iOS")
@@ -542,14 +526,12 @@ class NitroCookies : HybridNitroCookiesSpec() {
       val urlObj = validateURL(url)
       val cookieManager = cookieManagerOrThrow()
 
-      // Check if the cookie exists for the given URL
       val cookieString = cookieManager.getCookie(url)
       val cookies = cookieString?.split(";")?.map { it.trim() } ?: emptyList()
       val found = cookies.any { it.startsWith("$name=") }
 
       if (found) {
-        // Android CookieManager doesn't support removing specific cookies by name
-        // We can only expire them by setting a past expiration date
+        // Original scope is unknown here; this expires only the URL host Domain and root path.
         val expiredCookie =
           "$name=; Path=/; Domain=${urlObj.host}; Expires=Thu, 01 Jan 1970 00:00:00 GMT"
         cookieManager.setCookie(url, expiredCookie)

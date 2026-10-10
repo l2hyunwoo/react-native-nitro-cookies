@@ -21,7 +21,7 @@ await NitroCookies.set(
 const cookies = await NitroCookies.get(url, true);
 ```
 
-두 호출 모두 세 번째 인자로 WebKit cookie store를 선택합니다. 생략하면 Apple shared cookie store를 사용합니다.
+`useWebKit`은 `set`의 세 번째 인자이자 `get`의 두 번째 인자이며, WebKit cookie store를 선택합니다. 생략하면 Apple shared cookie store를 사용합니다.
 로그인 쿠키를 읽고 저장하고 삭제할 때는 같은 cookie store를 사용하세요.
 
 ## WebView 설정 시 확인할 점
