@@ -58,6 +58,9 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      - name: Test package documentation preparation
+        run: yarn package test:package-docs
+
       - name: Build package
         run: yarn prepare
 
