@@ -28,7 +28,7 @@ get(url: string, useWebKit?: boolean): Promise<Cookies>
 getListSync(url: string): Cookie[]
 ```
 
-**Next / 미출시.** 기본 cookie store를 조회하면서 같은 이름의 쿠키를 모두 유지합니다. Apple은 저장된 `domain`과 `path`를 보존합니다. Android의 URL 조회 결과에는 `name`과 `value`만 있습니다.
+**1.3.0부터 지원합니다.** 기본 cookie store를 조회하면서 같은 이름의 쿠키를 모두 유지합니다. Apple은 저장된 `domain`과 `path`를 보존합니다. Android의 URL 조회 결과에는 `name`과 `value`만 있습니다.
 
 ## getList
 
@@ -36,7 +36,7 @@ getListSync(url: string): Cookie[]
 getList(url: string, useWebKit?: boolean): Promise<Cookie[]>
 ```
 
-**Next / 미출시.** 선택한 cookie store를 list로 조회합니다. 순서는 native 결과를 따릅니다. Android의 list 항목만으로는 삭제할 쿠키를 특정할 수 없으므로, 저장할 때 사용한 scope가 별도로 필요합니다.
+**1.3.0부터 지원합니다.** 선택한 cookie store를 list로 조회합니다. 순서는 native 결과를 따릅니다. Android의 list 항목만으로는 삭제할 쿠키를 특정할 수 없으므로, 저장할 때 사용한 scope가 별도로 필요합니다.
 
 ## getAll
 
@@ -52,6 +52,6 @@ Domain과 관계없이 선택한 Apple cookie store의 모든 쿠키를 조회�
 getAllList(useWebKit?: boolean): Promise<Cookie[]>
 ```
 
-**Next / 미출시.** 선택한 Apple cookie store의 모든 쿠키를 조회합니다. 이름이 같은 쿠키도 빠짐없이 반환하며, 저장된 scope를 유지합니다. Android에서는 `PLATFORM_UNSUPPORTED`로 실패합니다.
+**1.3.0부터 지원합니다.** 선택한 Apple cookie store의 모든 쿠키를 조회합니다. 이름이 같은 쿠키도 빠짐없이 반환하며, 저장된 scope를 유지합니다. Android에서는 `PLATFORM_UNSUPPORTED`로 실패합니다.
 
 [Types](./types) · [Errors](./errors) · [플랫폼 지원](./platforms)

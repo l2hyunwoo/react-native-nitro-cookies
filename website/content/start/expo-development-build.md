@@ -5,7 +5,7 @@ Expo Go does not include these native modules. Installing their JavaScript packa
 
 This guide uses Expo SDK 56, React Native 0.85.3, and Nitro Modules 0.35.9.
 It pins the blank TypeScript template rather than following the latest SDK.
-The `set()` and `get()` example works with the published 1.2.1 API; Next APIs still require a [source build](./installation).
+The installation below uses Nitro Cookies 1.3.0. See [installation](./installation) for API availability.
 
 ## Create the app
 
@@ -20,7 +20,7 @@ npx create-expo@4.0.4 cookie-check \
 cd cookie-check
 npm install
 npx expo install expo-dev-client@56.0.27
-npm install --save-exact react-native-nitro-cookies@1.2.1 \
+npm install --save-exact react-native-nitro-cookies@1.3.0 \
   react-native-nitro-modules@0.35.9
 ```
 
@@ -101,9 +101,9 @@ npx expo run:android
 `--clean` deletes and recreates `ios/` and `android/`, including manual edits there. Preserve native customizations in app config or config plugins before using it.
 A Metro restart alone does not rebuild a native dependency.
 
-## Test the current source instead of npm 1.2.1
+## Test local source changes
 
-The current source and the published package both declare version 1.2.1, but contain different APIs.
+To test local changes beyond the published 1.3.0 release, install a source tarball.
 To test the source, prepare and pack the library in a repository checkout, then install that tarball in the Expo app before generating the native projects:
 
 ```sh
@@ -118,7 +118,7 @@ npm install /tmp/react-native-nitro-cookies-source.tgz
 ```
 
 `prepare` builds JavaScript, types, and Nitro bindings; `pack` also runs the documentation packaging step.
-Do not substitute a plain `npm install react-native-nitro-cookies@1.2.1` when you intend to test the source.
+Do not substitute a plain `npm install react-native-nitro-cookies@1.3.0` when you intend to test the source.
 Use a new tarball filename when repacking changed source, install it again, and rebuild the development client.
 
 ## Verified configuration
@@ -126,7 +126,7 @@ Use a new tarball filename when repacking changed source, install it again, and 
 The check ran with Expo `56.0.23`, React Native `0.85.3`, Nitro Modules `0.35.9`, and `expo-dev-client` `56.0.27`.
 The development build installed and passed `set()`/`get()` on an iPhone 17 Pro simulator running iOS 26.5 and an Android 15 (API 35) emulator. The Android build used JDK 17.
 
-The tested package was a source tarball from commit [`827a165`](https://github.com/l2hyunwoo/react-native-nitro-cookies/commit/827a1655ef2f227982f6aefe84f6b08a826e2d62). The published npm 1.2.1 artifact was not independently run.
+The tested package was a source tarball from commit [`827a165`](https://github.com/l2hyunwoo/react-native-nitro-cookies/commit/827a1655ef2f227982f6aefe84f6b08a826e2d62). The npm 1.3.0 artifact was not independently run in that verification.
 This verification does not cover other SDK combinations, EAS builds, or cookie sharing with WebViews or HTTP clients.
 
 ## References

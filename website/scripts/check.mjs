@@ -88,7 +88,9 @@ for (const prefix of ["", "ko/"]) {
   assert.ok(full.startsWith("\uFEFF# Nitro Cookies\n\n> "));
   assert.ok(index.includes("## Optional\n"));
   assert.ok(
-    full.includes(prefix ? "아직 출시하지 않았습니다" : "are unreleased"),
+    [index, full].every((text) =>
+      text.includes(prefix ? "1.3.0부터 지원합니다" : "available from 1.3.0"),
+    ),
   );
   const documents = english.filter((file) => file !== "index.md");
   const indexPages = [...index.matchAll(/^- \[[^\]]+\]\(([^)]+\.md)\)$/gm)].map(

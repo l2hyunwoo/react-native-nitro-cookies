@@ -5,13 +5,9 @@ This guide assumes an existing native project with a working iOS or Android buil
 
 ## Choose the documentation version
 
-These are **Next** docs for the source branch. List queries, scoped deletion, and normalized errors are unreleased additions.
-The package manifest currently declares `1.2.1`; that version number does not mean these additions are published.
-Check the [release history](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases) before using a Next API with an npm package.
+These docs cover Nitro Cookies **1.3.0**. List queries, scoped deletion, normalized errors, and the runtime `CookieErrorCode` export are available from 1.3.0.
 
-The published `1.2.1` API does not include list queries, `clearCookie*`, or the runtime `CookieErrorCode` export.
-The source branch also changes existing behavior, including Apple request-header matching, tvOS support, and Android WebView availability errors.
-Do not infer those changes from the unchanged manifest version. Check the installed release before depending on them.
+If you use 1.2.1 or earlier, upgrade to 1.3.0 and rebuild the native app. See the [1.3.0 release notes](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases/tag/v1.3.0) for Apple request-header matching, tvOS support, and Android WebView error handling.
 
 ## Install the packages
 
@@ -31,7 +27,7 @@ pnpm add react-native-nitro-cookies react-native-nitro-modules
 
 :::
 
-The source branch requires `react-native-nitro-modules >=0.35.0 <1.0.0`.
+Nitro Cookies 1.3.0 requires `react-native-nitro-modules >=0.35.0 <1.0.0`.
 Use a React Native version compatible with your installed Nitro runtime.
 The iOS deployment target follows React Native. The Android library defaults to API 24; your app can require a higher minimum.
 
@@ -52,14 +48,14 @@ Android uses autolinking; rebuild and launch the Android app after installation.
 Use a development build that includes both native packages. Follow [Expo development build](./expo-development-build) for installation, local builds, and rebuilds.
 Expo Go does not include this module. Rebuild the development client when native dependencies change.
 
-## Verify a Next API from source
+## Run the 1.3.0 example from source
 
-Use the repository example app to test this Next source snapshot:
+Use the repository example app to explore the 1.3.0 APIs:
 
 ```sh
 git clone https://github.com/l2hyunwoo/react-native-nitro-cookies.git
 cd react-native-nitro-cookies
-git checkout 80feca9fa2b347d37bb1f87fea59dda1150e9978
+git checkout v1.3.0
 corepack enable
 yarn install --immutable
 yarn nitrogen

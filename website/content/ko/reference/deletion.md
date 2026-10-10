@@ -12,7 +12,7 @@
 clearCookieSync(url: string, identifier: CookieIdentifier): void
 ```
 
-**Next / 미출시.** 기본 cookie store에서 식별 정보가 일치하는 쿠키를 삭제합니다. 반환형은 `void`입니다. Apple에서는 일치하는 쿠키가 없으면 아무 작업도 하지 않습니다. Android에서는 쿠키를 만료시키는 쓰기를 요청하며, 쓰기의 수락 여부나 쿠키의 존재 여부는 확인하지 않습니다.
+**1.3.0부터 지원합니다.** 기본 cookie store에서 식별 정보가 일치하는 쿠키를 삭제합니다. 반환형은 `void`입니다. Apple에서는 일치하는 쿠키가 없으면 아무 작업도 하지 않습니다. Android에서는 쿠키를 만료시키는 쓰기를 요청하며, 쓰기의 수락 여부나 쿠키의 존재 여부는 확인하지 않습니다.
 
 ## clearCookie
 
@@ -20,7 +20,7 @@ clearCookieSync(url: string, identifier: CookieIdentifier): void
 clearCookie(url: string, identifier: CookieIdentifier, useWebKit?: boolean): Promise<void>
 ```
 
-**Next / 미출시.** 선택한 cookie store에서 식별 정보가 일치하는 쿠키를 삭제합니다. Android에서는 CookieManager가 쓰기를 수락할 때까지 기다립니다. CookieManager가 쓰기를 거절하면 오류로 처리합니다. 삭제 전에 쿠키가 존재했는지는 알 수 없습니다. Secure 쿠키를 삭제하려면 HTTPS를 사용하세요.
+**1.3.0부터 지원합니다.** 선택한 cookie store에서 식별 정보가 일치하는 쿠키를 삭제합니다. Android에서는 CookieManager가 쓰기를 수락할 때까지 기다립니다. CookieManager가 쓰기를 거절하면 오류로 처리합니다. 삭제 전에 쿠키가 존재했는지는 알 수 없습니다. Secure 쿠키를 삭제하려면 HTTPS를 사용하세요.
 
 ## clearByNameSync
 

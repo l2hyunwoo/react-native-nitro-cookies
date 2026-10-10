@@ -1,6 +1,6 @@
 # Scope를 지정해 쿠키 삭제
 
-같은 이름의 쿠키가 여러 개라면 Next `clearCookie` API를 사용하세요.
+같은 이름의 쿠키가 여러 개라면 `clearCookie` API를 사용하세요.
 다른 쿠키를 삭제하지 않도록 저장할 때 사용한 `name`, `domain`, `path`를 전달하세요.
 
 ## Apple: 조회한 식별 정보 그대로 사용
@@ -80,7 +80,7 @@ for (const identity of identities) {
 }
 ```
 
-이 Next 예제는 기본 cookie store에서 식별 정보가 일치하는 쿠키만 삭제합니다.
+이 예제는 기본 cookie store에서 식별 정보가 일치하는 쿠키만 삭제합니다.
 iOS WebKit으로 로그인했다면 각 `clearCookie` 호출의 세 번째 인자에 `true`를 전달하세요.
 각 domain과 호환되는 URL을 사용해야 합니다. 하나의 URL로 서로 관계없는 domain의 쿠키를 모두 선택할 수는 없습니다.
 

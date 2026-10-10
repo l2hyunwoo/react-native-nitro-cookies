@@ -29,10 +29,10 @@ import NitroCookies, {
 - `useWebKit` is an optional boolean argument, not an options object. Its default is `false`.
 - Sync methods use the default store. Async methods return a Promise, but completion guarantees still depend on the platform and operation.
 - Dictionary results use cookie names as keys. Lists preserve duplicate names.
-- Failures in the Next wrapper expose a string `code`. Read the [error contract](./errors) before implementing recovery.
+- Failures in the wrapper expose a string `code`. Read the [error contract](./errors) before implementing recovery.
 
-The list/scoped-deletion APIs and normalized error contract are **Next additions**.
-Check [installation](../start/installation) for the distinction between source documentation and an npm release.
+The list/scoped-deletion APIs and normalized error contract are **available in 1.3.0**.
+See [installation](../start/installation) for release availability and upgrade steps.
 
 See [types](./types) for data shapes and [platform support](./platforms) for availability.
 

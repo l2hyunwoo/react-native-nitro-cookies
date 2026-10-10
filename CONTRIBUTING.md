@@ -223,7 +223,7 @@ Release checklist:
 - [ ] Rebuild and check the site so rendered pages and AI exports describe the same release state.
 - [ ] Review the generated Release body and add the release-specific upgrade instructions.
 
-Keep the current unreleased-API notices until a published package contains those APIs.
+Keep API availability notices aligned with published releases. List queries, scoped deletion, normalized errors, and the runtime `CookieErrorCode` export were added in 1.3.0.
 
 ## Issues and questions
 

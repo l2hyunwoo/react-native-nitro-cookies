@@ -5,7 +5,7 @@ titleTemplate: Nitro Cookies
 ---
 
 <div class="cookie-home">
-<a class="home-release" href="./start/installation.html">NEXT DOCUMENTATION · UNRELEASED APIS INCLUDED <span aria-hidden="true">↗</span></a>
+<a class="home-release" href="./start/installation.html">VERSION 1.3.0 DOCUMENTATION <span aria-hidden="true">↗</span></a>
 <div class="hero-grid">
 <div class="hero-copy">
 <p class="eyebrow">NITRO COOKIES / REACT NATIVE</p>

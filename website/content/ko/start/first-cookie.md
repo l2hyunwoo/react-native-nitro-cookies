@@ -36,7 +36,7 @@ const matches = cookies.demo_session?.value === "demo-token";
 ```
 
 `get`은 쿠키 이름을 key로 삼는 dictionary를 반환합니다. 일치하는 쿠키가 없으면 `{}`를 반환합니다.
-같은 이름의 쿠키를 빠짐없이 조회하려면 Next [list API](../reference/reading#getlist)를 사용하세요.
+같은 이름의 쿠키를 빠짐없이 조회하려면 [list API](../reference/reading#getlist)를 사용하세요.
 
 ## 3. Request header 생성
 

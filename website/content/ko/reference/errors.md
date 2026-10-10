@@ -1,6 +1,6 @@
 # Errors
 
-**Next 오류 처리 규칙.** 23개 공개 메서드에서 발생한 오류는 문자열 `code`가 있는 `Error`로 전달됩니다. Sync 호출은 이 오류를 throw하고, async 호출은 이 오류로 Promise를 reject합니다.
+**1.3.0부터 적용되는 오류 처리 규칙입니다.** 23개 공개 메서드에서 발생한 오류는 문자열 `code`가 있는 `Error`로 전달됩니다. Sync 호출은 이 오류를 throw하고, async 호출은 이 오류로 Promise를 reject합니다.
 알려진 오류 코드를 처리할 때는 패키지가 export하는 runtime enum을 사용하세요.
 
 ```ts

@@ -7,7 +7,7 @@ JavaScript changes use Fast Refresh. Native changes require an app rebuild.
 
 The playground in `src/App.tsx` has top tabs for Read, Write, Delete, Lifecycle, Errors, and WebView.
 Each tab has its own content. Inputs scroll independently; the run button and native result remain visible.
-It uses the local source, including unreleased APIs. It does not prove that Apple stores synchronize automatically.
+It uses the local source; the documented API is available in 1.3.0. It does not prove that Apple stores synchronize automatically.
 
 ## Explore the API
 

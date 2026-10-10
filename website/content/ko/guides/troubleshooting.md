@@ -18,8 +18,8 @@ Metro에서 앱을 reload하는 것만으로는 native module이 추가되지 �
 ## 문서에 있는 메서드를 찾을 수 없을 때
 
 설치한 패키지 버전과 [릴리스 이력](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases)을 비교하세요.
-이 문서는 소스 브랜치를 기준으로 하며, 아직 출시하지 않은 list API, scope를 지정하는 삭제 API, error normalization을 포함합니다.
-패키지 manifest에 `1.2.1`이 적혀 있어도 이 변경 사항이 배포됐다는 뜻은 아닙니다. Next API를 확인하려면 [소스 설치 절차](../start/installation)를 따르세요.
+이 문서는 1.3.0을 기준으로 설명합니다. List API, scope를 지정하는 삭제 API, error normalization은 1.3.0부터 지원합니다.
+이전 버전이라면 [설치 절차](../start/installation)에 따라 업데이트하고 native 앱을 다시 빌드하세요.
 
 ## Android에서 WEBVIEW_UNAVAILABLE이 발생할 때
 
@@ -48,12 +48,12 @@ Sync·async 모두 같은 제약이 있습니다. `await set()`도 쓰기가 수
 
 ## Dictionary에 쿠키가 안 보이거나 삭제 후에도 남아 있을 때
 
-`get`은 쿠키 이름을 key로 사용하므로 같은 이름의 쿠키 중 하나만 남습니다. 중복 쿠키를 확인하려면 Next list API를 사용하세요.
+`get`은 쿠키 이름을 key로 사용하므로 같은 이름의 쿠키 중 하나만 남습니다. 중복 쿠키를 확인하려면 list API를 사용하세요.
 Android의 URL list는 `name`과 `value`를 제공하지만 원래 `domain`, `path`, flag는 복원하지 못합니다.
 조회한 metadata로 scope를 추정하지 마세요. 저장할 때 사용한 scope를 보관하세요.
 
 Android의 `clearByName`은 정확한 식별 정보로 삭제할 쿠키를 선택하지 않습니다. 반환값만으로 모든 scope의 쿠키가 삭제됐다고 판단하면 안 됩니다.
-Next `clearCookie` API에 원래 `name`, `domain`, `path`를 전달하세요. Apple에서는 저장할 때 사용한 cookie store도 같아야 합니다.
+`clearCookie` API에 원래 `name`, `domain`, `path`를 전달하세요. Apple에서는 저장할 때 사용한 cookie store도 같아야 합니다.
 자세한 방법은 [scope를 지정해 쿠키 삭제](./scoped-deletion)를 참고하세요.
 
 ## 직접 보낸 요청에 예상과 다른 쿠키가 포함될 때
