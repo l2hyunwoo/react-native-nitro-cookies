@@ -1,8 +1,8 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: Feature Request 💡
-    url: https://github.com/l2hyunwoo/react-native-nitro-cookies/discussions/new?category=ideas
-    about: If you have a feature request, please create a new discussion on GitHub.
-  - name: Discussions on GitHub 💬
-    url: https://github.com/l2hyunwoo/react-native-nitro-cookies/discussions
-    about: If this library works as promised but you need help, please ask questions there.
+    url: https://github.com/l2hyunwoo/react-native-nitro-cookies/issues/new?title=Feature%20request%3A%20
+    about: Describe the problem and the feature you propose in an issue.
+  - name: Questions 💬
+    url: https://github.com/l2hyunwoo/react-native-nitro-cookies/issues/new?title=Question%3A%20
+    about: Ask a question in Issues and include the relevant versions and platform.

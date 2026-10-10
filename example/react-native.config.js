@@ -11,8 +11,7 @@ module.exports = {
     [pkg.name]: {
       root: path.join(__dirname, '../package'),
       platforms: {
-        // Codegen script incorrectly fails without this
-        // So we explicitly specify the platforms with empty object
+        // Retained from the codegen workaround; RN 0.85.3 now accepts missing platform entries.
         ios: {},
         android: {},
       },
