@@ -186,18 +186,21 @@ Choose `react-native-nitro-cookies`, select patch, minor, or major, and describe
 Commit the generated file with your pull request. Documentation and CI-only changes do not need a release.
 Run `yarn changeset status` to review pending changes.
 
-Maintainers run the [Publish workflow](./.github/workflows/publish.yml) from the intended source branch.
-Set `dry_run` to `true` for a rehearsal. There is no manual version input.
-The workflow consumes changesets, updates `package/package.json`, and writes `package/CHANGELOG.md`.
-It rejects releases with no version change or an existing tag.
-The private example app is not versioned or published.
+When changesets reach `main`, the [Publish workflow](./.github/workflows/publish.yml) opens or updates the `chore(release): version packages` pull request.
+That pull request consumes the changesets, updates `package/package.json`, and writes `package/CHANGELOG.md`.
+Review the version and changelog there, then merge it. The private example app is not versioned or published.
 
-A normal run pushes the version commit and tag, builds the library, verifies its outputs, and publishes to npm with provenance.
-It then creates a GitHub Release from the new changelog entry, with installation and comparison links.
-A dry run passes the versioned files between jobs and builds the package without pushing or publishing.
+After the version pull request is merged, maintainers run the Publish workflow manually on `main`.
+Set `dry_run` to `true` for a rehearsal. The workflow publishes the version in `package/package.json`.
+It rejects a version that npm or a tag already has from another commit, so run it only after merging the version pull request.
+If a run publishes to npm but fails before the tag or Release, rerun it on the same commit. It checks that npm's `gitHead` matches the commit, then creates only the missing tag and Release.
+
+A normal run builds the library, verifies its outputs, and publishes to npm with provenance.
+It then pushes the `vX.Y.Z` tag and creates a GitHub Release from the changelog entry, with installation and comparison links.
+A dry run builds the package and runs `npm publish --dry-run` without tagging or creating a Release.
 Review changeset summaries for API availability, breaking changes, and upgrade instructions before release.
 
-`yarn version-packages` changes local files for inspection. Do not commit that preview before running Publish.
+`yarn version-packages` changes local files for inspection. Do not commit that preview; the version pull request does it.
 Do not use `changeset publish` as a substitute for the Publish workflow.
 The old `release-it` entry point has been removed.
 
@@ -211,6 +214,7 @@ Release checklist:
 - [ ] Exercise the playground's list/dictionary comparison, scoped deletion, headers, normalized errors, and store selection on iOS and Android.
 - [ ] Record the tested app, OS, device, and source revision. Distinguish mocked checks, native fixtures, and manual playground results.
 - [ ] Confirm the packed package exposes list queries, scoped deletion, normalized errors, and the runtime `CookieErrorCode` when preparing 1.3.0.
+- [ ] Review the version and changelog in the version pull request, then merge it.
 - [ ] Rehearse the intended version with `dry_run: true` and inspect build and package output.
 - [ ] Run publication and verify the npm version, tarball contents, tag, and GitHub Release.
 - [ ] Only after publication is confirmed, update release guidance in the README and matching English/Korean installation and API pages.
