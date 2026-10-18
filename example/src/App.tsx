@@ -14,6 +14,7 @@ import {
   View,
   useColorScheme,
 } from "react-native";
+import type { ScrollViewInstance } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import NitroCookies, { CookieErrorCode } from "react-native-nitro-cookies";
@@ -76,7 +77,7 @@ function AppContent() {
   const [browserURL, setBrowserURL] = useState<string>();
   const [currentBrowserURL, setCurrentBrowserURL] = useState<string>();
   const webView = useRef<WebView>(null);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const operation = operations[selected];
   const inputs: Inputs = {
     url,

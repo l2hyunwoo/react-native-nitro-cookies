@@ -41,6 +41,7 @@ android {
   namespace "com.margelo.nitro.nitrocookies"
 
   compileSdkVersion getExtOrIntegerDefault("compileSdkVersion")
+  ndkVersion getExtOrDefault("ndkVersion")
 
   defaultConfig {
     minSdkVersion getExtOrIntegerDefault("minSdkVersion")
