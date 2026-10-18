@@ -15,7 +15,7 @@ See [migration guidance](https://l2hyunwoo.github.io/react-native-nitro-cookies/
 | `.github/workflows/ci.yml` | JavaScript, library build, and native validation jobs |
 | `.github/workflows/publish.yml` | Package publishing and GitHub Release workflow |
 
-Use Yarn 3.6.1 through Corepack. Root workspaces are `package` and `example`; install website dependencies separately.
+Use Yarn 4.18.1 through Corepack. Root workspaces are `package` and `example`; install website dependencies separately.
 Treat manifests as version authority. The current library development dependencies use Nitro Modules and Nitrogen 0.35.9; the Nitro peer range is `>=0.35.0 <1.0.0`.
 Peer ranges do not establish that every React Native or OS version has been tested.
 

@@ -4,7 +4,7 @@ Keep contributions focused on one change. Follow the [Code of Conduct](./CODE_OF
 
 ## Setup
 
-Use the Node.js version in [`.nvmrc`](./.nvmrc) and the repository's Yarn 3.6.1 release.
+Use the Node.js version in [`.nvmrc`](./.nvmrc) and the repository's Yarn 4.18.1 release.
 Root Yarn workspaces contain `package/` and `example/`. The documentation site in `website/` is a separate Yarn project.
 Use Yarn for repository dependencies. The Publish workflow uses npm for version changes and registry publication.
 
