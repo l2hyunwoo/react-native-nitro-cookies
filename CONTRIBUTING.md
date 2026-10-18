@@ -190,9 +190,10 @@ When changesets reach `main`, the [Publish workflow](./.github/workflows/publish
 That pull request consumes the changesets, updates `package/package.json`, and writes `package/CHANGELOG.md`.
 Review the version and changelog there, then merge it. The private example app is not versioned or published.
 
-After the version pull request is merged, maintainers run the Publish workflow manually on `main`.
-Set `dry_run` to `true` for a rehearsal. The workflow publishes the version in `package/package.json`.
-It rejects a version that npm or a tag already has from another commit, so run it only after merging the version pull request.
+Merging the version pull request publishes the release. That push has no pending changesets, and npm does not have the version in `package/package.json`, so the Publish workflow publishes it.
+To rehearse before merging, check out the version pull request branch and run `yarn prepare && npm publish --dry-run` in `package/`.
+A manual Publish run on `main` (with optional `dry_run`) publishes or resumes the version committed on `main`.
+A manual run rejects a version that npm or a tag already has from another commit.
 If a run publishes to npm but fails before the tag or Release, rerun it on the same commit. It checks that npm's `gitHead` matches the commit, then creates only the missing tag and Release.
 
 A normal run builds the library, verifies its outputs, and publishes to npm with provenance.
@@ -214,9 +215,9 @@ Release checklist:
 - [ ] Exercise the playground's list/dictionary comparison, scoped deletion, headers, normalized errors, and store selection on iOS and Android.
 - [ ] Record the tested app, OS, device, and source revision. Distinguish mocked checks, native fixtures, and manual playground results.
 - [ ] Confirm the packed package exposes list queries, scoped deletion, normalized errors, and the runtime `CookieErrorCode` when preparing 1.3.0.
-- [ ] Review the version and changelog in the version pull request, then merge it.
-- [ ] Rehearse the intended version with `dry_run: true` and inspect build and package output.
-- [ ] Run publication and verify the npm version, tarball contents, tag, and GitHub Release.
+- [ ] Rehearse the intended version on the version pull request branch with `npm publish --dry-run` and inspect build and package output.
+- [ ] Review the version and changelog in the version pull request, then merge it to publish.
+- [ ] Verify the npm version, tarball contents, tag, and GitHub Release.
 - [ ] Only after publication is confirmed, update release guidance in the README and matching English/Korean installation and API pages.
 - [ ] Update English/Korean LLM notices in `website/scripts/llms.mjs` and the release-text assertions in `website/scripts/check.mjs` together.
 - [ ] Rebuild and check the site so rendered pages and AI exports describe the same release state.

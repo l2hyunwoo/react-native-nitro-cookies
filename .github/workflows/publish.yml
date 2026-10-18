@@ -1,7 +1,9 @@
 name: Publish
 
 # Pushes to main open or update the Version PR from pending changesets.
-# A manual run publishes the version that is already committed on main.
+# When no changesets are pending and main has a version that npm lacks
+# (the Version PR was merged), the same push publishes it.
+# A manual run publishes or resumes the version that is already committed on main.
 on:
   push:
     branches: [main]
@@ -29,6 +31,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      release: ${{ steps.release.outputs.needed }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,6 +51,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Create or update Version PR
+        id: changesets
         uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           github-token: ${{ github.token }}
@@ -59,9 +64,23 @@ jobs:
       - name: Verify versioned lockfile
         run: yarn install --immutable
 
+      - name: Check for an unpublished version
+        id: release
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./package/package.json').version")
+          if [ -z "$(npm view "react-native-nitro-cookies@$VERSION" version 2>/dev/null || true)" ]; then
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "v$VERSION is not on npm; publishing it."
+          fi
+
   publish:
     name: Publish to NPM
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: version
+    if: >-
+      !cancelled() && github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' || needs.version.outputs.release == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: write

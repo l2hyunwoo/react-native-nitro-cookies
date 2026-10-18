@@ -114,13 +114,15 @@ function setVersion(cwd, version) {
   );
 }
 
-test("pushes to main open the Version PR without publishing", () => {
+test("pushes to main open the Version PR and publish once it is merged", () => {
   assert.deepEqual(release.on.push.branches, ["main"]);
   const { version, publish } = release.jobs;
   assert.equal(version.if, "github.event_name == 'push'");
+  assert.equal(version.outputs.release, "${{ steps.release.outputs.needed }}");
+  assert.equal(publish.needs, "version");
   assert.equal(
     publish.if,
-    "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'",
+    "!cancelled() && github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || needs.version.outputs.release == 'true')",
   );
   assert.equal(release.concurrency.group, "release-${{ github.event_name }}");
   const action = version.steps.find((step) =>
@@ -153,6 +155,24 @@ test("the Version PR consumes changesets and skips the private example", (t) => 
   );
   // The Version PR job re-runs an immutable install after versioning.
   execFileSync("yarn", ["install", "--immutable"], { cwd, env });
+});
+
+test("a push publishes only when no changesets are pending and npm lacks the version", (t) => {
+  const step = release.jobs.version.steps.find((s) => s.id === "release");
+  assert.equal(step.if, "steps.changesets.outputs.hasChangesets == 'false'");
+  const { cwd, env } = fixture(t);
+  const run = (npm) => {
+    writeFileSync(env.GITHUB_OUTPUT, "");
+    const result = spawnSync("bash", ["-c", step.run], {
+      cwd,
+      env: { ...env, FAKE_NPM: npm },
+      encoding: "utf8",
+    });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    return readFileSync(env.GITHUB_OUTPUT, "utf8").trim();
+  };
+  assert.equal(run(""), "needed=true");
+  assert.equal(run("1.3.0=0123abc"), "");
 });
 
 function runCheck(cwd, env) {
