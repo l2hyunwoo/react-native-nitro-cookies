@@ -2,7 +2,7 @@
   "name": "nitro-cookies-website",
   "private": true,
   "type": "module",
-  "packageManager": "yarn@3.6.1",
+  "packageManager": "yarn@4.18.1",
   "scripts": {
     "dev": "vitepress dev --host 127.0.0.1",
     "typecheck": "tsc --noEmit --module nodenext --moduleResolution nodenext --target es2022 --skipLibCheck .vitepress/config.mts",

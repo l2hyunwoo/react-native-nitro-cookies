@@ -1,13 +1,9 @@
 name: Publish
 
-# Manual trigger with version input
+# Manual release from pending changesets
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version number (e.g., 1.2.3 - no v prefix)'
-        required: true
-        type: string
       dry_run:
         description: 'Dry run mode (test without publishing)'
         required: false
@@ -26,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       commit_sha: ${{ steps.commit.outputs.sha }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Check dry run mode
         run: |
@@ -43,43 +40,31 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: .nvmrc
 
-      - name: Validate version format
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Apply changesets
+        id: version
         run: |
-          VERSION="${{ github.event.inputs.version }}"
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-            echo "::error title=Invalid Version Format::Version must be in X.Y.Z format (e.g., 1.2.3). Got: $VERSION"
+          set -euo pipefail
+          CURRENT_VERSION=$(node -p "require('./package/package.json').version")
+          yarn version-packages
+          VERSION=$(node -p "require('./package/package.json').version")
+          if [ "$CURRENT_VERSION" = "$VERSION" ]; then
+            echo "No pending changesets update react-native-nitro-cookies."
             exit 1
           fi
-          echo "✓ Version format valid: $VERSION"
-
-      - name: Check for existing tag
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
-            echo "::error title=Tag Already Exists::Tag v$VERSION already exists. Please use a different version number."
+          if git rev-parse --verify "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            echo "Tag v$VERSION already exists."
             exit 1
           fi
-          echo "✓ Tag v$VERSION does not exist"
-
-      - name: Check for dirty working directory
-        run: |
-          if ! git diff-index --quiet HEAD --; then
-            echo "::error title=Uncommitted Changes::Working directory has uncommitted changes. Please commit or stash them first."
-            git status
-            exit 1
-          fi
-          echo "✓ Working directory is clean"
-
-      - name: Update package.json version
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          echo "Updating package/package.json to version $VERSION"
-          cd package
-          npm version $VERSION --no-git-tag-version
-          cd ..
-          echo "✓ package/package.json updated to version $VERSION"
+          yarn install --immutable
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Configure git
         run: |
@@ -88,14 +73,26 @@ jobs:
 
       - name: Create version commit
         id: commit
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ github.event.inputs.version }}"
-          git add package/package.json
+          set -euo pipefail
+          git add package/package.json package/CHANGELOG.md .changeset
           git commit -m "chore(release): bump version to $VERSION"
 
           COMMIT_SHA=$(git rev-parse HEAD)
-          echo "sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
           echo "✓ Version commit created: $COMMIT_SHA"
+
+      - name: Upload versioned files (Dry Run)
+        if: github.event.inputs.dry_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: versioned-package
+          path: |
+            package/package.json
+            package/CHANGELOG.md
+          if-no-files-found: error
 
       - name: Push version commit
         run: |
@@ -121,25 +118,9 @@ jobs:
           ref: ${{ github.event.inputs.dry_run == 'true' && github.ref || needs.create-version-commit.outputs.commit_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup Node.js (Dry Run)
-        if: github.event.inputs.dry_run == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Update package.json version (Dry Run)
-        if: github.event.inputs.dry_run == 'true'
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          echo "Updating package/package.json to version $VERSION (dry run)"
-          cd package
-          npm version $VERSION --no-git-tag-version
-          cd ..
-          echo "✓ package/package.json updated to version $VERSION"
-
       - name: Create and push tag
         run: |
-          VERSION="${{ github.event.inputs.version }}"
+          VERSION="${{ needs.create-version-commit.outputs.version }}"
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "🔍 DRY RUN: Would create and push tag v$VERSION"
             echo "   Current commit: $(git rev-parse HEAD)"
@@ -167,22 +148,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: .nvmrc
           cache: 'yarn'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Update package.json version (Dry Run)
+      - name: Restore versioned files (Dry Run)
         if: github.event.inputs.dry_run == 'true'
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          echo "Updating package/package.json to version $VERSION (dry run)"
-          cd package
-          npm version $VERSION --no-git-tag-version
-          cd ..
-          echo "✓ package/package.json updated to version $VERSION"
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-package
+          path: package
 
       - name: Build library
         run: |
@@ -227,39 +205,35 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.inputs.dry_run == 'true' && github.ref || needs.create-version-commit.outputs.commit_sha }}
 
+      - name: Restore versioned files (Dry Run)
+        if: github.event.inputs.dry_run == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-package
+          path: package
+
       - name: Generate Release Notes
         id: release_notes
+        env:
+          VERSION: ${{ needs.create-version-commit.outputs.version }}
         run: |
-          set -e  # Exit on error
-
-          VERSION="${{ github.event.inputs.version }}"
+          set -euo pipefail
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 --exclude="v$VERSION" 2>/dev/null || echo "")
 
           # Send debug output to stderr to avoid polluting release notes
           echo "Generating release notes for v$VERSION..." >&2
           echo "Previous tag: $PREVIOUS_TAG" >&2
 
-          # Get merged PRs since last tag
-          if [ -n "$PREVIOUS_TAG" ]; then
-            PREVIOUS_DATE=$(git log -1 --format=%aI "$PREVIOUS_TAG" 2>/dev/null)
-            echo "Getting PRs merged after $PREVIOUS_DATE..." >&2
-            # Limit to 50 PRs and suppress any extra output
-            PRS=$(gh pr list --state merged --search "merged:>$PREVIOUS_DATE" --limit 50 --json number,title,author --jq '.[] | "- #\(.number) \(.title) (@\(.author.login))"' 2>&1 | grep "^-" || echo "")
-          else
-            echo "No previous tag found, getting all merged PRs..." >&2
-            # Limit to 50 PRs and suppress any extra output
-            PRS=$(gh pr list --state merged --limit 50 --json number,title,author --jq '.[] | "- #\(.number) \(.title) (@\(.author.login))"' 2>&1 | grep "^-" || echo "")
-          fi
-
           # Create release notes in a clean way
           {
             echo "## What's Changed"
             echo ""
-            if [ -n "$PRS" ]; then
-              echo "$PRS"
-            else
-              echo "- No merged PRs found"
-            fi
+            awk -v version="$VERSION" '
+              $0 == "## " version { found = 1; next }
+              found && /^## / { exit }
+              found { print }
+              END { if (!found) exit 1 }
+            ' package/CHANGELOG.md
             echo ""
             echo "## Installation"
             echo ""
@@ -280,25 +254,12 @@ jobs:
             fi
           } > release_notes.md
 
-          # Output the release notes to GitHub output
-          {
-            echo "release_notes<<RELEASE_NOTES_EOF"
-            cat release_notes.md
-            echo "RELEASE_NOTES_EOF"
-          } >> $GITHUB_OUTPUT
-
-          echo "✓ Release notes generated" >&2
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Create Release
         if: github.event.inputs.dry_run != 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ github.event.inputs.version }}
-          body: ${{ steps.release_notes.outputs.release_notes }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.create-version-commit.outputs.version }}
+        run: gh release create "v$VERSION" --verify-tag --title "v$VERSION" --notes-file release_notes.md
 
       - name: Display Release Notes (Dry Run)
         if: github.event.inputs.dry_run == 'true'

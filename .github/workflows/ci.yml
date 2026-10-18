@@ -48,6 +48,9 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      - name: Test Changesets release workflow
+        run: yarn test:release
+
       - name: Run unit tests
         run: yarn test --maxWorkers=2 --coverage
 

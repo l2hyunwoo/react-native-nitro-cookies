@@ -16,20 +16,22 @@
     "prepare": "yarn workspace react-native-nitro-cookies prepare",
     "nitrogen": "yarn workspace react-native-nitro-cookies nitrogen",
     "clean": "del-cli package/android/build example/android/build example/android/app/build example/ios/build package/lib",
-    "release": "yarn workspace react-native-nitro-cookies release-it --only-version"
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "test:release": "node --test .github/scripts/changesets.test.mjs"
   },
   "workspaces": [
     "package",
     "example"
   ],
-  "packageManager": "yarn@3.6.1",
+  "packageManager": "yarn@4.18.1",
   "devDependencies": {
+    "@changesets/cli": "3.0.3",
     "@commitlint/config-conventional": "19.8.1",
     "@eslint/compat": "1.3.2",
     "@eslint/eslintrc": "3.3.3",
     "@eslint/js": "9.35.0",
     "@evilmartians/lefthook": "1.12.3",
-    "@release-it/conventional-changelog": "10.0.5",
     "@typescript-eslint/eslint-plugin": "8.55.0",
     "@typescript-eslint/parser": "8.55.0",
     "commitlint": "19.8.1",
@@ -38,9 +40,9 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "prettier": "3.8.1",
-    "release-it": "19.2.4",
     "turbo": "2.8.7",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "yaml": "2.9.0"
   },
   "commitlint": {
     "extends": [

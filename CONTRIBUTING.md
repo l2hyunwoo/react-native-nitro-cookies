@@ -4,9 +4,9 @@ Keep contributions focused on one change. Follow the [Code of Conduct](./CODE_OF
 
 ## Setup
 
-Use the Node.js version in [`.nvmrc`](./.nvmrc) and the repository's Yarn 3.6.1 release.
+Use the Node.js version in [`.nvmrc`](./.nvmrc) and the repository's Yarn 4.18.1 release.
 Root Yarn workspaces contain `package/` and `example/`. The documentation site in `website/` is a separate Yarn project.
-Use Yarn for repository dependencies. The Publish workflow uses npm for version changes and registry publication.
+Use Yarn for repository dependencies. The Publish workflow uses Changesets for versions and npm for registry publication.
 
 For native work, install the [React Native development tools](https://reactnative.dev/docs/set-up-your-environment).
 Android requires the Android SDK and JDK 17. Apple development requires macOS, Xcode, and Ruby with Bundler.
@@ -181,33 +181,28 @@ Use this checklist in the pull request description:
 
 ## Releases
 
-[GitHub Releases](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases) is the canonical release history.
-`CHANGELOG.md` preserves older entries and links there. The Publish workflow does not update it.
+Add a changeset with `yarn changeset` for changes that need a release.
+Choose `react-native-nitro-cookies`, select patch, minor, or major, and describe the user-visible change.
+Commit the generated file with your pull request. Documentation and CI-only changes do not need a release.
+Run `yarn changeset status` to review pending changes.
 
-Maintainers publish through the [Publish workflow](./.github/workflows/publish.yml), triggered with `workflow_dispatch`.
-Supply `version` in `X.Y.Z` format without a `v` prefix. Set `dry_run` to `true` for a rehearsal.
-Choose the intended source branch in the workflow UI.
+Maintainers run the [Publish workflow](./.github/workflows/publish.yml) from the intended source branch.
+Set `dry_run` to `true` for a rehearsal. There is no manual version input.
+The workflow consumes changesets, updates `package/package.json`, and writes `package/CHANGELOG.md`.
+It rejects releases with no version change or an existing tag.
+The private example app is not versioned or published.
 
-| Step | Normal run | Dry run |
-| --- | --- | --- |
-| Version | Update `package/package.json`, create a version commit, and push it to the selected branch | Update and commit inside the runner; do not push |
-| Tag | Create and push `vX.Y.Z` | Report the tag that would be created |
-| Package | Install workspace dependencies, build the library, and verify build output | Run the same build and verification with the requested version |
-| npm | Run `npm publish --provenance --access public` from `package/` | Run `npm publish --dry-run --access public` from `package/` |
-| Release | Create a GitHub Release after publication | Generate and display the proposed body without creating a Release |
+A normal run pushes the version commit and tag, builds the library, verifies its outputs, and publishes to npm with provenance.
+It then creates a GitHub Release from the new changelog entry, with installation and comparison links.
+A dry run passes the versioned files between jobs and builds the package without pushing or publishing.
+Review changeset summaries for API availability, breaking changes, and upgrade instructions before release.
 
-A dry run changes temporary runner files and runs dependency lifecycle scripts and the package build.
-It does not push a commit or tag, publish to npm, or create a GitHub Release.
-The workflow rejects invalid version formats and existing tags.
+`yarn version-packages` changes local files for inspection. Do not commit that preview before running Publish.
+Do not use `changeset publish` as a substitute for the Publish workflow.
+The old `release-it` entry point has been removed.
 
-The generated Release body lists up to 50 merged pull requests after the previous tag's commit date.
-It adds installation commands, a README link, and a comparison link.
-Maintainers must review and edit the Release notes for API availability, breaking changes, and upgrade instructions.
-The workflow does not write curated release notes or a changelog entry automatically.
-
-The root `yarn release` command is a legacy release-it entry point, separate from this workflow.
-Its `--only-version` flag limits prompting to the version choice; it does not limit execution to a version edit.
-Do not use it as a substitute for the Publish workflow.
+[GitHub Releases](https://github.com/l2hyunwoo/react-native-nitro-cookies/releases) preserves the existing release history.
+The root `CHANGELOG.md` keeps historical entries. New entries are generated in `package/CHANGELOG.md`.
 
 Release checklist:
 
