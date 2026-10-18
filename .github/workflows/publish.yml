@@ -16,8 +16,9 @@ on:
 permissions:
   contents: read
 
+# Separate groups: a queued push run must not replace a queued manual Publish run.
 concurrency:
-  group: release
+  group: release-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
@@ -60,7 +61,7 @@ jobs:
 
   publish:
     name: Publish to NPM
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -87,21 +88,41 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # A rerun after a partial release resumes only when npm's gitHead proves the
+      # published tarball came from this commit.
       - name: Check release version
         id: version
         run: |
           set -euo pipefail
           VERSION=$(node -p "require('./package/package.json').version")
-          if git rev-parse --verify "refs/tags/v$VERSION" >/dev/null 2>&1; then
-            echo "Tag v$VERSION already exists. Merge the Version PR before publishing."
-            exit 1
-          fi
+          HEAD_SHA=$(git rev-parse HEAD)
+          PUBLISHED=false
+          TAGGED=false
           if [ -n "$(npm view "react-native-nitro-cookies@$VERSION" version 2>/dev/null || true)" ]; then
-            echo "react-native-nitro-cookies@$VERSION is already on npm. Merge the Version PR before publishing."
-            exit 1
+            PUBLISHED_SHA=$(npm view "react-native-nitro-cookies@$VERSION" gitHead 2>/dev/null || true)
+            if [ "$PUBLISHED_SHA" != "$HEAD_SHA" ]; then
+              echo "react-native-nitro-cookies@$VERSION is already on npm from ${PUBLISHED_SHA:-an unknown commit}. Merge the Version PR before publishing."
+              exit 1
+            fi
+            PUBLISHED=true
           fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "✓ Releasing v$VERSION"
+          if git rev-parse --verify "refs/tags/v$VERSION" >/dev/null 2>&1; then
+            if [ "$(git rev-list -n 1 "v$VERSION")" != "$HEAD_SHA" ]; then
+              echo "Tag v$VERSION already exists on another commit."
+              exit 1
+            fi
+            if [ "$PUBLISHED" != "true" ]; then
+              echo "Tag v$VERSION exists, but npm does not have this version."
+              exit 1
+            fi
+            TAGGED=true
+          fi
+          {
+            echo "version=$VERSION"
+            echo "published=$PUBLISHED"
+            echo "tagged=$TAGGED"
+          } >> "$GITHUB_OUTPUT"
+          echo "✓ Releasing v$VERSION (published=$PUBLISHED, tagged=$TAGGED)"
 
       - name: Build library
         run: |
@@ -123,7 +144,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 --exclude="v$VERSION" 2>/dev/null || echo "")
 
           {
             echo "## What's Changed"
@@ -155,6 +176,7 @@ jobs:
           } > release_notes.md
 
       - name: Publish to NPM
+        if: steps.version.outputs.published != 'true'
         run: |
           cd package
           if [ "${{ inputs.dry_run }}" = "true" ]; then
@@ -170,6 +192,7 @@ jobs:
 
       # Tag only after npm accepts the package so a failed publish can be retried.
       - name: Create and push tag
+        if: steps.version.outputs.tagged != 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -191,6 +214,8 @@ jobs:
             echo "---"
             cat release_notes.md
             echo "---"
+          elif gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "✓ GitHub release v$VERSION already exists"
           else
             gh release create "v$VERSION" --verify-tag --title "v$VERSION" --notes-file release_notes.md
           fi

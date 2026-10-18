@@ -192,7 +192,8 @@ Review the version and changelog there, then merge it. The private example app i
 
 After the version pull request is merged, maintainers run the Publish workflow manually on `main`.
 Set `dry_run` to `true` for a rehearsal. The workflow publishes the version in `package/package.json`.
-It rejects a version that already has a tag or is already on npm, so run it only after merging the version pull request.
+It rejects a version that npm or a tag already has from another commit, so run it only after merging the version pull request.
+If a run publishes to npm but fails before the tag or Release, rerun it on the same commit. It checks that npm's `gitHead` matches the commit, then creates only the missing tag and Release.
 
 A normal run builds the library, verifies its outputs, and publishes to npm with provenance.
 It then pushes the `vX.Y.Z` tag and creates a GitHub Release from the changelog entry, with installation and comparison links.

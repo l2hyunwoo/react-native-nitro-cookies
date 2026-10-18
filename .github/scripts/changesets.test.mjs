@@ -22,20 +22,29 @@ const publishSteps = release.jobs.publish.steps;
 const check = publishSteps.find((step) => step.id === "version");
 const notes = publishSteps.find((step) => step.id === "release_notes");
 
-function fixture(t, { publishedVersions = [] } = {}) {
+function fixture(t) {
   const cwd = mkdtempSync(join(tmpdir(), "nitro-changesets-"));
   t.after(() => rmSync(cwd, { recursive: true, force: true }));
-  // Fake npm so the published-version guard runs offline.
+  // Fake `npm view <pkg>@<version> <field>` backed by FAKE_NPM="<version>=<gitHead> ...".
   const bin = join(cwd, ".bin");
   mkdirSync(bin);
   writeFileSync(
     join(bin, "npm"),
-    `#!/bin/sh\ncase " ${publishedVersions.join(" ")} " in *" \${2#*@} "*) echo "\${2#*@}";; *) exit 1;; esac\n`,
+    [
+      "#!/bin/sh",
+      'v="${2#*@}"',
+      "for e in $FAKE_NPM; do",
+      '  case "$e" in "$v="*) if [ "$3" = gitHead ]; then echo "${e#*=}"; else echo "$v"; fi; exit 0;; esac',
+      "done",
+      "exit 1",
+      "",
+    ].join("\n"),
   );
   chmodSync(join(bin, "npm"), 0o755);
   const env = {
     ...process.env,
     CI: "true",
+    FAKE_NPM: "",
     PATH: `${bin}:${process.env.PATH}`,
     GITHUB_OUTPUT: join(cwd, "output"),
   };
@@ -109,7 +118,11 @@ test("pushes to main open the Version PR without publishing", () => {
   assert.deepEqual(release.on.push.branches, ["main"]);
   const { version, publish } = release.jobs;
   assert.equal(version.if, "github.event_name == 'push'");
-  assert.equal(publish.if, "github.event_name == 'workflow_dispatch'");
+  assert.equal(
+    publish.if,
+    "github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'",
+  );
+  assert.equal(release.concurrency.group, "release-${{ github.event_name }}");
   const action = version.steps.find((step) =>
     step.uses?.startsWith("changesets/action@"),
   );
@@ -142,33 +155,84 @@ test("the Version PR consumes changesets and skips the private example", (t) => 
   execFileSync("yarn", ["install", "--immutable"], { cwd, env });
 });
 
-test("publish rejects a version whose tag already exists", (t) => {
-  const { cwd, run, env } = fixture(t);
-  run("git", ["tag", "v1.3.0"]);
-  const result = spawnSync("bash", ["-c", check.run], {
-    cwd,
-    env,
-    encoding: "utf8",
-  });
+function runCheck(cwd, env) {
+  return spawnSync("bash", ["-c", check.run], { cwd, env, encoding: "utf8" });
+}
+
+function outputs(env) {
+  return Object.fromEntries(
+    readFileSync(env.GITHUB_OUTPUT, "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => line.split("=")),
+  );
+}
+
+test("publish rejects a version already on npm from another commit", (t) => {
+  const { cwd, env } = fixture(t);
+  const result = runCheck(cwd, { ...env, FAKE_NPM: "1.3.0=0123abc" });
   assert.equal(result.status, 1, result.stderr);
-  assert.match(result.stdout, /Tag v1.3.0 already exists/);
+  assert.match(result.stdout, /already on npm from 0123abc/);
 });
 
-test("publish rejects a version that is already on npm", (t) => {
-  const { cwd, env } = fixture(t, { publishedVersions: ["1.3.0"] });
-  const result = spawnSync("bash", ["-c", check.run], {
-    cwd,
-    env,
-    encoding: "utf8",
-  });
+test("publish rejects a version on npm without a recorded commit", (t) => {
+  const { cwd, env } = fixture(t);
+  const result = runCheck(cwd, { ...env, FAKE_NPM: "1.3.0=" });
   assert.equal(result.status, 1, result.stderr);
-  assert.match(result.stdout, /already on npm/);
+  assert.match(result.stdout, /from an unknown commit/);
+});
+
+test("publish rejects a tag on another commit", (t) => {
+  const { cwd, run, commit, env } = fixture(t);
+  run("git", ["tag", "v1.3.1"]);
+  setVersion(cwd, "1.3.1");
+  commit();
+  const result = runCheck(cwd, env);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stdout, /Tag v1.3.1 already exists on another commit/);
+});
+
+test("publish rejects a tag whose version is not on npm", (t) => {
+  const { cwd, run, env } = fixture(t);
+  run("git", ["tag", "v1.3.0"]);
+  const result = runCheck(cwd, env);
+  assert.equal(result.status, 1, result.stderr);
+  assert.match(result.stdout, /npm does not have this version/);
+});
+
+test("publish resumes a partial release when npm's gitHead matches HEAD", (t) => {
+  const { cwd, run, env } = fixture(t);
+  const head = run("git", ["rev-parse", "HEAD"]).trim();
+  const resumed = runCheck(cwd, { ...env, FAKE_NPM: `1.3.0=${head}` });
+  assert.equal(resumed.status, 0, resumed.stdout + resumed.stderr);
+  assert.deepEqual(outputs(env), {
+    version: "1.3.0",
+    published: "true",
+    tagged: "false",
+  });
+  run("git", ["tag", "v1.3.0"]);
+  writeFileSync(env.GITHUB_OUTPUT, "");
+  const tagged = runCheck(cwd, { ...env, FAKE_NPM: `1.3.0=${head}` });
+  assert.equal(tagged.status, 0, tagged.stdout + tagged.stderr);
+  assert.equal(outputs(env).tagged, "true");
+});
+
+test("completed release steps are skipped on resume", () => {
+  const step = (name) => publishSteps.find((s) => s.name === name);
+  assert.equal(
+    step("Publish to NPM").if,
+    "steps.version.outputs.published != 'true'",
+  );
+  assert.equal(
+    step("Create and push tag").if,
+    "steps.version.outputs.tagged != 'true'",
+  );
+  assert.match(step("Create Release").run, /gh release view/);
 });
 
 test("publish accepts an unpublished version and extracts only its notes", (t) => {
-  const { cwd, run, commit, env } = fixture(t, {
-    publishedVersions: ["1.3.0"],
-  });
+  const { cwd, run, commit, env } = fixture(t);
+  const previous = run("git", ["rev-parse", "HEAD"]).trim();
   run("git", ["tag", "v1.3.0"]);
   setVersion(cwd, "1.3.1");
   writeFileSync(
@@ -176,13 +240,13 @@ test("publish accepts an unpublished version and extracts only its notes", (t) =
     "# react-native-nitro-cookies\n\n## 1.3.1\n\n### Patch Changes\n\n- Fix navigation callbacks.\n\n## 1.3.0\n\nOld release notes.\n",
   );
   commit();
-  const checked = spawnSync("bash", ["-c", check.run], {
-    cwd,
-    env,
-    encoding: "utf8",
-  });
+  const checked = runCheck(cwd, { ...env, FAKE_NPM: `1.3.0=${previous}` });
   assert.equal(checked.status, 0, checked.stdout + checked.stderr);
-  assert.match(readFileSync(env.GITHUB_OUTPUT, "utf8"), /version=1.3.1/);
+  assert.deepEqual(outputs(env), {
+    version: "1.3.1",
+    published: "false",
+    tagged: "false",
+  });
   const generated = spawnSync("bash", ["-c", notes.run], {
     cwd,
     encoding: "utf8",
