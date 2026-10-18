@@ -159,7 +159,7 @@ test("the Version PR consumes changesets and skips the private example", (t) => 
 
 test("a push publishes only when no changesets are pending and npm lacks the version", (t) => {
   const step = release.jobs.version.steps.find((s) => s.id === "release");
-  assert.equal(step.if, "steps.changesets.outputs.hasChangesets == 'false'");
+  assert.equal(step.if, "steps.changesets.outputs.has-changesets == 'false'");
   const { cwd, env } = fixture(t);
   const run = (npm) => {
     writeFileSync(env.GITHUB_OUTPUT, "");
