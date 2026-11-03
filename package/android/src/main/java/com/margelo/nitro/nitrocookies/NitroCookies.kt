@@ -3,6 +3,7 @@ package com.margelo.nitro.nitrocookies
 import android.os.Handler
 import android.os.Looper
 import android.webkit.CookieManager
+import androidx.annotation.Keep
 import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.Promise
 import java.net.HttpURLConnection
@@ -13,6 +14,7 @@ import java.util.TimeZone
 
 /** HybridNitroCookies - Android implementation of cookie management */
 @DoNotStrip
+@Keep
 class NitroCookies : HybridNitroCookiesSpec() {
 
   /** Convert Cookie struct to Set-Cookie header string */
