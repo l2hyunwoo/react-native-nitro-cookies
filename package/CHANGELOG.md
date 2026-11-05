@@ -1,5 +1,11 @@
 # react-native-nitro-cookies
 
+## 1.3.2
+
+### Patch Changes
+
+- 6e1fad5: Keep the `NitroCookies` constructor in R8-minified Android release builds. Without it, apps crash at launch on Android 7.1 (API 25) with `NoSuchMethodError` when Nitro creates the HybridObject.
+
 ## 1.3.1
 
 ### Patch Changes
